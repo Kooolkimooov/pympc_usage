@@ -54,7 +54,6 @@ def cost(
 	if not activate_euclidean_cost and objective is None:
 		raise ValueError( "Cannot compute cost" )
 
-	local_state = deepcopy( state )
 	cost = 0.
 
 	if actuation_history is not None:
@@ -63,21 +62,21 @@ def cost(
 	states = np.zeros( (horizon, len( state )) )
 
 	for i in range( horizon ):
-		states[ i ] = local_state
-		local_state = local_state + model(
-				local_state, actuations[ i ], **model_args
+		states[ i ] = state
+		state = state + model(
+				state, actuations[ i ], **model_args
 				) * time_step
 		if activate_euclidean_cost:
-			cost += np.linalg.norm( local_state[ :len( state ) // 2 ] - target ) ** 2
+			cost += np.linalg.norm( state[ :len( state ) // 2 ] - target ) ** 2
 		if objective is not None:
-			cost += objective( local_state, actuations[ i ], **model_args )
+			cost += objective( state, actuations[ i ], **model_args )
 
 	cost /= horizon
 
 	if activate_final_cost:
-		cost += np.linalg.norm( local_state[ :len( state ) // 2 ] - target ) ** 2
+		cost += np.linalg.norm( state[ :len( state ) // 2 ] - target ) ** 2
 		if objective is not None:
-			cost += objective( local_state, actuations[ -1 ], **model_args )
+			cost += objective( state, actuations[ -1 ], **model_args )
 
 	if state_history is not None:
 		state_history.append( states )

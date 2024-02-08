@@ -1,49 +1,26 @@
-
 from numpy import cos, pi, sin
 
 from mpc import *
 
 
 # double pendulum with cart
-def double_pendulum(
+def pendulum(
 		x: np.ndarray,
 		u: float,
 		cart_mass: float = 1,
-		first_arm_length: float = 1,
-		first_arm_mass: float = 1,
-		second_arm_length: float = 1,
-		second_arm_mass: float = 1
-		) -> np.ndarray:
+		arm_length: float = 1,
+		mass: float = 1, ) -> np.ndarray:
 
 	g = 9.80665
-	x, theta_1, theta_2, dx, dtheta_1, dtheta_2 = x
-
-	l1 = first_arm_length / 2
-	l2 = second_arm_length / 2
-	J1 = (first_arm_mass * l1 ** 2) / 3
-	J2 = (second_arm_mass * l2 ** 2) / 3
-
-	h1 = cart_mass + first_arm_mass + second_arm_mass
-	h2 = first_arm_mass * l1 + second_arm_mass * second_arm_length
-	h3 = second_arm_mass * l2
-	h4 = first_arm_mass * l1 ** 2 + second_arm_mass * second_arm_length ** 2 + J1
-	h5 = second_arm_mass * l2 * first_arm_length
-	h6 = second_arm_mass * l2 ** 2 + J2
-	h7 = (first_arm_mass * l1 + second_arm_mass * second_arm_length) * g
-	h8 = second_arm_mass * l2 * g
+	x, theta, dx, dtheta = x
 
 	A = np.array(
-			[ [ 1, 0, 0, 0, 0, 0 ], [ 0, 1, 0, 0, 0, 0 ], [ 0, 0, 1, 0, 0, 0 ],
-				[ 0, 0, 0, h1, h2 * cos( theta_1 ), h3 * cos( theta_2 ) ],
-				[ 0, 0, 0, h2 * cos( theta_1 ), h4, h5 * cos( theta_1 - theta_2 ) ],
-				[ 0, 0, 0, h3 * cos( theta_2 ), h5 * cos( theta_1 - theta_2 ), h6 ] ]
+			[ [ 1, 0, 0, 0 ], [ 0, 1, 0, 0 ], [ 0, 0, cos( theta ), arm_length ],
+				[ 0, 0, 1 + cart_mass / mass, arm_length * cos( theta ) ] ]
 			)
 
 	b = np.array(
-			[ dx, dtheta_1, dtheta_2,
-				h2 * dtheta_1 ** 2 * sin( theta_1 ) + h3 * dtheta_2 ** 2 * sin( theta_2 ) + u,
-				h7 * sin( theta_1 ) - h5 * dtheta_2 ** 2 * sin( theta_1 - theta_2 ),
-				h5 * dtheta_1 ** 2 * sin( theta_1 - theta_2 ) + h8 * sin( theta_2 ) ]
+			[ dx, dtheta, -g * sin( theta ), arm_length * dtheta ** 2 * sin( theta ) + u / mass ]
 			)
 
 	xdot = np.linalg.solve( A, b )
@@ -51,43 +28,33 @@ def double_pendulum(
 	return xdot
 
 
-def double_pendulum_objective(
-		x: np.ndarray,
-		u: float,
-		cart_mass: float = 1,
-		first_arm_length: float = 1,
-		first_arm_mass: float = 1,
-		second_arm_length: float = 1,
-		second_arm_mass: float = 1
+def pendulum_objective(
+		x: np.ndarray, u: float, cart_mass: float = 1, arm_length: float = 1, mass: float = 1
 		) -> float:
-	_, theta_1, theta_2, _, _, _ = x
-	g = 9.80665
-	l1 = first_arm_length / 2
-	l2 = second_arm_length / 2
 
-	E = first_arm_mass * l1 * g * cos( theta_1 ) + second_arm_mass * g * (
-			first_arm_length * cos( theta_1 ) + l2 * cos( theta_2 ))
+	g = 9.80665
+
+	_, theta, dx, dtheta = x
+	Ep = - mass * g * arm_length * cos( theta )
+	Ek = 0.5 * cart_mass * dx ** 2 + 0.5 * mass * (
+			(arm_length * dtheta * sin( theta )) ** 2 + (dx + arm_length * dtheta * cos( theta )) ** 2)
 
 	# objective is to minimize potential energy
-	return - E
+	return Ek - Ep
 
 
 if __name__ == "__main__":
 	# model, initial state and all parameters
-	model = double_pendulum
-	state = np.array( [ 0., pi, pi, 0., 0., 0. ] )
-	time_step = 0.05
-	n_frames = 150
-	horizon = 150
+	model = pendulum
+	state = np.array( [ 0., 0, 0., 0. ] )
+	time_step = 0.025
+	n_frames = 100
+	horizon = 100
 	max_iter = 1000
 	tolerance = 1e-6
-	target = np.array( [ 0, 0, 0 ] )
+	target = np.array( [ 0, pi ] )
 	model_args = {
-			"cart_mass"        : 1,
-			"first_arm_length" : 1,
-			"first_arm_mass"   : 1,
-			"second_arm_length": 1,
-			"second_arm_mass"  : 1
+			"cart_mass": 1, "arm_length": 1, "mass": 1
 			}
 	command_upper_bound = 200
 	command_lower_bound = -200
@@ -117,7 +84,7 @@ if __name__ == "__main__":
 		os.mkdir( folder )
 
 	for frame in range( n_frames ):
-		horizon = n_frames - frame if n_frames - frame > 10 else 10
+		horizon = n_frames - frame - 10 if n_frames - frame - 10 > 2 else 2
 
 		print( f"frame {frame + 1}/{n_frames}", end = ' ' )
 
@@ -145,8 +112,8 @@ if __name__ == "__main__":
 						),
 				state_history = all_states,
 				actuation_history = all_actuations,
-				objective = double_pendulum_objective,
-				# activate_euclidean_cost = False,
+				objective = pendulum_objective,
+				activate_euclidean_cost = False,
 				# activate_final_cost = False
 				)
 
@@ -155,9 +122,10 @@ if __name__ == "__main__":
 
 		# update state (Euler integration, maybe RK in future?)
 		state += model( state, actuation, **model_args ) * time_step
+		tf = time.perf_counter()
 		print(
 				f"actuation: {actuation} - state: {state[ :3 ]} - Ep: "
-				f"{double_pendulum_objective( state, actuation, **model_args )}", end = ' '
+				f"{pendulum_objective( state, actuation, **model_args )}", end = ' '
 				)
 
 		# ramp
@@ -165,7 +133,6 @@ if __name__ == "__main__":
 		# sine
 		# target = 1 + np.sin( frame / n_frames * 2 * np.pi )
 
-		tf = time.perf_counter()
 		print( f"- {tf - ti:.6f}s", end = ' ' )
 
 		# plot results in subplots
@@ -177,21 +144,35 @@ if __name__ == "__main__":
 		plt.subplots_adjust( hspace = 0., wspace = .5 )
 		fig.suptitle( f"{frame + 1}/{n_frames} - compute time: {tf - ti:.6f}s" )
 		ax0.set_ylabel( 'position' )
-		ax1.set_ylabel( 'angles' )
+		ax1.set_ylabel( 'angle' )
 		ax2.set_ylabel( 'actuation' )
+
+		min_x = np.array( actual_states )[ :, 0 ].min() if len( actual_states ) > 1 and np.array(
+				actual_states
+				)[ :, 0 ].min() < -1 else -1
+		max_x = np.array( actual_states )[ :, 0 ].max() if len( actual_states ) > 1 and np.array(
+				actual_states
+				)[ :, 0 ].max() > 1 else 1
+		min_u = min( actual_actuations ) - 1 if len( actual_actuations ) > 1 and min(
+			actual_actuations
+			) < -1 else -1
+		max_u = max( actual_actuations ) + 1 if len( actual_actuations ) > 1 and max(
+			actual_actuations
+			) > 1 else 1
+
 		ax0.set_ylim( min_x, max_x )
 		ax1.set_ylim( -2 * pi, 2 * pi )
+		ax2.set_ylim( min_u, max_u )
 
-		x, theta_1, theta_2, _, _, _ = state
-		l1 = model_args[ "first_arm_length" ]
-		l2 = model_args[ "second_arm_length" ]
-		X = [ x, x + l1 * sin( theta_1 ), x + l1 * sin( theta_1 ) + l2 * sin( theta_2 ) ]
-		Y = [ 0, l1 * cos( theta_1 ), l1 * cos( theta_1 ) + l2 * cos( theta_2 ) ]
+		x, theta, _, _ = state
+		l = model_args[ "arm_length" ]
+		X = [ x, x + l * sin( theta ), ]
+		Y = [ 0, - l * cos( theta ) ]
 		pendulum.plot( X[ :2 ], Y[ :2 ], 'b', linewidth = 5 )
 		pendulum.plot( X[ 1: ], Y[ 1: ], 'g', linewidth = 5 )
 		pendulum.scatter( X, Y, c = 'r', s = 100 )
-		pendulum.set_xlim( x - (l1 + l2), x + l1 + l2 )
-		pendulum.set_ylim( -(l1 + l2), (l1 + l2) )
+		pendulum.set_xlim( x - l, x + l )
+		pendulum.set_ylim( -l, l )
 
 		time_axis_states = [ -(len( actual_states ) - 1) * time_step + i * time_step for i in
 												 range( len( actual_states ) + len( all_states[ 0 ][ 1:, 0 ] ) ) ]
@@ -203,9 +184,6 @@ if __name__ == "__main__":
 				)
 		ax1.axhline(
 				target[ 1 ], color = 'r', linewidth = 5
-				)
-		ax1.axhline(
-				target[ 2 ], color = 'r', linewidth = 5
 				)
 
 		actual_states = np.array( actual_states )
@@ -223,12 +201,6 @@ if __name__ == "__main__":
 					'b',
 					linewidth = .1
 					)
-			ax1.plot(
-					time_axis_states,
-					actual_states[ :, 2 ].tolist() + all_states[ i ][ 1:, 2 ].tolist(),
-					'g',
-					linewidth = .1
-					)
 			ax2.plot(
 					time_axis_actuations,
 					actual_actuations + all_actuations[ i ].tolist(),
@@ -236,8 +208,6 @@ if __name__ == "__main__":
 					linewidth = .1
 					)
 
-		min_x = actual_states[ :, 0 ].min() if actual_states[ :, 0 ].min() < -1 else -1
-		max_x = actual_states[ :, 0 ].max() if actual_states[ :, 0 ].max() > 1 else 1
 		actual_states = actual_states.tolist()
 
 		# plot vertical line from y min to y max
