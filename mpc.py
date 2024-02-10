@@ -37,6 +37,8 @@ def mass_spring_nl_damper(
 # cost function for one horizon pass with given model and actuations
 def cost(
 		actuations: np.ndarray,
+		current_actuation: np.ndarray,
+		command_shape: tuple,
 		model: callable,
 		model_args: dict,
 		target: np.ndarray,
@@ -51,6 +53,9 @@ def cost(
 		verb: bool
 		) -> float:
 
+	local_actuation = deepcopy( current_actuation )
+	actuations = actuations.reshape( command_shape )
+
 	if not activate_euclidean_cost and objective is None:
 		raise ValueError( "Cannot compute cost" )
 
@@ -63,20 +68,21 @@ def cost(
 
 	for i in range( horizon ):
 		states[ i ] = state
+		local_actuation += actuations[ i ]
 		state = state + model(
-				state, actuations[ i ], **model_args
+				state, local_actuation, **model_args
 				) * time_step
 		if activate_euclidean_cost:
 			cost += np.linalg.norm( state[ :len( state ) // 2 ] - target ) ** 2
 		if objective is not None:
-			cost += objective( state, actuations[ i ], **model_args )
+			cost += objective( state, local_actuation, **model_args )
 
 	cost /= horizon
 
 	if activate_final_cost:
 		cost += np.linalg.norm( state[ :len( state ) // 2 ] - target ) ** 2
 		if objective is not None:
-			cost += objective( state, actuations[ -1 ], **model_args )
+			cost += objective( state, local_actuation, **model_args )
 
 	if state_history is not None:
 		state_history.append( states )
@@ -92,7 +98,8 @@ def model_predictive_control(
 		model: callable,
 		state: np.ndarray,
 		target: np.ndarray,
-		command_dimension: int,
+		last_result: np.ndarray,
+		current_actuation: np.ndarray,
 		horizon: int,
 		time_step: float,
 		tolerance: float = 1e-6,
@@ -106,18 +113,22 @@ def model_predictive_control(
 		state_history: list = None,
 		actuation_history: list = None,
 		verb: bool = False
-		) -> float:
+		) -> np.ndarray:
 
-	initial_guess = np.zeros( (horizon, command_dimension) )
-	if command_dimension == 1:
-		initial_guess = np.zeros( horizon )
+	command_shape = last_result.shape
+	initial_guess = np.concatenate(
+			(last_result[ 1: ],
+			 np.zeros( (1,) if len( command_shape ) >= 1 else (1, command_shape[ 1 ]) )), axis = 0
+			).flatten()
 
 	result = minimize(
 			fun = cost,
 			x0 = initial_guess,
 			args = (
-			model, model_args, target, horizon, state, time_step, objective, activate_euclidean_cost,
-			activate_final_cost, state_history, actuation_history, verb),
+					current_actuation, command_shape, model, model_args, target, horizon, state, time_step,
+					objective, activate_euclidean_cost, activate_final_cost, state_history,
+					actuation_history,
+					verb),
 			tol = tolerance,
 			bounds = bounds,
 			constraints = constraints,
@@ -126,27 +137,29 @@ def model_predictive_control(
 
 	if verb:
 		print( result )
-	return result.x[ 0 ]
+	return result.x
 
 
 if __name__ == '__main__':
 	# model, initial state and all parameters
 	model = mass_spring_nl_damper
 	state = np.array( [ 0., 0. ] )
-	time_step = 0.1
-	horizon = 10
-	max_iter = 25
+	time_step = 0.01
+	horizon = 50
+	actuation = 0.
+	result = np.zeros( (horizon,) )
+	max_iter = 1000
 	tolerance = 1e-6
 	target = 2
-	n_frames = 100
+	n_frames = 200
 	model_args = { 'mass': 5, 'dampening': 4, 'spring': 3 }
-	command_upper_bound = 50
-	command_lower_bound = -50
-	command_derivative_upper_bound = 1
-	command_derivative_lower_bound = -1
+	command_upper_bound = 150
+	command_lower_bound = -150
+	command_derivative_upper_bound = 25
+	command_derivative_lower_bound = -25
 
-	actual_states = [ ]
-	actual_actuations = [ ]
+	actual_states = [ state ]
+	actual_actuations = [ actuation ]
 
 	# create folder for plots
 	folder = (f'./plots/{model.__name__}_{state[ 0 ]}_{state[ 1 ]}_{time_step}_{horizon}_'
@@ -174,29 +187,30 @@ if __name__ == '__main__':
 
 		ti = time.perf_counter()
 		# model predictive control
-		actuation = model_predictive_control(
+		result = model_predictive_control(
 				model = model,
 				cost = cost,
 				target = target,
-				command_dimension = 1,
+				last_result = result,
+				current_actuation = actuation,
 				horizon = horizon,
 				state = state,
 				time_step = time_step,
 				tolerance = tolerance,
 				max_iter = max_iter,
 				model_args = model_args,
-				bounds = Bounds( command_lower_bound, command_upper_bound ),
+				bounds = Bounds( command_derivative_lower_bound, command_derivative_upper_bound ),
 				constraints = NonlinearConstraint(
-						lambda x: np.diff( x ) / time_step,
-						np.ones( horizon - 1 ) * command_derivative_lower_bound,
-						np.ones( horizon - 1 ) * command_derivative_upper_bound
+						lambda x: actuation + np.cumsum( x ), command_lower_bound, command_upper_bound
 						),
 				state_history = all_states,
 				actuation_history = all_actuations,
 				activate_final_cost = False
 				)
 
-		actual_states.append( state[ 0 ] )
+		actuation += result[ 0 ]
+
+		actual_states.append( state )
 		actual_actuations.append( actuation )
 
 		# update state (Euler integration, maybe RK in future?)
@@ -218,24 +232,32 @@ if __name__ == '__main__':
 		ax2.set_ylabel( 'actuation' )
 
 		time_axis_states = [ -(len( actual_states ) - 1) * time_step + i * time_step for i in
-												 range( len( actual_states ) + len( all_states[ 0 ][ 1:, 0 ] ) ) ]
+												 range( len( actual_states ) + len( all_states[ 0 ] ) - 1 ) ]
 		time_axis_actuations = [ -(len( actual_actuations ) - 1) * time_step + i * time_step for i in
-														 range( len( actual_actuations ) + len( all_actuations[ 0 ] ) ) ]
+														 range( len( actual_actuations ) + len( all_actuations[ 0 ] ) - 1 ) ]
 
 		ax1.axhline(
 				target, color = 'r', linewidth = 5
 				)
 
+		actual_states = np.array( actual_states )
+
 		for i in range( len( all_states ) ):
 			ax1.plot(
-					time_axis_states, actual_states + all_states[ i ][ 1:, 0 ].tolist(), 'b', linewidth = .1
-					)
-			ax2.plot(
-					time_axis_actuations,
-					actual_actuations + all_actuations[ i ].tolist(),
+					time_axis_states,
+					actual_states[ :, 0 ].tolist() + all_states[ i ][ 1:, 0 ].tolist(),
 					'b',
 					linewidth = .1
 					)
+			ax2.plot(
+					time_axis_actuations,
+					actual_actuations + [ actuation + a for a in
+																all_actuations[ i ].flatten()[ 1: ].cumsum().tolist() ],
+					'b',
+					linewidth = .1
+					)
+
+		actual_states = actual_states.tolist()
 
 		# plot vertical line from y min to y max
 		ax1.axvline( color = 'g' )
@@ -246,7 +268,7 @@ if __name__ == '__main__':
 		print()
 
 	# create gif from frames
-	print( 'creating gif ...' )
+	print( 'creating gif ...', end = ' ' )
 	names = [ image for image in glob.glob( f"{folder}/*.png" ) ]
 	names.sort( key = lambda x: os.path.getmtime( x ) )
 	frames = [ Image.open( name ) for name in names ]
@@ -257,3 +279,4 @@ if __name__ == '__main__':
 			loop = True,
 			save_all = True
 			)
+	print( f'saved at {folder}/{folder.split( '/' )[ -1 ]}.gif' )
