@@ -279,4 +279,4 @@ if __name__ == '__main__':
 			loop = True,
 			save_all = True
 			)
-	print( f'saved at {folder}/{folder.split( '/' )[ -1 ]}.gif' )
+	print( f'saved at {folder}/{folder.split( "/" )[ -1 ]}.gif' )

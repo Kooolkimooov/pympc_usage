@@ -51,14 +51,14 @@ if __name__ == "__main__":
 	state = np.array( [ 0., 0, 0., 0. ] )
 	actuation = 0.
 	time_step = 0.025
-	n_frames = 500
+	n_frames = 100
 	horizon = 100
 	result = np.zeros( (horizon,) )
 	max_iter = 1000
 	tolerance = 1e-6
 	target = np.array( [ -1, pi ] )
 	model_args = {
-			"cart_mass": 1, "arm_length": 1, "mass": 5
+			"cart_mass": 1, "arm_length": 1, "mass": 1
 			}
 	command_upper_bound = 50
 	command_lower_bound = -50
@@ -89,8 +89,8 @@ if __name__ == "__main__":
 
 	for frame in range( n_frames ):
 
-		if frame == n_frames // 2:
-			target = np.array( [ 1, pi ] )
+		# if frame == n_frames // 2:
+		# 	target = np.array( [ 1, pi ] )
 
 		print( f"frame {frame + 1}/{n_frames}", end = ' ' )
 
@@ -219,6 +219,7 @@ if __name__ == "__main__":
 
 		plt.savefig( f'{folder}/{frame}.png' )
 		plt.close( 'all' )
+		del fig
 		print()
 
 	# create gif from frames
@@ -233,4 +234,4 @@ if __name__ == "__main__":
 			loop = True,
 			save_all = True
 			)
-	print( f'saved at {folder}/{folder.split( '/' )[ -1 ]}.gif' )
+	print( f'saved at {folder}/{folder.split( "/" )[ -1 ]}.gif' )
