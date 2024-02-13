@@ -32,14 +32,18 @@ def double_pendulum(
 	h8 = second_arm_mass * l2 * g
 
 	A = np.array(
-			[ [ 1, 0, 0, 0, 0, 0 ], [ 0, 1, 0, 0, 0, 0 ], [ 0, 0, 1, 0, 0, 0 ],
+			[ [ 1, 0, 0, 0, 0, 0 ],
+				[ 0, 1, 0, 0, 0, 0 ],
+				[ 0, 0, 1, 0, 0, 0 ],
 				[ 0, 0, 0, h1, h2 * cos( theta_1 ), h3 * cos( theta_2 ) ],
 				[ 0, 0, 0, h2 * cos( theta_1 ), h4, h5 * cos( theta_1 - theta_2 ) ],
 				[ 0, 0, 0, h3 * cos( theta_2 ), h5 * cos( theta_1 - theta_2 ), h6 ] ]
 			)
 
 	b = np.array(
-			[ dx, dtheta_1, dtheta_2,
+			[ dx,
+				dtheta_1,
+				dtheta_2,
 				h2 * dtheta_1 ** 2 * sin( theta_1 ) + h3 * dtheta_2 ** 2 * sin( theta_2 ) + u,
 				h7 * sin( theta_1 ) - h5 * dtheta_2 ** 2 * sin( theta_1 - theta_2 ),
 				h5 * dtheta_1 ** 2 * sin( theta_1 - theta_2 ) + h8 * sin( theta_2 ) ]
@@ -82,7 +86,7 @@ def double_pendulum_objective(
 	Ek = Ek_c + Ek_1 + Ek_2
 
 	# objective is to minimize kinetic energy and maximize potiential energy
-	return - Ek - Ep
+	return Ek - Ep
 
 
 if __name__ == "__main__":
@@ -91,12 +95,14 @@ if __name__ == "__main__":
 	state = np.array( [ 0., pi, pi, 0, 0., 0. ] )
 	actuation = 0.
 	time_step = 0.025
-	n_frames = 500
-	horizon = 200
+	n_frames = 600
+	horizon = 75
+	euclidean_cost = True
+	final_cost = True
 	result = np.zeros( (horizon,) )
-	max_iter = 1000
+	max_iter = 1001
 	tolerance = 1e-6
-	target = np.array( [ 0, 0, 0 ] )
+	target = np.array( [ -1, 0, 0 ] )
 	model_args = {
 			"cart_mass"        : .6,
 			"first_arm_mass"   : .2,
@@ -104,19 +110,23 @@ if __name__ == "__main__":
 			"first_arm_length" : .5,
 			"second_arm_length": .5
 			}
-	command_upper_bound = 5
-	command_lower_bound = -5
+	command_upper_bound = 50
+	command_lower_bound = -50
 	command_derivative_upper_bound = 5
 	command_derivative_lower_bound = -5
+	note = f'receding_horizon-25_change_of_target'
 
 	actual_states = [ state ]
 	actual_actuations = [ actuation ]
 
 	# create folder for plots
-	folder = (f'./plots/{model.__name__}_{time_step}_{horizon}_{model_args[ "cart_mass" ]}_'
-						f'{max_iter}_{tolerance}_{n_frames}_{command_lower_bound}_'
-						f'{command_upper_bound}_{command_derivative_lower_bound}_'
-						f'{command_derivative_upper_bound}')
+	folder = (
+			f'./plots/{model.__name__}_{time_step}_{horizon}_{model_args[ "cart_mass" ]}_'
+			f'{model_args[ "first_arm_mass" ]}_{model_args[ "second_arm_mass" ]}_'
+			f'{model_args[ "first_arm_length" ]}_{model_args[ "second_arm_length" ]}_'
+			f'{max_iter}_{tolerance}_{n_frames}_{euclidean_cost}_{final_cost}_{command_lower_bound}_'
+			f'{command_upper_bound}_{command_derivative_lower_bound}_'
+			f'{command_derivative_upper_bound}_{note}')
 
 	if os.path.exists( folder ):
 		files_in_dir = glob.glob( f'{folder}/*.png' )
@@ -129,12 +139,17 @@ if __name__ == "__main__":
 	else:
 		os.mkdir( folder )
 
+	print( f"executing {folder}" )
+
 	for frame in range( n_frames ):
+		horizon = horizon - 1 if horizon > 25 else 25
 
-		# if frame == n_frames // 2:
-		# 	target = np.array( [ 1, pi ] )
+		if frame == n_frames // 2:
+			target = np.array( [ 1, 0, 0 ] )
+			horizon = 75
+			result = np.concatenate((result, np.zeros( (horizon - len(result),) )))
 
-		print( f"frame {frame + 1}/{n_frames}", end = ' ' )
+		print( f"frame {frame + 1}/{n_frames}", end = ' ', flush = True )
 
 		all_states = [ ]
 		all_actuations = [ ]
@@ -160,8 +175,8 @@ if __name__ == "__main__":
 				state_history = all_states,
 				actuation_history = all_actuations,
 				objective = double_pendulum_objective,
-				# activate_euclidean_cost = False,
-				# activate_final_cost = False
+				activate_euclidean_cost = euclidean_cost,
+				activate_final_cost = final_cost
 				)
 
 		actuation += result[ 0 ]
@@ -173,11 +188,11 @@ if __name__ == "__main__":
 		state += model( state, actuation, **model_args ) * time_step
 		tf = time.perf_counter()
 		print(
-				f"actuation: {actuation} - state: {state[ :3 ]} - O: "
-				f"{double_pendulum_objective( state, actuation, **model_args )}", end = ' '
+				f"- actuation: {actuation} - state: {state[ :3 ]} - objective: "
+				f"{double_pendulum_objective( state, actuation, **model_args )}", end = ' ', flush = True
 				)
 
-		print( f"- {tf - ti:.6f}s", end = ' ' )
+		print( f"- compute time {tf - ti:.6f}s", end = ' ', flush = True )
 
 		# plot results in subplots
 		fig = plt.figure( figsize = (16, 9) )  # subplot shape is (y, x)
@@ -210,8 +225,11 @@ if __name__ == "__main__":
 		pendulum.plot( X[ :2 ], Y[ :2 ], 'b', linewidth = 5 )
 		pendulum.plot( X[ 1: ], Y[ 1: ], 'g', linewidth = 5 )
 		pendulum.scatter( X, Y, c = 'r', s = 100 )
-		pendulum.set_xlim( x - l1 - l2, x + l1 + l2 )
-		pendulum.set_ylim( -l1 - l2, l1 + l2 )
+		pendulum.set_xlim( -2, 2 )
+		pendulum.set_ylim( -2, 2 )
+		pendulum.axhline(color="k")
+		# pendulum.set_xlim( x - l1 - l2, x + l1 + l2 )
+		# pendulum.set_ylim( -l1 - l2, l1 + l2 )
 
 		time_axis_states = [ -(len( actual_states ) - 1) * time_step + i * time_step for i in
 												 range( len( actual_states ) + len( all_states[ 0 ] ) - 1 ) ]
@@ -276,9 +294,9 @@ if __name__ == "__main__":
 	frames = [ Image.open( name ) for name in names ]
 	frame_one = frames[ 0 ]
 	frame_one.save(
-			f"{folder}/{folder.split( '/' )[ -1 ]}.gif",
+			f"{folder}/gif.gif",
 			append_images = frames,
 			loop = True,
 			save_all = True
 			)
-	print( f'saved at {folder}/{folder.split( "/" )[ -1 ]}.gif' )
+	print( f'saved at {folder}/gif.gif' )
