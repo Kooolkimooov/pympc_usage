@@ -95,7 +95,7 @@ if __name__ == "__main__":
 	state = np.array( [ 0., pi, pi, 0, 0., 0. ] )
 	actuation = 0.
 	time_step = 0.025
-	n_frames = 600
+	n_frames = 200
 	horizon = 75
 	euclidean_cost = True
 	final_cost = True
@@ -144,10 +144,10 @@ if __name__ == "__main__":
 	for frame in range( n_frames ):
 		horizon = horizon - 1 if horizon > 25 else 25
 
-		if frame == n_frames // 2:
-			target = np.array( [ 1, 0, 0 ] )
-			horizon = 75
-			result = np.concatenate((result, np.zeros( (horizon - len(result),) )))
+		# if frame == n_frames // 2:
+		# 	target = np.array( [ 1, 0, 0 ] )
+		# 	horizon = 75
+		# 	result = np.concatenate((result, np.zeros( (horizon - len(result),) )))
 
 		print( f"frame {frame + 1}/{n_frames}", end = ' ', flush = True )
 
@@ -300,3 +300,31 @@ if __name__ == "__main__":
 			save_all = True
 			)
 	print( f'saved at {folder}/gif.gif' )
+
+	# with scipy.optimize.minimize
+	# Days: 0
+	# Hours: 0
+	# Minutes: 4
+	# Seconds: 56
+	# Milliseconds: 874
+	# Ticks: 2968743334
+	# TotalDays: 0, 00343604552546296
+	# TotalHours: 0, 0824650926111111
+	# TotalMinutes: 4, 94790555666667
+	# TotalSeconds: 296, 8743334
+	# TotalMilliseconds: 296874, 3334
+
+	# with ipopt
+	# Days: 0
+	# Hours: 4
+	# Minutes: 18
+	# Seconds: 41
+	# Milliseconds: 571
+	# Ticks: 155215710386
+	# TotalDays: 0, 179647812946759
+	# TotalHours: 4, 31154751072222
+	# TotalMinutes: 258, 692850643333
+	# TotalSeconds: 15521, 5710386
+	# TotalMilliseconds: 15521571, 03 86
+
+
