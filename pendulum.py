@@ -105,7 +105,7 @@ if __name__ == "__main__":
 				target = target,
 				last_result = result[ :horizon ],
 				current_actuation = actuation,
-				horizon = horizon,
+				robust_horizon = horizon,
 				state = state,
 				time_step = time_step,
 				tolerance = tolerance,

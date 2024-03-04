@@ -162,16 +162,17 @@ if __name__ == "__main__":
 				target = target,
 				last_result = result[ :horizon ],
 				current_actuation = actuation,
-				horizon = horizon,
+				robust_horizon = horizon,
 				state = state,
 				time_step = time_step,
 				tolerance = tolerance,
 				max_iter = max_iter,
 				model_args = model_args,
 				bounds = Bounds( command_derivative_lower_bound, command_derivative_upper_bound ),
-				constraints = NonlinearConstraint(
-						lambda x: actuation + np.cumsum( x ), command_lower_bound, command_upper_bound
+				constraints = (NonlinearConstraint(
+						lambda u: actuation + np.cumsum( u ), command_lower_bound, command_upper_bound
 						),
+                   ),
 				state_history = all_states,
 				actuation_history = all_actuations,
 				objective = double_pendulum_objective,

@@ -42,7 +42,8 @@ def cost(
 		model: callable,
 		model_args: dict,
 		target: np.ndarray,
-		horizon: int,
+		robust_horizon: int,
+		prediction_horizon: int,
 		state: np.ndarray,
 		time_step: float,
 		objective: callable,
@@ -62,13 +63,17 @@ def cost(
 	cost = 0.
 
 	if actuation_history is not None:
-		actuation_history.append( actuations )
+		to_append = np.concatenate(
+				(actuations,
+				 np.array( [ actuations[ -1 ] for _ in range( prediction_horizon - robust_horizon ) ] ))
+				) if prediction_horizon > robust_horizon else actuations
+		actuation_history.append( to_append )
 
-	states = np.zeros( (horizon, len( state )) )
+	states = np.zeros( (prediction_horizon, len( state )) )
 
-	for i in range( horizon ):
+	for i in range( prediction_horizon ):
 		states[ i ] = state
-		local_actuation += actuations[ i ]
+		local_actuation += actuations[ i ] if i < robust_horizon else actuations[ -1 ]
 		state = state + model(
 				state, local_actuation, **model_args
 				) * time_step
@@ -77,7 +82,7 @@ def cost(
 		if objective is not None:
 			cost += objective( state, local_actuation, **model_args )
 
-	cost /= horizon
+	cost /= prediction_horizon
 
 	if activate_final_cost:
 		cost += np.linalg.norm( state[ :len( state ) // 2 ] - target ) ** 2
@@ -100,13 +105,14 @@ def model_predictive_control(
 		target: np.ndarray,
 		last_result: np.ndarray,
 		current_actuation: np.ndarray,
-		horizon: int,
 		time_step: float,
+		robust_horizon: int,
+		prediction_horizon: int = None,
 		tolerance: float = 1e-6,
 		max_iter: int = 100,
 		model_args: dict = None,
 		bounds: Bounds = None,
-		constraints: NonlinearConstraint | LinearConstraint = None,
+		constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None,
 		objective: callable = None,
 		activate_euclidean_cost: bool = True,
 		activate_final_cost: bool = True,
@@ -117,18 +123,18 @@ def model_predictive_control(
 
 	command_shape = last_result.shape
 	initial_guess = np.concatenate(
-			(last_result[ 1: ],
-			 np.zeros( (1,) if len( command_shape ) >= 1 else (1, command_shape[ 1 ]) )), axis = 0
+			(last_result[ 1: ], [ last_result[ -1 ] ])
 			).flatten()
+
+	if prediction_horizon == None:
+		prediction_horizon = robust_horizon
 
 	result = minimize(
 			fun = cost,
 			x0 = initial_guess,
-			args = (
-					current_actuation, command_shape, model, model_args, target, horizon, state, time_step,
-					objective, activate_euclidean_cost, activate_final_cost, state_history,
-					actuation_history,
-					verb),
+			args = (current_actuation, command_shape, model, model_args, target, robust_horizon,
+							prediction_horizon, state, time_step, objective, activate_euclidean_cost,
+							activate_final_cost, state_history, actuation_history, verb),
 			tol = tolerance,
 			bounds = bounds,
 			constraints = constraints,
@@ -193,7 +199,7 @@ if __name__ == '__main__':
 				target = target,
 				last_result = result,
 				current_actuation = actuation,
-				horizon = horizon,
+				robust_horizon = horizon,
 				state = state,
 				time_step = time_step,
 				tolerance = tolerance,
