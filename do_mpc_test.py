@@ -27,29 +27,29 @@ bluerov_configuration = {
 		"robot_max_actuation_ramp" : np.array( [ 100, 100, 100, 100, 100, 100 ] )
 		}
 
-horizon = 50
-r_horizon = 5
-nsteps = 10
-dt = 0.5
+horizon = 4
+r_horizon = 4
+nsteps = 25
+dt = .5
+target = casadi.SX( np.array( [ .5, -.5, 1, 0, 0, pi ] ) )
 
 setup_mpc = {
-		'n_horizon'           : horizon,
-		'n_robust'            : r_horizon,
-		'open_loop'           : 0,
-		't_step'              : dt,
-		'state_discretization': 'collocation',
-		'collocation_type'    : 'radau',
-		'collocation_deg'     : 3,
-		'collocation_ni'      : 1,
-		'store_full_solution' : True,
+		'n_horizon': horizon, 'n_robust': r_horizon, 'open_loop': False, 't_step': dt,
+		# 'state_discretization': 'collocation',
+		# 'collocation_type'    : 'radau',
+		# 'collocation_deg'     : 5,
+		# 'collocation_ni'      : 5,
+		# 'store_full_solution' : True,
 
 		# Use MA27 linear solver in ipopt for faster calculations:
-		'nlpsol_opts'         : { 'ipopt.linear_solver': 'mumps' }
+		# 'nlpsol_opts'         : { 'ipopt.linear_solver': 'spral'} # 'mumps' } #
 		}
 
 params_simulator = {
 		# Note: cvode doesn't support DAE systems.
-		'integration_tool': 'idas', 'abstol': 1e-8, 'reltol': 1e-8, 't_step': dt
+		'integration_tool': 'idas', # 'abstol': 1e-9,
+		# 'reltol': 1e-9,
+		't_step'          : dt
 		}
 
 
@@ -121,13 +121,13 @@ dnu = model.set_variable( '_x', 'dnu', shape = (6, 1) )
 u = model.set_variable( '_u', 'force', shape = (6, 1) )
 
 cost = model.set_expression(
-		'cost', sum1( (casadi.SX( np.array( [ 0, 0, 1, 0, 0, 0 ] ) ) - eta) ** 2 )
+		'cost', sum1( (target - eta) ** 2 )
 		)
 
 J, I, D, S = get_state_matrixes( eta )
 
 model.set_rhs( 'deta', J @ nu )
-model.set_rhs( 'dnu', casadi.inv( I ) @ (D @ eta + S + u) )
+model.set_rhs( 'dnu', casadi.inv( I ) @ (D @ nu + S + u) )
 model.set_rhs( 'eta', deta )
 model.set_rhs( 'nu', dnu )
 
@@ -182,7 +182,7 @@ tf = time.perf_counter()
 print( f'initialization in {tf - ti = }' )
 
 for i in range( 1, nsteps + 1 ):
-	print( f' -> {dt = } s | {horizon = } | {i = } / {nsteps} | {i * dt = :.3f} s' )
+	print( f' -> {dt = } s | {horizon = } | {i = } / {nsteps} | {i * dt = :.3f} s | {target = }' )
 	ti = time.perf_counter()
 	u0 = mpc.make_step( x0 )
 	y0 = simulator.make_step( u0 )
@@ -204,6 +204,7 @@ for i in range( 1, nsteps + 1 ):
 	print( '\tx =', str( x0[ :6 ] ).replace( '\n', '' ) )
 
 ax[ 2 ].plot( [ k * dt for k in range( nsteps ) ], computation_times )
+ax[ 2 ].axhline( dt )
 sim_graphics.plot_results()
 sim_graphics.reset_axes()
 plt.show()
