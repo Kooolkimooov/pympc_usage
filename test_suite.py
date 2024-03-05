@@ -1,11 +1,15 @@
-from bluerov import robot, bluerov_configuration
-from mpc import model_predictive_control, cost, NonlinearConstraint, Bounds
-import numpy as np
-import time
 import json
+import time
+import traceback
+from copy import deepcopy
+
+import numpy as np
+
+from bluerov import bluerov_configuration, robot
+from mpc import Bounds, cost, model_predictive_control, NonlinearConstraint
 
 test_param = {
-		'state'             : np.array( [ 0., 0, 0, 0, 0., 0., 0., 0, 0, 0, 0., 0. ] ),
+		'state'             : np.array( [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ] ),
 		'time_step'         : 0.5,
 		'n_frames'          : 25,
 		'robust_horizon'    : 4,
@@ -21,8 +25,8 @@ test_results = {
 
 test_bounds = {
 		'state'             : [
-				np.array( [ -1., -1., -1., -np.pi, -np.pi, -np.pi, 0., 0., 0., 0., 0., 0. ] ),
-				np.array( [ 1., 1., 1., np.pi, np.pi, np.pi, 0., 0., 0., 0., 0., 0. ] ) ],
+				np.array( [ -1., -1., 0., -np.pi / 10, -np.pi / 10, -np.pi, 0., 0., 0., 0., 0., 0. ] ),
+				np.array( [ 1., 1., 2., np.pi / 10, np.pi / 10, np.pi, 0., 0., 0., 0., 0., 0. ] ) ],
 
 		'time_step'         : [ 0.001, 1 ],
 		'n_frames'          : [ 25, 250 ],
@@ -31,8 +35,8 @@ test_bounds = {
 		'euclidean_cost'    : [ True, False ],
 		'final_cost'        : [ True, False ],
 		'target'            : [ np.array(
-				[ -1., -1., -1., -np.pi, -np.pi, -np.pi ]
-				), np.array( [ 1., 1., 1., np.pi, np.pi, np.pi ] ) ]
+				[ -1., -1., 0., -np.pi / 10, -np.pi / 10, -np.pi / 10 ]
+				), np.array( [ 1., 1., 2., np.pi / 10, np.pi / 10, np.pi / 10 ] ) ]
 		}
 
 
@@ -61,6 +65,12 @@ def test_inhouse_mpc( test_param: dict ) -> dict:
 	xs = [ ]
 
 	for frame in range( test_param[ 'n_frames' ] ):
+		print(
+				f'inhouse: frame {frame + 1:3} out of {test_param[ "n_frames" ]:<5}', end = '',
+				flush = True
+				)
+		state = deepcopy( test_param[ 'state' ] )
+
 		ti = time.perf_counter()
 		result = model_predictive_control(
 				model = robot,
@@ -70,7 +80,7 @@ def test_inhouse_mpc( test_param: dict ) -> dict:
 				current_actuation = actuation,
 				robust_horizon = test_param[ 'robust_horizon' ],
 				prediction_horizon = test_param[ 'prediction_horizon' ],
-				state = test_param[ 'state' ],
+				state = state,
 				time_step = test_param[ 'time_step' ],
 				model_args = model_args,
 				bounds = Bounds(
@@ -88,8 +98,7 @@ def test_inhouse_mpc( test_param: dict ) -> dict:
 
 		result = result.reshape( result_shape )
 		actuation += result[ 0 ]
-		test_param[ 'state' ] += robot( test_param[ 'state' ], actuation, **model_args ) * test_param[
-			'time_step' ]
+		test_param[ 'state' ] += robot( state, actuation, **model_args ) * test_param[ 'time_step' ]
 
 		dts.append( tf - ti )
 		costs.append(
@@ -102,7 +111,7 @@ def test_inhouse_mpc( test_param: dict ) -> dict:
 						test_param[ 'target' ],
 						test_param[ 'robust_horizon' ],
 						test_param[ 'prediction_horizon' ],
-						test_param[ 'state' ],
+						state,
 						test_param[ 'time_step' ],
 						None,
 						test_param[ 'euclidean_cost' ],
@@ -112,14 +121,37 @@ def test_inhouse_mpc( test_param: dict ) -> dict:
 						False
 						)
 				)
+
 		dus.append( result.tolist() )
 		xs.append( test_param[ 'state' ].tolist() )
 
-	test_results[ 'dts' ] = dts
-	test_results[ 'costs' ] = costs
-	test_results[ 'dus' ] = dus
-	test_results[ 'xs' ] = xs
-	return test_results
+		print(
+				f'cost: {costs[ -1 ]:.3e} dt: {dts[ -1 ]:.3e} '
+				f'pose: {test_param[ "state" ][ 0 ]:+.3e}'
+				f' {test_param[ "state" ][ 1 ]:+.3e}'
+				f' {test_param[ "state" ][ 2 ]:+.3e}'
+				f' {test_param[ "state" ][ 3 ]:+.3e}'
+				f' {test_param[ "state" ][ 4 ]:+.3e}'
+				f' {test_param[ "state" ][ 5 ]:+.3e}', end = '\r', flush = True
+				)
+
+	print(
+			f'\ninhouse done with final error '
+			f'{test_param[ 'target' ] - test_param[ 'state' ][ :6 ]}'.replace(
+					'\n', ''
+					), flush = True
+			)
+	print( f'some stats on dts   : {np.percentile( dts, [ 1, 25, 50, 75, 99 ] )}', flush = True )
+	print( f'some stats on costs : {np.percentile( costs, [ 1, 25, 50, 75, 99 ] )}', flush = True )
+
+	inhouse_test_results = { }
+
+	inhouse_test_results[ 'dts' ] = dts
+	inhouse_test_results[ 'costs' ] = costs
+	inhouse_test_results[ 'dus' ] = dus
+	inhouse_test_results[ 'xs' ] = xs
+
+	return inhouse_test_results
 
 
 def get_random_test_param( out: dict, bounds: dict ):
@@ -132,33 +164,63 @@ def get_random_test_param( out: dict, bounds: dict ):
 			v = np.random.random() > .5
 		elif isinstance( u, float ):
 			v = (np.random.random()) * (u - l) + l
+			if key == 'time_step':
+				m = np.random.random() * 10
+				e = np.random.random() * 3 + 1
+				v = m * 10 ** (-e)
 		elif isinstance( u, int ):
 			v = int( (np.random.random()) * (u - l) + l )
 		else:
 			raise RuntimeError()
 		out[ key ] = v
 
+	if not out[ 'euclidean_cost' ] and not out[ 'final_cost' ]:
+		if np.random.random() > .5:
+			out[ 'euclidean_cost' ] = True
+		else:
+			out[ 'final_cost' ] = True
+
 
 if __name__ == '__main__':
 
-	tests = [ ]
-	for _ in range( 1 ):
+	ntests = 10
+	for i in range( ntests ):
+		print( f'test {i + 1} out of {ntests}' )
 
 		get_random_test_param( test_param, test_bounds )
-		test = {
-				'test_param': test_param, 'inhouse_mpc': None, 'do_mpc': None
-				}
+
 		for key, value in test_param.items():
-			print( f'{key}: {value}'.replace( '\n', '' ) )
+			print( f'{key:<20}: {value}'.replace( '\n', '' ) )
 
 		# test inhouse mpc
 		try:
-			test_results = test_inhouse_mpc( test_param )
-			test['inhouse_mpc'] = test_results
-		except:
-			test['inhouse_mpc'] = 'dnf'
+			inhouse_test_results = test_inhouse_mpc( test_param )
+			if inhouse_test_results.keys() != test_results.keys():
+				raise ValueError( 'test results keys do not match' )
+		except Exception as e:
+			inhouse_test_results = f'dnf: {e}'
+			print( f'\ninhouse failed: {e}' )
+			print( traceback.format_exc() )
+			if 'str' in str(e):
+				exit(-1)
 
+		try:
+			do_mpc_test_results = test_do_mpc( test_param )
+		except Exception as e:
+			do_mpc_test_results = f'dnf: {e}'
+			# print( f'\ndo_mpc failed: {e}' )
+			# print( traceback.format_exc() )
 
+		test = {
+				'test_param': test_param, 'inhouse_mpc': inhouse_test_results, 'do_mpc':
+					do_mpc_test_results
+				}
+
+		test[ 'test_param' ][ 'state' ] = test[ 'test_param' ][ 'state' ].tolist()
+		test[ 'test_param' ][ 'target' ] = test[ 'test_param' ][ 'target' ].tolist()
+
+		with open( 'test_suite.json' ) as file:
+			tests = json.load( file )
 		tests.append( test )
 		with open( 'test_suite.json', 'w' ) as file:
 			json.dump( tests, file )
