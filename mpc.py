@@ -57,21 +57,26 @@ def cost(
 	local_actuation = deepcopy( current_actuation )
 	actuations = actuations.reshape( command_shape )
 
-	if not activate_euclidean_cost and objective is None:
+	if not activate_euclidean_cost and not activate_final_cost and objective is None:
 		raise ValueError( "Cannot compute cost" )
 
 	cost = 0.
 
+	horizon = prediction_horizon if prediction_horizon > robust_horizon else robust_horizon
+
 	if actuation_history is not None:
-		to_append = np.concatenate(
-				(actuations,
-				 np.array( [ actuations[ -1 ] for _ in range( prediction_horizon - robust_horizon ) ] ))
-				) if prediction_horizon > robust_horizon else actuations
+		if prediction_horizon > robust_horizon:
+			to_append = np.concatenate(
+					(actuations,
+					 np.array( [ actuations[ -1 ] for _ in range( prediction_horizon - robust_horizon ) ] ))
+					)
+		else:
+			to_append = actuations
 		actuation_history.append( to_append )
 
-	states = np.zeros( (prediction_horizon, len( state )) )
+	states = np.zeros( (horizon, len( state )) )
 
-	for i in range( prediction_horizon ):
+	for i in range( horizon ):
 		states[ i ] = state
 		local_actuation += actuations[ i ] if i < robust_horizon else actuations[ -1 ]
 		state = state + model(
