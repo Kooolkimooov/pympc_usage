@@ -152,7 +152,7 @@ def test_do_mpc( test_param: dict ) -> dict:
 				)
 
 	print(
-			f'{"do_mpc":<20} done with final error '
+			f'{"do_mpc":<20}: done with final error '
 			f'{np.abs( test_param[ "target" ] - test_param[ "state" ][ :6 ] )} '
 			f'in {sum( dts )}s               '.replace(
 					'\n', ''
@@ -275,7 +275,7 @@ def test_inhouse_mpc( test_param: dict ) -> dict:
 				)
 
 	print(
-			f'{"inhouse":<20} done with final error '
+			f'{"inhouse":<20}: done with final error '
 			f'{np.abs( test_param[ "target" ] - state[ :6 ] )} '
 			f'in {sum( dts )}s                  '.replace(
 					'\n', ''
