@@ -47,6 +47,7 @@ def cost(
 		state: np.ndarray,
 		time_step: float,
 		objective: callable,
+		final_cost_weight: float,
 		activate_euclidean_cost: bool,
 		activate_final_cost: bool,
 		state_history: list,
@@ -90,7 +91,7 @@ def cost(
 	cost /= prediction_horizon
 
 	if activate_final_cost:
-		cost += np.linalg.norm( state[ :len( state ) // 2 ] - target ) ** 2
+		cost += final_cost_weight * np.linalg.norm( state[ :len( state ) // 2 ] - target ) ** 2
 		if objective is not None:
 			cost += objective( state, local_actuation, **model_args )
 
@@ -121,10 +122,13 @@ def model_predictive_control(
 		objective: callable = None,
 		activate_euclidean_cost: bool = True,
 		activate_final_cost: bool = True,
+		final_cost_weight: float = 1.0,
 		state_history: list = None,
 		actuation_history: list = None,
 		verb: bool = False
 		) -> np.ndarray:
+
+	assert final_cost_weight > 0
 
 	command_shape = last_result.shape
 	initial_guess = np.concatenate(
@@ -138,7 +142,7 @@ def model_predictive_control(
 			fun = cost,
 			x0 = initial_guess,
 			args = (current_actuation, command_shape, model, model_args, target, robust_horizon,
-							prediction_horizon, state, time_step, objective, activate_euclidean_cost,
+							prediction_horizon, state, time_step, objective, final_cost_weight, activate_euclidean_cost,
 							activate_final_cost, state_history, actuation_history, verb),
 			tol = tolerance,
 			bounds = bounds,
@@ -148,7 +152,7 @@ def model_predictive_control(
 
 	if verb:
 		print( result )
-	return result.x
+	return result.x.reshape( command_shape )
 
 
 if __name__ == '__main__':
