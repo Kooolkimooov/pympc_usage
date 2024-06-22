@@ -7,7 +7,7 @@ from copy import deepcopy
 import numpy as np
 
 from bluerov import bluerov_configuration, robot
-from mpc import Bounds, cost, model_predictive_control, NonlinearConstraint
+from mpc import Bounds, cost, optimize, NonlinearConstraint
 from do_mpc_test import get_state_matrixes, do_mpc, casadi
 
 test_param = {
@@ -74,7 +74,7 @@ def test_do_mpc( test_param: dict ) -> dict:
 	u = model.set_variable( '_u', 'force', shape = (6, 1) )
 
 	model.set_expression(
-			'cost', casadi.sum1( (target - eta) ** 2 )
+			'model_predictive_control_cost_function', casadi.sum1( (target - eta) ** 2 )
 			)
 
 	J, Iinv, D, S = get_state_matrixes( eta, bluerov_configuration )
@@ -93,9 +93,9 @@ def test_do_mpc( test_param: dict ) -> dict:
 	lterm = casadi.SX( np.zeros( (1, 1) ) )
 	mterm = casadi.SX( np.zeros( (1, 1) ) )
 	if test_param[ 'euclidean_cost' ]:
-		lterm = model.aux[ 'cost' ]
+		lterm = model.aux[ 'model_predictive_control_cost_function' ]
 	if test_param[ 'final_cost' ]:
-		mterm = model.aux[ 'cost' ]
+		mterm = model.aux[ 'model_predictive_control_cost_function' ]
 
 	mpc.set_objective( mterm = mterm, lterm = lterm )
 	mpc.set_rterm( force = 0 )
@@ -142,7 +142,7 @@ def test_do_mpc( test_param: dict ) -> dict:
 		us.append( u0.flatten().tolist() )
 
 		print(
-				f'cost: {costs[ -1 ]:.3e} dt: {dts[ -1 ]:.3e} '
+				f'model_predictive_control_cost_function: {costs[ -1 ]:.3e} dt: {dts[ -1 ]:.3e} '
 				f'pose: {x0[ 0 ][ 0 ]:+.3e}'
 				f' {x0[ 1 ][ 0 ]:+.3e}'
 				f' {x0[ 2 ][ 0 ]:+.3e}'
@@ -211,13 +211,13 @@ def test_inhouse_mpc( test_param: dict ) -> dict:
 				)
 
 		ti = time.perf_counter()
-		result = model_predictive_control(
+		result = optimize(
 				model = robot,
-				cost = cost,
+				cost_function = cost,
 				target = test_param[ 'target' ],
-				last_result = result,
+				initial_guess = result,
 				current_actuation = actuation,
-				robust_horizon = test_param[ 'robust_horizon' ],
+				optimization_horizon = test_param[ 'robust_horizon' ],
 				prediction_horizon = test_param[ 'prediction_horizon' ],
 				state = state,
 				time_step = test_param[ 'time_step' ],
@@ -265,7 +265,7 @@ def test_inhouse_mpc( test_param: dict ) -> dict:
 		xs.append( state.tolist() )
 
 		print(
-				f'cost: {costs[ -1 ]:.3e} dt: {dts[ -1 ]:.3e} '
+				f'model_predictive_control_cost_function: {costs[ -1 ]:.3e} dt: {dts[ -1 ]:.3e} '
 				f'pose: {state[ 0 ]:+.3e}'
 				f' {state[ 1 ]:+.3e}'
 				f' {state[ 2 ]:+.3e}'

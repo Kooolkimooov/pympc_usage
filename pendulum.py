@@ -1,15 +1,21 @@
+import glob
+import json
+
+import numpy as np
+from matplotlib import pyplot as plt
 from numpy import cos, pi, sin
+from numpy.linalg import solve
+from PIL import Image
 
 from mpc import *
+import os
+import time
 
 
 # pendulum with cart
 def pendulum(
-		x: np.ndarray,
-		u: float,
-		cart_mass: float = 1,
-		arm_length: float = 1,
-		mass: float = 1, ) -> np.ndarray:
+		x: np.ndarray, u: np.ndarray, cart_mass: float = 1, arm_length: float = 1, mass: float = 1
+		) -> np.ndarray:
 
 	g = 9.80665
 	x, theta, dx, dtheta = x
@@ -20,16 +26,16 @@ def pendulum(
 			)
 
 	b = np.array(
-			[ dx, dtheta, -g * sin( theta ), arm_length * dtheta ** 2 * sin( theta ) + u / mass ]
+			[ dx, dtheta, -g * sin( theta ), arm_length * dtheta ** 2 * sin( theta ) + u[ 0 ] / mass ]
 			)
 
-	xdot = np.linalg.solve( A, b )
+	xdot = solve( A, b )
 
 	return xdot
 
 
 def pendulum_objective(
-		x: np.ndarray, u: float, cart_mass: float = 1, arm_length: float = 1, mass: float = 1
+		x: np.ndarray, u: np.ndarray, cart_mass: float = 1, arm_length: float = 1, mass: float = 1
 		) -> float:
 
 	g = 9.80665
@@ -46,38 +52,72 @@ def pendulum_objective(
 
 
 if __name__ == "__main__":
-	# model, initial state and all parameters
-	model = pendulum
-	state = np.array( [ 0., 0, 0., 0. ] )
-	actuation = 0.
-	time_step = 0.025
-	n_frames = 100
-	horizon = 100
-	result = np.zeros( (horizon,) )
-	max_iter = 1000
-	tolerance = 1e-6
-	target = np.array( [ -1, pi ] )
-	model_args = {
-			"cart_mass": 1, "arm_length": 1, "mass": 1
+
+	state = np.array( [ 0., 0., 0., 0. ] )
+	actuation = np.array( [ 0. ] )
+
+	model_kwargs = { "cart_mass": 1, "arm_length": 1, "mass": 1 }
+
+	optimization_horizon = 25
+	time_steps_per_actuation = 3
+
+	weight_matrix = np.eye( state.shape[ 0 ] // 2 )
+	# weight_matrix[0, 0] = 2.
+
+	mpc_config = {
+			'candidate_shape'         : (
+					optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ]),
+
+			'model'                   : pendulum,
+			'initial_actuation'       : actuation,
+			'initial_state'           : state,
+			'model_kwargs'            : model_kwargs,
+			'target'                  : np.array(
+					[ 1., np.pi ]
+					),
+			'optimization_horizon'    : optimization_horizon,
+			'prediction_horizon'      : 0,
+			'time_step'               : 0.05,
+			'time_steps_per_actuation': time_steps_per_actuation,
+			'objective_function'      : pendulum_objective,
+			'error_weight_matrix'     : weight_matrix,
+			'final_cost_weight'       : 0.,
+			'objective_weight'        : 1.,
+			'state_record'            : [ ],
+			'actuation_record'        : [ ],
+			'objective_record'        : [ ],
+			'verbose'                 : False
 			}
+
+	result = np.zeros( mpc_config[ 'candidate_shape' ] )
+
 	command_upper_bound = 50
 	command_lower_bound = -50
-	command_derivative_upper_bound = 5
-	command_derivative_lower_bound = -5
+	command_derivative_upper_bound = int( 25 / mpc_config[ 'time_step' ] )
+	command_derivative_lower_bound = int( -25 / mpc_config[ 'time_step' ] )
 
-	actual_states = [ state ]
-	actual_actuations = [ actuation ]
+	n_frames = 200
 
-	# create folder for plots
-	folder = (
-		f'./plots/{model.__name__}_{time_step}_{horizon}_{model_args[ "cart_mass" ]}_'
-		f'{model_args[ "arm_length" ]}_{model_args[ "mass" ]}_'
-		f'{max_iter}_{tolerance}_{n_frames}_{command_lower_bound}_'
-		f'{command_upper_bound}_{command_derivative_lower_bound}_'
-		f'{command_derivative_upper_bound}')
+	max_iter = 1000
+	tolerance = 1e-6
+
+	previous_states_record = [ deepcopy( state ) ]
+	previous_actuation_record = [ deepcopy( actuation ) ]
+	previous_objective_record = [ pendulum_objective( state, actuation, **model_kwargs ) ]
+	previous_target_record = [ ]
+
+	folder = (f'./plots/{pendulum.__name__}_'
+						f'dt={mpc_config[ "time_step" ]}_'
+						f'opth={optimization_horizon}_'
+						f'preh=_{mpc_config[ "prediction_horizon" ]}'
+						f'dtpu={time_steps_per_actuation}_'
+						f'{max_iter=}_'
+						f'{tolerance=}_'
+						f'{n_frames=}_'
+						f'{int( time.time() )}')
 
 	if os.path.exists( folder ):
-		files_in_dir = glob.glob( f'{folder}/*.png' )
+		files_in_dir = glob.glob( f'{folder}/*' )
 		if len( files_in_dir ) > 0:
 			if input( f"{folder} contains data. Remove? (y/n) " ) == 'y':
 				for fig in files_in_dir:
@@ -87,139 +127,154 @@ if __name__ == "__main__":
 	else:
 		os.mkdir( folder )
 
+	with open( f'{folder}/config.json', 'w' ) as f:
+		json.dump( mpc_config, f, default = serialize_others )
+
 	for frame in range( n_frames ):
 
-		# if frame == n_frames // 2:
-		# 	target = np.array( [ 1, pi ] )
+		if frame == 75:
+			previous_target_record.append(
+					(frame * mpc_config[ 'time_step' ], deepcopy( mpc_config[ 'target' ] ))
+					)
+			mpc_config[ 'target' ] = np.array( [ -1, pi ] )
 
-		print( f"frame {frame + 1}/{n_frames}", end = ' ' )
+		mpc_config[ 'state_record' ] = [ ]
+		mpc_config[ 'actuation_record' ] = [ ]
+		mpc_config[ 'objective_record' ] = [ ]
 
-		all_states = [ ]
-		all_actuations = [ ]
+		print( f"frame {frame + 1}/{n_frames}\t", end = ' ' )
 
 		ti = time.perf_counter()
-		# model predictive control
-		result = model_predictive_control(
-				model = model,
-				cost = cost,
-				target = target,
-				last_result = result[ :horizon ],
-				current_actuation = actuation,
-				robust_horizon = horizon,
-				state = state,
-				time_step = time_step,
+
+		result = optimize(
+				cost_function = model_predictive_control_cost_function,
+				cost_kwargs = mpc_config,
+				initial_guess = result, # np.concatenate( (result[ 1: ], [ result[ -1 ] ]) ),
 				tolerance = tolerance,
 				max_iter = max_iter,
-				model_args = model_args,
-				bounds = Bounds( command_derivative_lower_bound, command_derivative_upper_bound ),
 				constraints = NonlinearConstraint(
 						lambda x: actuation + np.cumsum( x ), command_lower_bound, command_upper_bound
-						),
-				state_history = all_states,
-				actuation_history = all_actuations,
-				objective = pendulum_objective,
-				# activate_euclidean_cost = False,
-				# activate_final_cost = False
+						)
 				)
 
 		actuation += result[ 0 ]
+		state += pendulum( state, actuation, **model_kwargs ) * mpc_config[ 'time_step' ]
 
-		actual_states.append( state )
-		actual_actuations.append( actuation )
-
-		# update state (Euler integration, maybe RK in future?)
-		state += model( state, actuation, **model_args ) * time_step
 		tf = time.perf_counter()
+		compute_time = tf - ti
+
+		mpc_config[ 'initial_state' ] = state
+		mpc_config[ 'initial_actuation' ] = actuation
+
+		previous_states_record.append( deepcopy( state ) )
+		previous_actuation_record.append( deepcopy( actuation ) )
+		previous_objective_record.append( pendulum_objective( state, actuation, **model_kwargs ) )
+
+		n_f_eval = len( mpc_config[ 'state_record' ] )
+
 		print(
-				f"actuation: {actuation} - state: {state[ :2 ]} - Ep: "
-				f"{pendulum_objective( state, actuation, **model_args )}", end = ' '
+				f"actuation={actuation}\t"
+				f"state={state[ : state.shape[ 0 ] // 2 ]}\t"
+				f"objective={pendulum_objective( state, actuation, **model_kwargs )}\t"
+				f"{compute_time=:.6f}s - {n_f_eval=}\t", end = ' '
 				)
 
-		# ramp
-		# target += 1 / n_frames
-		# sine
-		# target = 1 + np.sin( frame / n_frames * 2 * np.pi )
+		ti = time.perf_counter()
 
-		print( f"- {tf - ti:.6f}s", end = ' ' )
+		fig = plt.figure()  # ( figsize = (16, 9) )  # subplot shape is (y, x)
+		view = plt.subplot2grid( (4, 5), (0, 0), 4, 3, fig )
+		view.grid( True )
+		view.set_xlabel( "x" )
+		view.set_ylabel( "y" )
 
-		# plot results in subplots
-		fig = plt.figure( figsize = (16, 9) )  # subplot shape is (y, x)
-		pendulum = plt.subplot2grid( (3, 5), (0, 0), 3, 3, fig )
-		ax0 = plt.subplot2grid( (3, 5), (0, 3), 1, 2, fig )
-		ax1 = plt.subplot2grid( (3, 5), (1, 3), 1, 2, fig )
-		ax2 = plt.subplot2grid( (3, 5), (2, 3), 1, 2, fig )
-		plt.subplots_adjust( hspace = 0., wspace = .5 )
-		fig.suptitle( f"{frame + 1}/{n_frames} - compute time: {tf - ti:.6f}s" )
-		ax0.set_ylabel( 'position' )
-		ax1.set_ylabel( 'angle' )
-		ax2.set_ylabel( 'actuation' )
+		ax_pos = plt.subplot2grid( (4, 5), (0, 3), 1, 2, fig )
+		ax_pos.set_ylabel( 'position' )
+		ax_pos.yaxis.set_label_position( "right" )
+		ax_pos.yaxis.tick_right()
 
-		min_x = np.array( actual_states )[ :, 0 ].min() if len( actual_states ) > 1 and np.array(
-				actual_states
-				)[ :, 0 ].min() < -2 else -2
-		max_x = np.array( actual_states )[ :, 0 ].max() if len( actual_states ) > 1 and np.array(
-				actual_states
-				)[ :, 0 ].max() > 2 else 2
+		ax_ang = plt.subplot2grid( (4, 5), (1, 3), 1, 2, fig )
+		ax_ang.set_ylabel( 'angle' )
+		ax_ang.yaxis.set_label_position( "right" )
+		ax_ang.yaxis.tick_right()
 
-		ax0.set_ylim( min_x, max_x )
-		ax1.set_ylim( -2 * pi, 2 * pi )
-		ax2.set_ylim( command_lower_bound, command_upper_bound )
+		ax_obj = plt.subplot2grid( (4, 5), (2, 3), 1, 2, fig )
+		ax_obj.set_ylabel( 'Ek - Ep' )
+		ax_obj.yaxis.set_label_position( "right" )
+		ax_obj.yaxis.tick_right()
+
+		ax_act = plt.subplot2grid( (4, 5), (3, 3), 1, 2, fig )
+		ax_act.set_ylabel( 'actuation' )
+		ax_act.set_xlabel( 'time' )
+		ax_act.yaxis.set_label_position( "right" )
+		ax_act.yaxis.tick_right()
+
+		plt.subplots_adjust( hspace = 0., wspace = 0. )
+		fig.suptitle( f"{frame + 1}/{n_frames} - {compute_time=:.6f}s - {n_f_eval=}" )
+
+		ax_obj.set_ylim( -20, 40 )
+		ax_pos.set_ylim( -3, 3 )
+		ax_ang.set_ylim( - pi, 2 * pi )
+		ax_act.set_ylim( command_lower_bound, command_upper_bound )
 
 		x, theta, _, _ = state
-		l = model_args[ "arm_length" ]
+		l = mpc_config[ 'model_kwargs' ][ "arm_length" ]
 		X = [ x, x + l * sin( theta ), ]
 		Y = [ 0, - l * cos( theta ) ]
-		pendulum.plot( X[ :2 ], Y[ :2 ], 'b', linewidth = 5 )
-		pendulum.plot( X[ 1: ], Y[ 1: ], 'g', linewidth = 5 )
-		pendulum.scatter( X, Y, c = 'r', s = 100 )
-		pendulum.set_xlim( x - l, x + l )
-		pendulum.set_ylim( -l, l )
+		view.plot( X[ :2 ], Y[ :2 ], 'b', linewidth = 5 )
+		view.plot( X[ 1: ], Y[ 1: ], 'g', linewidth = 5 )
+		view.scatter( X, Y, c = 'r', s = 100 )
 
-		time_axis_states = [ -(len( actual_states ) - 1) * time_step + i * time_step for i in
-												 range( len( actual_states ) + len( all_states[ 0 ] ) - 1 ) ]
-		time_axis_actuations = [ -(len( actual_actuations ) - 1) * time_step + i * time_step for i in
-														 range( len( actual_actuations ) + len( all_actuations[ 0 ] ) - 1 ) ]
+		how = 11. / 8.9
+		view.set_xlim( x - 1.1 * l, x + 1.1 * l )
+		view.set_ylim( -1.1 * l * how, 1.1 * l * how )
 
-		ax0.axhline(
-				target[ 0 ], color = 'r', linewidth = 5
-				)
-		ax1.axhline(
-				target[ 1 ], color = 'r', linewidth = 5
-				)
+		time_previous = [ i * mpc_config[ 'time_step' ] - (frame + 1) * mpc_config[ 'time_step' ] for i
+											in range( frame + 2 ) ]
+		time_prediction = [ i * mpc_config[ 'time_step' ] for i in range(
+				mpc_config[ 'optimization_horizon' ] + mpc_config[ 'prediction_horizon' ]
+				) ]
 
-		actual_states = np.array( actual_states )
-
-		for i in range( len( all_states ) ):
-			ax0.plot(
-					time_axis_states,
-					actual_states[ :, 0 ].tolist() + all_states[ i ][ 1:, 0 ].tolist(),
-					'b',
-					linewidth = .1
+		t1 = 0.
+		timespan = time_prediction[ -1 ] - time_previous[ 0 ]
+		for index in range( len( previous_target_record ) ):
+			t2 = (previous_target_record[ index ][ 0 ] - 2 * mpc_config[ 'time_step' ]) / timespan
+			ax_pos.axhline(
+					previous_target_record[ index ][ 1 ][ 0 ], t1, t2, color = 'r', linewidth = 5
 					)
-			ax1.plot(
-					time_axis_states,
-					actual_states[ :, 1 ].tolist() + all_states[ i ][ 1:, 1 ].tolist(),
-					'b',
-					linewidth = .1
+			ax_ang.axhline(
+					previous_target_record[ index ][ 1 ][ 1 ], t1, t2, color = 'g', linewidth = 5
 					)
-			ax2.plot(
-					time_axis_actuations,
-					actual_actuations + [ actuation + a for a in
-																all_actuations[ i ].flatten()[ 1: ].cumsum().tolist() ],
-					'b',
-					linewidth = .1
-					)
+			t1 = t2 + mpc_config[ 'time_step' ]
 
-		actual_states = actual_states.tolist()
+		ax_pos.axhline( mpc_config[ 'target' ][ 0 ], t1, 1, color = 'r', linewidth = 5 )
+		ax_ang.axhline( mpc_config[ 'target' ][ 1 ], t1, 1, color = 'g', linewidth = 5 )
+
+		ax_pos.plot( time_previous, np.array( previous_states_record )[ :, 0 ], 'b' )
+		ax_ang.plot( time_previous, np.array( previous_states_record )[ :, 1 ], 'b' )
+		ax_obj.plot( time_previous, previous_objective_record, 'b' )
+		ax_act.plot( time_previous, previous_actuation_record, 'b' )
+
+		for f_eval in range( n_f_eval ):
+			state_record_array = np.array( mpc_config[ 'state_record' ][ f_eval ] )
+			ax_pos.plot( time_prediction, state_record_array[ :, 0 ], linewidth = .1 )
+			ax_ang.plot( time_prediction, state_record_array[ :, 1 ], linewidth = .1 )
+			ax_obj.plot( time_prediction, mpc_config[ 'objective_record' ][ f_eval ], linewidth = .1 )
+			ax_act.plot( time_prediction, mpc_config[ 'actuation_record' ][ f_eval ], linewidth = .1 )
 
 		# plot vertical line from y min to y max
-		ax0.axvline( color = 'g' )
-		ax1.axvline( color = 'g' )
-		ax2.axvline( color = 'g' )
+		ax_obj.axvline( color = 'g' )
+		ax_pos.axvline( color = 'g' )
+		ax_ang.axvline( color = 'g' )
+		ax_act.axvline( color = 'g' )
 
 		plt.savefig( f'{folder}/{frame}.png' )
 		plt.close( 'all' )
 		del fig
+
+		tf = time.perf_counter()
+		save_time = tf - ti
+
+		print( f'saved figure in {save_time:.6f}s\t', end = '' )
 		print()
 
 	# create gif from frames
@@ -229,9 +284,6 @@ if __name__ == "__main__":
 	frames = [ Image.open( name ) for name in names ]
 	frame_one = frames[ 0 ]
 	frame_one.save(
-			f"{folder}/{folder.split( '/' )[ -1 ]}.gif",
-			append_images = frames,
-			loop = True,
-			save_all = True
+			f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True
 			)
-	print( f'saved at {folder}/{folder.split( "/" )[ -1 ]}.gif' )
+	print( f'saved at {folder}/animation.gif' )

@@ -124,7 +124,7 @@ if __name__ == '__main__':
 	u = model.set_variable( '_u', 'force', shape = (6, 1) )
 
 	cost = model.set_expression(
-			'cost', sum1( (target - eta) ** 2 )
+			'model_predictive_control_cost_function', sum1( (target - eta) ** 2 )
 			)
 
 	J, Iinv, D, S = get_state_matrixes( eta )
@@ -140,8 +140,8 @@ if __name__ == '__main__':
 	mpc.set_param( **setup_mpc )
 	mpc.settings.supress_ipopt_output()
 
-	mterm = model.aux[ 'cost' ]
-	lterm = model.aux[ 'cost' ]
+	mterm = model.aux[ 'model_predictive_control_cost_function' ]
+	lterm = model.aux[ 'model_predictive_control_cost_function' ]
 
 	mpc.set_objective( mterm = mterm, lterm = lterm )
 	mpc.set_rterm( force = 0 )
