@@ -90,7 +90,7 @@ def double_pendulum_objective(
 	Ek = Ek_c + Ek_1 + Ek_2
 
 	# objective is to minimize kinetic energy and maximize potiential energy
-	return Ek - Ep
+	return (Ek - Ep) ** 3
 
 
 if __name__ == "__main__":
@@ -106,29 +106,38 @@ if __name__ == "__main__":
 			"second_arm_length": .5
 			}
 
-	optimization_horizon = 50
+	base_optimization_horizon = 50
+	optimization_horizon = base_optimization_horizon
 	time_steps_per_actuation = 2
 
-	weight_matrix = eye( state.shape[ 0 ] // 2 )
-	# weight_matrix[ 0, 0 ] = .5
+	optimization_horizon_lower_bound = 50
+
+	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
+	# pose_weight_matrix[ 0, 0 ] = 0.
+	# pose_weight_matrix[ 1, 1 ] = 0.
+	# pose_weight_matrix[ 2, 2 ] = 0.
+
+	actuation_weight_matrix = .01 * eye( actuation.shape[ 0 ] )
 
 	mpc_config = {
 			'candidate_shape'         : (
 					optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ]),
-
 			'model'                   : double_pendulum,
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
 			'model_kwargs'            : model_kwargs,
-			'target'                  : array( [ 1., 0., 0. ] ),
+			'target_pose'             : array(
+					[ 0., 0., 0. ]
+					),
 			'optimization_horizon'    : optimization_horizon,
 			'prediction_horizon'      : 0,
 			'time_step'               : 0.025,
 			'time_steps_per_actuation': time_steps_per_actuation,
 			'objective_function'      : double_pendulum_objective,
-			'error_weight_matrix'     : weight_matrix,
+			'pose_weight_matrix'      : pose_weight_matrix,
+			'actuation_weight_matrix' : actuation_weight_matrix,
+			'objective_weight'        : 100.,
 			'final_cost_weight'       : 1.,
-			'objective_weight'        : 1.,
 			'state_record'            : [ ],
 			'actuation_record'        : [ ],
 			'objective_record'        : [ ],
@@ -152,7 +161,7 @@ if __name__ == "__main__":
 	previous_objective_record = [ double_pendulum_objective( state, actuation, **model_kwargs ) ]
 	previous_target_record = [ ]
 
-	note = 'receding_horizon_reset'
+	note = ''
 
 	folder = (f'./plots/{double_pendulum.__name__}_'
 						f'{note}_'
@@ -181,14 +190,15 @@ if __name__ == "__main__":
 
 	for frame in range( n_frames ):
 
-		optimization_horizon = optimization_horizon - 1 if optimization_horizon > 25 else 25
+		if optimization_horizon > optimization_horizon_lower_bound:
+			optimization_horizon -= 1
 
-		if frame == 100:
+		if frame == 100 and False:
 			previous_target_record.append(
-					(frame * mpc_config[ 'time_step' ], deepcopy( mpc_config[ 'target' ] ))
+					(frame * mpc_config[ 'time_step' ], deepcopy( mpc_config[ 'target_pose' ] ))
 					)
-			mpc_config[ 'target' ] = array( [ -1., 0., 0. ] )
-			optimization_horizon = 50
+			mpc_config[ 'target_pose' ] = array( [ -1., 0., 0. ] )
+			optimization_horizon = base_optimization_horizon
 
 		mpc_config[ 'optimization_horizon' ] = optimization_horizon
 		mpc_config[ 'candidate_shape' ] = (
@@ -201,9 +211,9 @@ if __name__ == "__main__":
 		print( f"frame {frame + 1}/{n_frames}\t", end = ' ' )
 
 		result = result[ 1:mpc_config[ 'candidate_shape' ][ 0 ] ]
-		difference = result.shape[0] - mpc_config['candidate_shape'][0]
+		difference = result.shape[ 0 ] - mpc_config[ 'candidate_shape' ][ 0 ]
 		if difference < 0:
-			result = concatenate((result, array([result[-1]] * abs(difference))))
+			result = concatenate( (result, array( [ [ 0. ] ] * abs( difference ) )) )
 
 		ti = perf_counter()
 
@@ -260,7 +270,7 @@ if __name__ == "__main__":
 		view.set_xlabel( "x" )
 		view.set_ylabel( "y" )
 		how = 11. / 8.9
-		view.set_xlim( x-(l1 + l2), x+(l1 + l2) )
+		view.set_xlim( x - (l1 + l2), x + (l1 + l2) )
 		view.set_ylim( -(l1 + l2) * how, (l1 + l2) * how )
 
 		ax_pos = plt.subplot2grid( (4, 5), (0, 3), 1, 2, fig )
@@ -305,19 +315,55 @@ if __name__ == "__main__":
 		for index in range( len( previous_target_record ) ):
 			t2 = (previous_target_record[ index ][ 0 ] - 2 * mpc_config[ 'time_step' ]) / timespan
 			ax_pos.axhline(
-					previous_target_record[ index ][ 1 ][ 0 ], t1, t2, color = 'b', linestyle = ':'
+					previous_target_record[ index ][ 1 ][ 0 ],
+					t1,
+					t2,
+					color = 'b',
+					linestyle = ':',
+					linewidth = pose_weight_matrix[ 0, 0 ] + .0001
 					)
 			ax_ang.axhline(
-					previous_target_record[ index ][ 1 ][ 1 ], t1, t2, color = 'b', linestyle = ':'
+					previous_target_record[ index ][ 1 ][ 1 ],
+					t1,
+					t2,
+					color = 'b',
+					linestyle = ':',
+					linewidth = pose_weight_matrix[ 1, 1 ] + .0001
 					)
 			ax_ang.axhline(
-					previous_target_record[ index ][ 1 ][ 2 ], t1, t2, color = 'r', linestyle = ':'
+					previous_target_record[ index ][ 1 ][ 2 ],
+					t1,
+					t2,
+					color = 'r',
+					linestyle = ':',
+					linewidth = pose_weight_matrix[ 2, 2 ] + .0001
 					)
 			t1 = t2 + mpc_config[ 'time_step' ]
 
-		ax_pos.axhline( mpc_config[ 'target' ][ 0 ], t1, 1, color = 'b', linestyle = ':' )
-		ax_ang.axhline( mpc_config[ 'target' ][ 1 ], t1, 1, color = 'b', linestyle = ':' )
-		ax_ang.axhline( mpc_config[ 'target' ][ 2 ], t1, 1, color = 'r', linestyle = ':' )
+		ax_pos.axhline(
+				mpc_config[ 'target_pose' ][ 0 ],
+				t1,
+				1,
+				color = 'b',
+				linestyle = ':',
+				linewidth = pose_weight_matrix[ 0, 0 ] + .0001
+				)
+		ax_ang.axhline(
+				mpc_config[ 'target_pose' ][ 1 ],
+				t1,
+				1,
+				color = 'b',
+				linestyle = ':',
+				linewidth = pose_weight_matrix[ 1, 1 ] + .0001
+				)
+		ax_ang.axhline(
+				mpc_config[ 'target_pose' ][ 2 ],
+				t1,
+				1,
+				color = 'r',
+				linestyle = ':',
+				linewidth = pose_weight_matrix[ 2, 2 ] + .0001
+				)
 
 		ax_pos.plot( time_previous, array( previous_states_record )[ :, 0 ], 'b' )
 		ax_ang.plot( time_previous, array( previous_states_record )[ :, 1 ], 'b' )

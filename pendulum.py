@@ -60,8 +60,10 @@ if __name__ == "__main__":
 	optimization_horizon = 25
 	time_steps_per_actuation = 2
 
-	weight_matrix = eye( state.shape[ 0 ] // 2 )
+	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
 	# weight_matrix[0, 0] = 2.
+
+	actuation_weight_matrix = .1 * eye( actuation.shape[0] )
 
 	mpc_config = {
 			'candidate_shape'         : (
@@ -70,7 +72,7 @@ if __name__ == "__main__":
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
 			'model_kwargs'            : model_kwargs,
-			'target'                  : array(
+			'target_pose'             : array(
 					[ 1., pi ]
 					),
 			'optimization_horizon'    : optimization_horizon,
@@ -78,7 +80,8 @@ if __name__ == "__main__":
 			'time_step'               : 0.05,
 			'time_steps_per_actuation': time_steps_per_actuation,
 			'objective_function'      : pendulum_objective,
-			'error_weight_matrix'     : weight_matrix,
+			'pose_weight_matrix'      : pose_weight_matrix,
+			'actuation_weight_matrix' : actuation_weight_matrix,
 			'final_cost_weight'       : 0.,
 			'objective_weight'        : 1.,
 			'state_record'            : [ ],

@@ -1,15 +1,21 @@
-import time
+from glob import glob
+from json import dump
+from os import mkdir, path, remove
+from time import perf_counter, time
 
-import numpy as np
-import scipy
-import scipy.linalg
-import scipy.spatial
+from cycler import cycler
+from matplotlib import pyplot as plt
+from numpy import array, concatenate, cos, cross, cumsum, diag, eye, multiply, pi, sin, tan
+from numpy.linalg import inv
+from PIL import Image
+from scipy.spatial.transform import Rotation
+
 from mpc import *
 
 mass = 11.5
-inertial_coefficients = np.array( [ .16, .16, .16, 0.0, 0.0, 0.0 ] )
-center_of_mass = np.array( [ 0.0, 0.0, 0.0 ] )
-inertial_matrix = np.eye( 6 )
+inertial_coefficients = array( [ .16, .16, .16, 0.0, 0.0, 0.0 ] )
+center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
+inertial_matrix = eye( 6 )
 for i in range( 3 ):
 	inertial_matrix[ i, i ] = mass
 	inertial_matrix[ i + 3, i + 3 ] = inertial_coefficients[ i ]
@@ -36,53 +42,53 @@ bluerov_configuration = {
 		"mass"                     : mass,
 		"center_of_mass"           : center_of_mass,
 		"buoyancy"                 : 120.0,
-		"center_of_volume"         : np.array( [ 0.0, 0.0, - 0.02 ] ),
-		"inertial_matrix_inv"      : np.linalg.inv( inertial_matrix ),
-		"hydrodynamic_coefficients": np.array(
+		"center_of_volume"         : array( [ 0.0, 0.0, - 0.02 ] ),
+		"inertial_matrix_inv"      : inv( inertial_matrix ),
+		"hydrodynamic_coefficients": array(
 				[ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
 				),
-		"robot_max_actuation"      : np.array( [ 40, 40, 40, 40, 40, 40 ] ),
-		"robot_max_actuation_ramp" : np.array( [ 80, 80, 80, 80, 80, 80 ] )
+		"robot_max_actuation"      : array( [ 40, 40, 40, 40, 40, 40 ] ),
+		"robot_max_actuation_ramp" : array( [ 80, 80, 80, 80, 80, 80 ] )
 		}
 
 
 # double pendulum with cart
 def robot(
-		x: np.ndarray, u: np.ndarray, robot_configuration = None
-		) -> np.ndarray:
+		x: ndarray, u: ndarray, robot_configuration = None
+		) -> ndarray:
 	if robot_configuration is None:
 		global bluerov_configuration
 		robot_configuration = bluerov_configuration
 	Phi, Theta, Psi = x[ 3 ], x[ 4 ], x[ 5 ]
-	cPhi, sPhi = np.cos( Phi ), np.sin( Phi )
-	cTheta, sTheta, tTheta = np.cos( Theta ), np.sin( Theta ), np.tan( Theta )
-	cPsi, sPsi = np.cos( Psi ), np.sin( Psi )
-	J = np.zeros( (6, 6) )
-	J[ 0, :3 ] = np.array(
+	cPhi, sPhi = cos( Phi ), sin( Phi )
+	cTheta, sTheta, tTheta = cos( Theta ), sin( Theta ), tan( Theta )
+	cPsi, sPsi = cos( Psi ), sin( Psi )
+	J = zeros( (6, 6) )
+	J[ 0, :3 ] = array(
 			[ cPsi * cTheta, -sPsi * cPhi + cPsi * sTheta * sPhi, sPsi * sPhi + cPsi * sTheta * cPhi ]
 			)
-	J[ 1, :3 ] = np.array(
+	J[ 1, :3 ] = array(
 			[ sPsi * cTheta, cPsi * cPhi + sPsi * sTheta * sPhi, -cPsi * sPhi + sPsi * sTheta * cPhi ]
 			)
-	J[ 2, :3 ] = np.array( [ -sTheta, cTheta * sPhi, cTheta * cPhi ] )
-	J[ 3, 3: ] = np.array( [ 1, sPhi * tTheta, cPhi * tTheta ] )
-	J[ 4, 3: ] = np.array( [ 0, cPhi, -sPhi ] )
-	J[ 5, 3: ] = np.array( [ 0, sPhi / cTheta, cPhi / cTheta ] )
+	J[ 2, :3 ] = array( [ -sTheta, cTheta * sPhi, cTheta * cPhi ] )
+	J[ 3, 3: ] = array( [ 1, sPhi * tTheta, cPhi * tTheta ] )
+	J[ 4, 3: ] = array( [ 0, cPhi, -sPhi ] )
+	J[ 5, 3: ] = array( [ 0, sPhi / cTheta, cPhi / cTheta ] )
 
 	hydrodynamic_coefficients = robot_configuration[ "hydrodynamic_coefficients" ]
-	D = np.diag( hydrodynamic_coefficients[ :6 ] ) + np.diag(
-			np.multiply( hydrodynamic_coefficients[ 6: ], abs( x[ 6: ] ) )
+	D = diag( hydrodynamic_coefficients[ :6 ] ) + diag(
+			multiply( hydrodynamic_coefficients[ 6: ], abs( x[ 6: ] ) )
 			)
 	buoyancy = robot_configuration[ "buoyancy" ]
 	center_of_volume = robot_configuration[ "center_of_volume" ]
-	Fw = mass * np.array( [ 0, 0, 9.80665 ] )
-	Fb = buoyancy * np.array( [ 0, 0, -1 ] )
-	S = np.zeros( 6 )
+	Fw = mass * array( [ 0, 0, 9.80665 ] )
+	Fb = buoyancy * array( [ 0, 0, -1 ] )
+	S = zeros( 6 )
 	S[ :3 ] = J[ :3, :3 ].T @ (Fw + Fb)
-	S[ 3: ] = J[ :3, :3 ].T @ (np.cross( center_of_mass, Fw ) + np.cross( center_of_volume, Fb ))
+	S[ 3: ] = J[ :3, :3 ].T @ (cross( center_of_mass, Fw ) + cross( center_of_volume, Fb ))
 
 	I_inv = robot_configuration[ 'inertial_matrix_inv' ]
-	xdot = np.zeros( x.shape )
+	xdot = zeros( x.shape )
 	xdot[ :6 ] = J @ x[ 6: ]
 	xdot[ 6: ] = I_inv @ (D @ x[ 6: ] + S + u)
 
@@ -90,247 +96,296 @@ def robot(
 
 
 if __name__ == "__main__":
-	# model, initial state and all parameters
-	model = robot
-	state = np.array( [ 0., 0, 0, 0, 0., 0., 0., 0, 0, 0, 0., 0. ] )
-	actuation = np.array( [ 0., 0., 0., 0., 0., 0. ] )
-	actuation_dim = len( actuation )
-	time_step = 0.05
-	n_frames = 100
-	robust_horizon = 7
-	prediction_horizon = 10
-	euclidean_cost = True
-	final_cost = True
-	result_shape = (robust_horizon, actuation_dim)
-	result = np.zeros( result_shape )
+
+	state = array( [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ] )
+	actuation = array( [ 0., 0., 0., 0., 0., 0. ] )
+
+	model_kwargs = { 'robot_configuration': bluerov_configuration }
+
+	n_frames = 400
 	max_iter = 1000
-	tolerance = 1e-3
-	target = np.array( [ 1, 1, 1, 0, 0, np.pi ] )
-	error_weight_matrix = np.eye(target.size)
-	error_weight_matrix[:3,:3] *= 2.
-	# error_weight_matrix[3:,3:] *= .1
-	final_cost_weight = 2.
-	model_args = { 'robot_configuration': bluerov_configuration }
-	command_upper_bound = np.array(
-			[ bluerov_configuration[ 'robot_max_actuation' ] ] * robust_horizon
-			).flatten()
-	command_lower_bound = - np.array(
-			[ bluerov_configuration[ 'robot_max_actuation' ] ] * robust_horizon
-			).flatten()
-	command_derivative_upper_bound = np.array(
-			[ bluerov_configuration[ 'robot_max_actuation_ramp' ] ] * robust_horizon
-			).flatten()
-	command_derivative_lower_bound = - np.array(
-			[ bluerov_configuration[ 'robot_max_actuation_ramp' ] ] * robust_horizon
-			).flatten()
+	tolerance = 1e-6
+	time_step = 0.025
 
-	note = 'cost_and_final_weight'
+	sequence_time = n_frames * time_step
 
-	actual_states = [ state ]
-	actual_actuations = [ actuation ]
+	base_optimization_horizon = 25
+	optimization_horizon = base_optimization_horizon
+	time_steps_per_actuation = 5
 
-	# create folder for plots
-	folder = (f'./plots/'
-						f'{model.__name__}_'
+	optimization_horizon_lower_bound = 50
+
+	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
+	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
+	actuation_weight_matrix[ :3, :3 ] *= .01
+
+	trajectory = [ (time_step * .25 * n_frames, [ 0., 0., 1., 0., 0., pi ]),
+								 (time_step * .50 * n_frames, [ 1., 1., 1., 0., 0., -pi ]),
+								 (time_step * .75 * n_frames, [ -1., -1., 1., 0., 0., pi ]),
+								 (time_step * 1. * n_frames, [ 0., 0., 0., 0., 0., 0. ]) ]
+
+	command_upper_bound = 50
+	command_lower_bound = -50
+
+	mpc_config = {
+			'candidate_shape'         : (
+					optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ]),
+
+			'model'                   : robot,
+			'initial_actuation'       : actuation,
+			'initial_state'           : state,
+			'model_kwargs'            : model_kwargs,
+			'target_pose'             : trajectory[ 0 ][ 1 ],
+			'optimization_horizon'    : optimization_horizon,
+			'prediction_horizon'      : 0,
+			'time_step'               : time_step,
+			'time_steps_per_actuation': time_steps_per_actuation,
+			'objective_function'      : None,
+			'pose_weight_matrix'      : pose_weight_matrix,
+			'actuation_weight_matrix' : actuation_weight_matrix,
+			'objective_weight'        : 0.,
+			'final_cost_weight'       : 1.,
+			'state_record'            : [ ],
+			'actuation_record'        : [ ],
+			'objective_record'        : None,
+			'verbose'                 : False
+			}
+
+	result = zeros( mpc_config[ 'candidate_shape' ] )
+
+	previous_states_record = [ deepcopy( state ) ]
+	previous_actuation_record = [ deepcopy( actuation ) ]
+	previous_target_record = [ ]
+
+	note = ''
+
+	folder = (f'./plots/{robot.__name__}_'
 						f'{note}_'
-						f'{time_step=}_'
-						f'{robust_horizon=}_'
-						f'{prediction_horizon=}_'
+						f'dt={mpc_config[ "time_step" ]}_'
+						f'opth={optimization_horizon}_'
+						f'preh=_{mpc_config[ "prediction_horizon" ]}'
+						f'dtpu={time_steps_per_actuation}_'
 						f'{max_iter=}_'
 						f'{tolerance=}_'
 						f'{n_frames=}_'
-						f'{euclidean_cost=}_'
-						f'{final_cost=}'
-      )
+						f'{int( time() )}')
 
-	if os.path.exists( folder ):
-		files_in_dir = glob.glob( f'{folder}/*' )
+	if path.exists( folder ):
+		files_in_dir = glob( f'{folder}/*' )
 		if len( files_in_dir ) > 0:
 			if input( f"{folder} contains data. Remove? (y/n) " ) == 'y':
 				for fig in files_in_dir:
-					os.remove( fig )
+					remove( fig )
 			else:
 				exit()
 	else:
-		os.mkdir( folder )
+		mkdir( folder )
 
-	print( f"{folder = }" )
+	with open( f'{folder}/config.json', 'w' ) as f:
+		dump( mpc_config | { 'trajectory': trajectory }, f, default = serialize_others )
 
 	for frame in range( n_frames ):
 
-		print( f"{frame+1 = }/{n_frames}", end = ' ', flush = True )
+		if optimization_horizon > optimization_horizon_lower_bound:
+			optimization_horizon -= 1
 
-		all_states = [ ]
-		all_actuations = [ ]
+		for index in range( len( previous_target_record ) + 1, len( trajectory ) ):
+			if trajectory[ index - 1 ][ 0 ] < frame * time_step:
+				previous_target_record.append( trajectory[ index - 1 ] )
+				mpc_config[ 'target_pose' ] = trajectory[ index ][ 1 ]
+				optimization_horizon = base_optimization_horizon
+				break
 
-		ti = time.perf_counter()
-		# model predictive control
+		mpc_config[ 'optimization_horizon' ] = optimization_horizon
+		mpc_config[ 'candidate_shape' ] = (
+				optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ])
+
+		mpc_config[ 'state_record' ] = [ ]
+		mpc_config[ 'actuation_record' ] = [ ]
+
+		print( f"frame {frame + 1}/{n_frames}\t", end = ' ' )
+
+		result = result[ 1:mpc_config[ 'candidate_shape' ][ 0 ] ]
+		difference = result.shape[ 0 ] - mpc_config[ 'candidate_shape' ][ 0 ]
+		if difference < 0:
+			result = concatenate( (result, array( [ [ 0., 0., 0., 0., 0., 0. ] ] * abs( difference ) )) )
+
+		ti = perf_counter()
+
 		result = optimize(
-				model = model,
 				cost_function = model_predictive_control_cost_function,
-				target = target,
+				cost_kwargs = mpc_config,
 				initial_guess = result,
-				current_actuation = actuation,
-				optimization_horizon = robust_horizon,
-				prediction_horizon = prediction_horizon,
-				error_weight_matrix=error_weight_matrix,
-				state = state,
-				time_step = time_step,
 				tolerance = tolerance,
 				max_iter = max_iter,
-				model_args = model_args,
-				bounds = Bounds(
-						command_derivative_lower_bound * time_step, command_derivative_upper_bound * time_step
-						),
-				constraints = (NonlinearConstraint(
-						lambda u: (actuation + np.cumsum( u.reshape( result_shape ), axis = 0 )).flatten(),
-						command_lower_bound,
-						command_upper_bound
-						),),
-				state_history = all_states,
-				actuation_history = all_actuations,
-				activate_euclidean_cost = euclidean_cost,
-				activate_final_cost = final_cost,
-    			final_cost_weight=final_cost_weight
+				constraints = NonlinearConstraint(
+						lambda x: (actuation + cumsum(
+								x.reshape( mpc_config[ 'candidate_shape' ] ), axis = 0
+								)).flatten(), command_lower_bound, command_upper_bound
+						)
 				)
 
-		tf = time.perf_counter()
-		result = result.reshape( result_shape )
 		actuation += result[ 0 ]
-		state += model( state, actuation, **model_args ) * time_step
+		state += robot( state, actuation, **model_kwargs ) * time_step
+
+		tf = perf_counter()
 		compute_time = tf - ti
 
-		actual_states.append( state )
-		actual_actuations.append( actuation )
+		mpc_config[ 'initial_state' ] = state
+		mpc_config[ 'initial_actuation' ] = actuation
 
-		print( f"\tnf_eval = {len( all_actuations )}", end = ' ', flush = True )
-		print( f"\t{compute_time = :.6f}s", end = ' ', flush = True )
-		print( f"\t{state[:3].T = }", end = ' ', flush = True )
-		print( f"\t{actuation[:3].T = }", end = ' ', flush = True )
+		previous_states_record.append( deepcopy( state ) )
+		previous_actuation_record.append( deepcopy( actuation ) )
 
-		ti = time.perf_counter()
-  
-		# plot results in subplots
-		fig = plt.figure()#( figsize = (16, 9) )  # subplot shape is (y, x)
-		bot = plt.subplot2grid( (3, 5), (0, 0), 3, 3, fig, projection='3d' )
-		bot.view_init(elev=15, azim=45+180)
-		bot.set_xlabel("x")
-		bot.set_ylabel("y")
-		bot.set_zlabel("z")
-		bot.set_xlim( [ -2, 2 ] )
-		bot.set_ylim( [ -2, 2 ] )
-		bot.set_zlim( [ 0, 4 ] )
-		bot.invert_yaxis()
-		bot.invert_zaxis()
-  
+		n_f_eval = len( mpc_config[ 'state_record' ] )
+
+		print(
+				f"actuation={actuation}\t"
+				f"state={state[ : state.shape[ 0 ] // 2 ]}\t"
+				f"{compute_time=:.6f}s - {n_f_eval=}\t", end = ' '
+				)
+
+		ti = perf_counter()
+
+		time_previous = [ i * time_step - (frame + 1) * time_step for i in range( frame + 2 ) ]
+		time_prediction = [ i * time_step for i in range(
+				mpc_config[ 'optimization_horizon' ] + mpc_config[ 'prediction_horizon' ]
+				) ]
+
+		fig = plt.figure()
+		view = plt.subplot2grid( (3, 5), (0, 0), 4, 3, fig, projection = '3d' )
+		view.set_xlabel( "x" )
+		view.set_ylabel( "y" )
+		view.set_xlim( -2, 2 )
+		view.set_ylim( -2, 2 )
+		view.set_zlim( 0, 4 )
+		view.invert_yaxis()
+		view.invert_zaxis()
+
 		ax_pos = plt.subplot2grid( (3, 5), (0, 3), 1, 2, fig )
 		ax_pos.set_ylabel( 'position' )
-		ax_pos.yaxis.set_label_position("right")
+		ax_pos.yaxis.set_label_position( "right" )
 		ax_pos.yaxis.tick_right()
-		ax_pos.set_ylim( -1, 2 )
-  
+		ax_pos.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_pos.set_ylim( -3, 3 )
+		ax_pos.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+
 		ax_ang = plt.subplot2grid( (3, 5), (1, 3), 1, 2, fig )
 		ax_ang.set_ylabel( 'angle' )
-		ax_ang.yaxis.set_label_position("right")
+		ax_ang.yaxis.set_label_position( "right" )
 		ax_ang.yaxis.tick_right()
-		ax_ang.set_ylim( -2 * np.pi, 2 * np.pi )
-  
+		ax_ang.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_ang.set_ylim( -2 * pi, 2 * pi )
+		ax_ang.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+
 		ax_act = plt.subplot2grid( (3, 5), (2, 3), 1, 2, fig )
 		ax_act.set_ylabel( 'actuation' )
-		ax_act.yaxis.set_label_position("right")
+		ax_act.set_xlabel( 'time' )
+		ax_act.yaxis.set_label_position( "right" )
 		ax_act.yaxis.tick_right()
-		# ax_act.set_ylim( 
-        #           -max(bluerov_configuration[ 'robot_max_actuation' ]), 
-        #           max(bluerov_configuration[ 'robot_max_actuation' ])
-        #           )
-  
-		plt.subplots_adjust( hspace = 0., wspace = 0.5 )
-		fig.suptitle( f"{frame + 1}/{n_frames} - compute time: {compute_time:.6f}s" )
+		ax_act.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_act.set_ylim( 1.1 * command_lower_bound, 1.1 * command_upper_bound )
+		ax_act.set_prop_cycle(
+				cycler( 'color', [ 'blue', 'red', 'green', 'cyan', 'orange', 'olive' ] )
+				)
 
-		state_r = scipy.spatial.transform.Rotation.from_euler('xyz', state[3:6]).as_matrix()
-		target_r = scipy.spatial.transform.Rotation.from_euler('xyz', target[3:]).as_matrix()
+		plt.subplots_adjust( hspace = 0., wspace = .5 )
+		fig.suptitle( f"{frame + 1}/{n_frames} - {compute_time=:.6f}s - {n_f_eval=}" )
+
+		state_r = Rotation.from_euler( 'xyz', state[ 3:6 ] ).as_matrix()
+		target_r = Rotation.from_euler( 'xyz', mpc_config[ 'target_pose' ][ 3: ] ).as_matrix()
 
 		quiver_scale = .3
-		bot.quiver( *state[:3], *(state_r@(quiver_scale * np.ones((3, 1)))))
-		bot.quiver( *target[:3], *(target_r@(quiver_scale * np.ones((3, 1)))), color='r')
-  
-		time_axis_states = [ -(len( actual_states ) - 1) * time_step + i * time_step for i in
-												 range( len( actual_states ) + len( all_states[ 0 ] ) - 1 ) ]
-		time_axis_actuations = [ -(len( actual_actuations ) - 1) * time_step + i * time_step for i in
-														 range( len( actual_actuations ) + len( all_actuations[ 0 ] ) - 1 ) ]
+		view.quiver( *state[ :3 ], *(state_r @ (quiver_scale * array( [ 1., 0., 0. ] ))) )
+		view.quiver(
+				*mpc_config[ 'target_pose' ][ :3 ],
+				*(target_r @ (quiver_scale * array( [ 1., 0., 0. ] ))),
+				color = 'r'
+				)
 
 		t1 = 0.
-		timespan = time_axis_states[-1] - time_axis_states[0]
-		for axis in range(3):
+		timespan = time_prediction[ -1 ] - time_previous[ 0 ]
+		for index in range( len( previous_target_record ) ):
+			t2 = (previous_target_record[ index ][ 0 ] - 2 * time_step) / timespan
 			ax_pos.axhline(
-				target[ axis ], t1, (time_axis_states[-1] + frame * time_step) / timespan, linewidth = 5
-				)
+					previous_target_record[ index ][ 1 ][ 0 ], t1, t2, color = 'b', linestyle = ':'
+					)
+			ax_pos.axhline(
+					previous_target_record[ index ][ 1 ][ 1 ], t1, t2, color = 'r', linestyle = ':'
+					)
+			ax_pos.axhline(
+					previous_target_record[ index ][ 1 ][ 2 ], t1, t2, color = 'g', linestyle = ':'
+					)
 			ax_ang.axhline(
-				target[ axis + 3 ], t1, (time_axis_states[-1] + frame * time_step) / timespan, linewidth = 5
-				)
-		
-		actual_states = np.array( actual_states )
-		actual_actuations = np.array( actual_actuations )
-  
-		for i in range( len( all_states ) ):
-			for axis in range(3):
-				ax_pos.plot(
-					time_axis_states,
-					actual_states[ :, axis ].tolist() + all_states[ i ][ 1:, axis ].tolist(),
-					'b',
-					linewidth = .1
+					previous_target_record[ index ][ 1 ][ 3 ], t1, t2, color = 'b', linestyle = ':'
 					)
-				ax_ang.plot(
-					time_axis_states,
-					actual_states[ :, axis + 3 ].tolist() + all_states[ i ][ 1:, axis + 3 ].tolist(),
-					'b',
-					linewidth = .1
+			ax_ang.axhline(
+					previous_target_record[ index ][ 1 ][ 4 ], t1, t2, color = 'r', linestyle = ':'
 					)
-				ax_act.plot(
-					time_axis_actuations,
-					actual_actuations[:, axis].tolist() + [ actuation[axis] + a for a in all_actuations[ i ][1:, axis].cumsum() ],
-					'b',
-					linewidth = .1
+			ax_ang.axhline(
+					previous_target_record[ index ][ 1 ][ 5 ], t1, t2, color = 'g', linestyle = ':'
 					)
-				ax_act.plot(
-					time_axis_actuations,
-					actual_actuations[:, axis + 3].tolist() + [ actuation[axis + 3] + a for a in all_actuations[ i ][1:, axis + 3].cumsum() ],
-					'b',
-					linewidth = .1
-					)
-			bot.plot(
-					all_states[ i ][ 1:, 0 ],
-					all_states[ i ][ 1:, 1 ],
-					all_states[ i ] [1:, 2],
-					'b',
-					linewidth = .1
-					)
+			t1 = t2 + time_step
 
-		actual_states = actual_states.tolist()
-		actual_actuations = actual_actuations.tolist()
-  
+		ax_pos.axhline( mpc_config[ 'target_pose' ][ 0 ], t1, 1, color = 'b', linestyle = ':' )
+		ax_pos.axhline( mpc_config[ 'target_pose' ][ 1 ], t1, 1, color = 'r', linestyle = ':' )
+		ax_pos.axhline( mpc_config[ 'target_pose' ][ 2 ], t1, 1, color = 'g', linestyle = ':' )
+		ax_ang.axhline( mpc_config[ 'target_pose' ][ 3 ], t1, 1, color = 'b', linestyle = ':' )
+		ax_ang.axhline( mpc_config[ 'target_pose' ][ 4 ], t1, 1, color = 'r', linestyle = ':' )
+		ax_ang.axhline( mpc_config[ 'target_pose' ][ 5 ], t1, 1, color = 'g', linestyle = ':' )
+
+		view.plot(
+				array( previous_states_record )[ :, 0 ],
+				array( previous_states_record )[ :, 1 ],
+				array( previous_states_record )[ :, 2 ],
+				'b'
+				)
+
+		previous_pos_record_array = array( previous_states_record )[ :, :3 ]
+		previous_ang_record_array = array( previous_states_record )[ :, 3:6 ]
+
+		ax_pos.plot( time_previous, previous_pos_record_array )
+		ax_ang.plot( time_previous, previous_ang_record_array )
+		ax_act.plot( time_previous, previous_actuation_record )
+
+		for f_eval in range( n_f_eval ):
+			pos_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, :3 ]
+		ang_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 3:6 ]
+
+		view.plot(
+				pos_record_array[ :, 0 ],
+				pos_record_array[ :, 1 ],
+				pos_record_array[ :, 2 ],
+				'b',
+				linewidth = .1
+				)
+
+		ax_pos.plot( time_prediction, pos_record_array, linewidth = .1 )
+		ax_ang.plot( time_prediction, ang_record_array, linewidth = .1 )
+		ax_act.plot( time_prediction, mpc_config[ 'actuation_record' ][ f_eval ], linewidth = .1 )
+
 		# plot vertical line from y min to y max
 		ax_pos.axvline( color = 'g' )
 		ax_ang.axvline( color = 'g' )
 		ax_act.axvline( color = 'g' )
 
-		plt.savefig( f'{folder}/{frame}.png', dpi = 100 )
+		plt.savefig( f'{folder}/{frame}.png' )
 		plt.close( 'all' )
 		del fig
-  
-		tf = time.perf_counter()
+
+		tf = perf_counter()
 		save_time = tf - ti
-		print( f"\t{save_time = :.6f}s", end = ' ', flush = True )
+
+		print( f'saved figure in {save_time:.6f}s\t', end = '' )
 		print()
 
 	# create gif from frames
 	print( 'creating gif ...', end = ' ' )
-	names = [ image for image in glob.glob( f"{folder}/*.png" ) ]
-	names.sort( key = lambda x: os.path.getmtime( x ) )
+	names = [ image for image in glob( f"{folder}/*.png" ) ]
+	names.sort( key = lambda x: path.getmtime( x ) )
 	frames = [ Image.open( name ) for name in names ]
 	frame_one = frames[ 0 ]
 	frame_one.save(
 			f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True
 			)
 	print( f'saved at {folder}/animation.gif' )
-

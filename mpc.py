@@ -13,13 +13,14 @@ def model_predictive_control_cost_function(
 		initial_state: ndarray,
 		initial_actuation: ndarray,
 		model_kwargs: dict,
-		target: ndarray,
+		target_pose: ndarray,
 		objective_function: callable,
 		optimization_horizon: int,
 		prediction_horizon: int,
 		time_step: float,
 		time_steps_per_actuation: int,
-		error_weight_matrix: ndarray,
+		pose_weight_matrix: ndarray,
+		actuation_weight_matrix: ndarray,
 		objective_weight: float,
 		final_cost_weight: float,
 		state_record: list,
@@ -28,7 +29,7 @@ def model_predictive_control_cost_function(
 		verbose: bool
 		) -> float:
 
-	if norm( error_weight_matrix ) == 0 and final_cost_weight == 0 and objective_function is None:
+	if norm( pose_weight_matrix ) == 0 and final_cost_weight == 0 and objective_function is None:
 		raise ValueError( "Cannot compute model_predictive_control_cost_function" )
 
 	candidate_actuations = candidate_actuations.reshape( candidate_shape )
@@ -50,13 +51,15 @@ def model_predictive_control_cost_function(
 	for i in range( optimization_horizon ):
 
 		if time_steps_count == time_steps_per_actuation:
-			actuation += candidate_actuations[ i // time_steps_per_actuation ]
+			actuation_derivative = candidate_actuations[ i // time_steps_per_actuation ]
+			cost += actuation_derivative @ actuation_weight_matrix @ actuation_derivative.T
+			actuation += actuation_derivative
 			time_steps_count = 0
 
 		state += model( state, actuation, **model_kwargs ) * time_step
 
-		error = state[ :len( state ) // 2 ] - target
-		cost += error @ error_weight_matrix @ error.T
+		error = state[ :len( state ) // 2 ] - target_pose
+		cost += error @ pose_weight_matrix @ error.T
 
 		time_steps_count += 1
 
@@ -76,8 +79,8 @@ def model_predictive_control_cost_function(
 
 		state += model( state, actuation, **model_kwargs ) * time_step
 
-		error = state[ :len( state ) // 2 ] - target
-		cost += error @ error_weight_matrix @ error.T
+		error = state[ :len( state ) // 2 ] - target_pose
+		cost += error @ pose_weight_matrix @ error.T
 
 		if state_record is not None:
 			states[ optimization_horizon + i ] = state
@@ -91,8 +94,8 @@ def model_predictive_control_cost_function(
 			if objective_record is not None:
 				objectives[ optimization_horizon + i ] = objective
 
-	error = state[ :len( state ) // 2 ] - target
-	cost += final_cost_weight * pow( norm( error @ error_weight_matrix @ error.T ), 2 )
+	error = state[ :len( state ) // 2 ] - target_pose
+	cost += final_cost_weight * pow( norm( error @ pose_weight_matrix @ error.T ), 2 )
 	if objective_function is not None:
 		cost += final_cost_weight * objective_weight * objective_function(
 				state, actuation, **model_kwargs
@@ -108,9 +111,10 @@ def model_predictive_control_cost_function(
 		objective_record.append( objectives )
 
 	if verbose:
-		print( f'{horizon=}; {cost=}' )
+		print( f'{cost=}; {candidate_actuations}' )
 
 	return cost
+
 
 def optimize(
 		cost_function: callable,
@@ -119,7 +123,8 @@ def optimize(
 		tolerance: float = 1e-6,
 		max_iter: int = 100,
 		bounds: Bounds = None,
-		constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None, ) -> ndarray:
+		constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None
+		) -> ndarray:
 
 	cost_args = ()
 	for parameter in signature( cost_function ).parameters:
