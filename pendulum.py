@@ -1,31 +1,30 @@
-import glob
-import json
+from glob import glob
+from json import dump
+from os import mkdir, path, remove
+from time import perf_counter, time
 
-import numpy as np
 from matplotlib import pyplot as plt
-from numpy import cos, pi, sin
+from numpy import array, cos, cumsum, eye, pi, sin
 from numpy.linalg import solve
 from PIL import Image
 
 from mpc import *
-import os
-import time
 
 
 # pendulum with cart
 def pendulum(
-		x: np.ndarray, u: np.ndarray, cart_mass: float = 1, arm_length: float = 1, mass: float = 1
-		) -> np.ndarray:
+		x: ndarray, u: ndarray, cart_mass: float = 1, arm_length: float = 1, mass: float = 1
+		) -> ndarray:
 
 	g = 9.80665
 	x, theta, dx, dtheta = x
 
-	A = np.array(
+	A = array(
 			[ [ 1, 0, 0, 0 ], [ 0, 1, 0, 0 ], [ 0, 0, cos( theta ), arm_length ],
 				[ 0, 0, 1 + cart_mass / mass, arm_length * cos( theta ) ] ]
 			)
 
-	b = np.array(
+	b = array(
 			[ dx, dtheta, -g * sin( theta ), arm_length * dtheta ** 2 * sin( theta ) + u[ 0 ] / mass ]
 			)
 
@@ -35,7 +34,7 @@ def pendulum(
 
 
 def pendulum_objective(
-		x: np.ndarray, u: np.ndarray, cart_mass: float = 1, arm_length: float = 1, mass: float = 1
+		x: ndarray, u: ndarray, cart_mass: float = 1, arm_length: float = 1, mass: float = 1
 		) -> float:
 
 	g = 9.80665
@@ -53,27 +52,26 @@ def pendulum_objective(
 
 if __name__ == "__main__":
 
-	state = np.array( [ 0., 0., 0., 0. ] )
-	actuation = np.array( [ 0. ] )
+	state = array( [ 0., 0., 0., 0. ] )
+	actuation = array( [ 0. ] )
 
 	model_kwargs = { "cart_mass": 1, "arm_length": 1, "mass": 1 }
 
 	optimization_horizon = 25
-	time_steps_per_actuation = 3
+	time_steps_per_actuation = 2
 
-	weight_matrix = np.eye( state.shape[ 0 ] // 2 )
+	weight_matrix = eye( state.shape[ 0 ] // 2 )
 	# weight_matrix[0, 0] = 2.
 
 	mpc_config = {
 			'candidate_shape'         : (
 					optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ]),
-
 			'model'                   : pendulum,
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
 			'model_kwargs'            : model_kwargs,
-			'target'                  : np.array(
-					[ 1., np.pi ]
+			'target'                  : array(
+					[ 1., pi ]
 					),
 			'optimization_horizon'    : optimization_horizon,
 			'prediction_horizon'      : 0,
@@ -89,7 +87,7 @@ if __name__ == "__main__":
 			'verbose'                 : False
 			}
 
-	result = np.zeros( mpc_config[ 'candidate_shape' ] )
+	result = zeros( mpc_config[ 'candidate_shape' ] )
 
 	command_upper_bound = 50
 	command_lower_bound = -50
@@ -114,21 +112,21 @@ if __name__ == "__main__":
 						f'{max_iter=}_'
 						f'{tolerance=}_'
 						f'{n_frames=}_'
-						f'{int( time.time() )}')
+						f'{int( time() )}')
 
-	if os.path.exists( folder ):
-		files_in_dir = glob.glob( f'{folder}/*' )
+	if path.exists( folder ):
+		files_in_dir = glob( f'{folder}/*' )
 		if len( files_in_dir ) > 0:
 			if input( f"{folder} contains data. Remove? (y/n) " ) == 'y':
 				for fig in files_in_dir:
-					os.remove( fig )
+					remove( fig )
 			else:
 				exit()
 	else:
-		os.mkdir( folder )
+		mkdir( folder )
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		json.dump( mpc_config, f, default = serialize_others )
+		dump( mpc_config, f, default = serialize_others )
 
 	for frame in range( n_frames ):
 
@@ -136,7 +134,7 @@ if __name__ == "__main__":
 			previous_target_record.append(
 					(frame * mpc_config[ 'time_step' ], deepcopy( mpc_config[ 'target' ] ))
 					)
-			mpc_config[ 'target' ] = np.array( [ -1, pi ] )
+			mpc_config[ 'target' ] = array( [ -1, pi ] )
 
 		mpc_config[ 'state_record' ] = [ ]
 		mpc_config[ 'actuation_record' ] = [ ]
@@ -144,23 +142,23 @@ if __name__ == "__main__":
 
 		print( f"frame {frame + 1}/{n_frames}\t", end = ' ' )
 
-		ti = time.perf_counter()
+		ti = perf_counter()
 
 		result = optimize(
 				cost_function = model_predictive_control_cost_function,
 				cost_kwargs = mpc_config,
-				initial_guess = result, # np.concatenate( (result[ 1: ], [ result[ -1 ] ]) ),
+				initial_guess = result,
 				tolerance = tolerance,
 				max_iter = max_iter,
 				constraints = NonlinearConstraint(
-						lambda x: actuation + np.cumsum( x ), command_lower_bound, command_upper_bound
+						lambda x: actuation + cumsum( x ), command_lower_bound, command_upper_bound
 						)
 				)
 
 		actuation += result[ 0 ]
 		state += pendulum( state, actuation, **model_kwargs ) * mpc_config[ 'time_step' ]
 
-		tf = time.perf_counter()
+		tf = perf_counter()
 		compute_time = tf - ti
 
 		mpc_config[ 'initial_state' ] = state
@@ -179,9 +177,9 @@ if __name__ == "__main__":
 				f"{compute_time=:.6f}s - {n_f_eval=}\t", end = ' '
 				)
 
-		ti = time.perf_counter()
+		ti = perf_counter()
 
-		fig = plt.figure()  # ( figsize = (16, 9) )  # subplot shape is (y, x)
+		fig = plt.figure()
 		view = plt.subplot2grid( (4, 5), (0, 0), 4, 3, fig )
 		view.grid( True )
 		view.set_xlabel( "x" )
@@ -249,13 +247,13 @@ if __name__ == "__main__":
 		ax_pos.axhline( mpc_config[ 'target' ][ 0 ], t1, 1, color = 'r', linewidth = 5 )
 		ax_ang.axhline( mpc_config[ 'target' ][ 1 ], t1, 1, color = 'g', linewidth = 5 )
 
-		ax_pos.plot( time_previous, np.array( previous_states_record )[ :, 0 ], 'b' )
-		ax_ang.plot( time_previous, np.array( previous_states_record )[ :, 1 ], 'b' )
+		ax_pos.plot( time_previous, array( previous_states_record )[ :, 0 ], 'b' )
+		ax_ang.plot( time_previous, array( previous_states_record )[ :, 1 ], 'b' )
 		ax_obj.plot( time_previous, previous_objective_record, 'b' )
 		ax_act.plot( time_previous, previous_actuation_record, 'b' )
 
 		for f_eval in range( n_f_eval ):
-			state_record_array = np.array( mpc_config[ 'state_record' ][ f_eval ] )
+			state_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )
 			ax_pos.plot( time_prediction, state_record_array[ :, 0 ], linewidth = .1 )
 			ax_ang.plot( time_prediction, state_record_array[ :, 1 ], linewidth = .1 )
 			ax_obj.plot( time_prediction, mpc_config[ 'objective_record' ][ f_eval ], linewidth = .1 )
@@ -271,7 +269,7 @@ if __name__ == "__main__":
 		plt.close( 'all' )
 		del fig
 
-		tf = time.perf_counter()
+		tf = perf_counter()
 		save_time = tf - ti
 
 		print( f'saved figure in {save_time:.6f}s\t', end = '' )
@@ -279,8 +277,8 @@ if __name__ == "__main__":
 
 	# create gif from frames
 	print( 'creating gif ...', end = ' ' )
-	names = [ image for image in glob.glob( f"{folder}/*.png" ) ]
-	names.sort( key = lambda x: os.path.getmtime( x ) )
+	names = [ image for image in glob( f"{folder}/*.png" ) ]
+	names.sort( key = lambda x: path.getmtime( x ) )
 	frames = [ Image.open( name ) for name in names ]
 	frame_one = frames[ 0 ]
 	frame_one.save(

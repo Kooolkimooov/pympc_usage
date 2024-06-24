@@ -1,7 +1,6 @@
 from copy import deepcopy
 from inspect import signature
 
-import numpy as np
 from numpy import ndarray, zeros
 from numpy.linalg import norm
 from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint
@@ -96,10 +95,8 @@ def model_predictive_control_cost_function(
 	cost += final_cost_weight * pow( norm( error @ error_weight_matrix @ error.T ), 2 )
 	if objective_function is not None:
 		cost += final_cost_weight * objective_weight * objective_function(
-			state,
-			actuation,
-			**model_kwargs
-			)
+				state, actuation, **model_kwargs
+				)
 
 	cost /= horizon
 
@@ -115,8 +112,6 @@ def model_predictive_control_cost_function(
 
 	return cost
 
-
-# model predictive control returns the optimal actuation
 def optimize(
 		cost_function: callable,
 		cost_kwargs: dict,
