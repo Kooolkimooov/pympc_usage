@@ -90,7 +90,7 @@ def double_pendulum_objective(
 	Ek = Ek_c + Ek_1 + Ek_2
 
 	# objective is to minimize kinetic energy and maximize potiential energy
-	return (Ek - Ep) ** 3
+	return Ek - Ep
 
 
 if __name__ == "__main__":
@@ -106,22 +106,23 @@ if __name__ == "__main__":
 			"second_arm_length": .5
 			}
 
-	base_optimization_horizon = 50
+	base_optimization_horizon = 75
 	optimization_horizon = base_optimization_horizon
-	time_steps_per_actuation = 2
+	time_steps_per_actuation = 1
 
-	optimization_horizon_lower_bound = 50
+	optimization_horizon_lower_bound = 75
 
 	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
-	# pose_weight_matrix[ 0, 0 ] = 0.
-	# pose_weight_matrix[ 1, 1 ] = 0.
-	# pose_weight_matrix[ 2, 2 ] = 0.
+	pose_weight_matrix[ 0, 0 ] = 0.
+	pose_weight_matrix[ 1, 1 ] = 1.
+	pose_weight_matrix[ 2, 2 ] = 1.
 
-	actuation_weight_matrix = .01 * eye( actuation.shape[ 0 ] )
+	actuation_weight_matrix = .0 * eye( actuation.shape[ 0 ] )
 
 	mpc_config = {
 			'candidate_shape'         : (
 					optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ]),
+
 			'model'                   : double_pendulum,
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
@@ -136,7 +137,7 @@ if __name__ == "__main__":
 			'objective_function'      : double_pendulum_objective,
 			'pose_weight_matrix'      : pose_weight_matrix,
 			'actuation_weight_matrix' : actuation_weight_matrix,
-			'objective_weight'        : 100.,
+			'objective_weight'        : 1.,
 			'final_cost_weight'       : 1.,
 			'state_record'            : [ ],
 			'actuation_record'        : [ ],
@@ -148,8 +149,8 @@ if __name__ == "__main__":
 
 	command_upper_bound = 50
 	command_lower_bound = -50
-	command_derivative_upper_bound = int( 25 / mpc_config[ 'time_step' ] )
-	command_derivative_lower_bound = int( -25 / mpc_config[ 'time_step' ] )
+	command_derivative_upper_bound = 5
+	command_derivative_lower_bound = -5
 
 	n_frames = 300
 
@@ -167,7 +168,7 @@ if __name__ == "__main__":
 						f'{note}_'
 						f'dt={mpc_config[ "time_step" ]}_'
 						f'opth={optimization_horizon}_'
-						f'preh=_{mpc_config[ "prediction_horizon" ]}'
+						f'preh={mpc_config[ "prediction_horizon" ]}_'
 						f'dtpu={time_steps_per_actuation}_'
 						f'{max_iter=}_'
 						f'{tolerance=}_'
@@ -193,7 +194,7 @@ if __name__ == "__main__":
 		if optimization_horizon > optimization_horizon_lower_bound:
 			optimization_horizon -= 1
 
-		if frame == 100 and False:
+		if frame == 150:
 			previous_target_record.append(
 					(frame * mpc_config[ 'time_step' ], deepcopy( mpc_config[ 'target_pose' ] ))
 					)
@@ -223,6 +224,7 @@ if __name__ == "__main__":
 				initial_guess = result,
 				tolerance = tolerance,
 				max_iter = max_iter,
+				bounds = Bounds( command_derivative_lower_bound, command_derivative_upper_bound ),
 				constraints = NonlinearConstraint(
 						lambda x: actuation + cumsum( x ), command_lower_bound, command_upper_bound
 						)
@@ -371,7 +373,8 @@ if __name__ == "__main__":
 		ax_obj.plot( time_previous, previous_objective_record, 'b' )
 		ax_act.plot( time_previous, previous_actuation_record, 'b' )
 
-		for f_eval in range( n_f_eval ):
+		i_f_eval = 0 if n_f_eval < 10000 else n_f_eval - 10000
+		for f_eval in range( i_f_eval, n_f_eval ):
 			state_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )
 			ax_pos.plot( time_prediction, state_record_array[ :, 0 ], 'b', linewidth = .1 )
 			ax_ang.plot( time_prediction, state_record_array[ :, 1 ], 'b', linewidth = .1 )

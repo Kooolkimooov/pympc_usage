@@ -63,11 +63,12 @@ if __name__ == "__main__":
 	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
 	# weight_matrix[0, 0] = 2.
 
-	actuation_weight_matrix = .1 * eye( actuation.shape[0] )
+	actuation_weight_matrix = .1 * eye( actuation.shape[ 0 ] )
 
 	mpc_config = {
 			'candidate_shape'         : (
 					optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ]),
+
 			'model'                   : pendulum,
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
