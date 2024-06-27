@@ -54,11 +54,8 @@ bluerov_configuration = {
 
 # double pendulum with cart
 def robot(
-		x: ndarray, u: ndarray, robot_configuration = None
+		x: ndarray, u: ndarray, robot_configuration
 		) -> ndarray:
-	if robot_configuration is None:
-		global bluerov_configuration
-		robot_configuration = bluerov_configuration
 	Phi, Theta, Psi = x[ 3 ], x[ 4 ], x[ 5 ]
 	cPhi, sPhi = cos( Phi ), sin( Phi )
 	cTheta, sTheta, tTheta = cos( Theta ), sin( Theta ), tan( Theta )
@@ -97,40 +94,41 @@ def robot(
 
 if __name__ == "__main__":
 
-	state = array( [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ] )
-	actuation = array( [ 0., 0., 0., 0., 0., 0. ] )
-
-	model_kwargs = { 'robot_configuration': bluerov_configuration }
-
 	n_frames = 400
 	max_iter = 1000
 	tolerance = 1e-6
 	time_step = 0.025
+
+	state = array( [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ] )
+	trajectory = [ (time_step * .25 * n_frames, [ 0., 0., 1., 0., 0., pi ]),
+								 (time_step * .50 * n_frames, [ 1., 1., 1., 0., 0., -pi ]),
+								 (time_step * .75 * n_frames, [ -1., -1., 1., 0., 0., pi ]),
+								 (time_step * 1. * n_frames, [ 0., 0., 0., 0., 0., 0. ]) ]
+	actuation = array( [ 0., 0., 0., 0., 0., 0. ] )
+
+	model_kwargs = { 'robot_configuration': bluerov_configuration }
 
 	sequence_time = n_frames * time_step
 
 	base_optimization_horizon = 25
 	optimization_horizon = base_optimization_horizon
 	time_steps_per_actuation = 5
+	result_shape = (optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ])
+
+	result = zeros( result_shape )
 
 	optimization_horizon_lower_bound = 50
 
 	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
+	pose_weight_matrix[ :3, :3 ] *= 2.
 	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
 	actuation_weight_matrix[ :3, :3 ] *= .01
-
-	trajectory = [ (time_step * .25 * n_frames, [ 0., 0., 1., 0., 0., pi ]),
-								 (time_step * .50 * n_frames, [ 1., 1., 1., 0., 0., -pi ]),
-								 (time_step * .75 * n_frames, [ -1., -1., 1., 0., 0., pi ]),
-								 (time_step * 1. * n_frames, [ 0., 0., 0., 0., 0., 0. ]) ]
 
 	command_upper_bound = 50
 	command_lower_bound = -50
 
 	mpc_config = {
-			'candidate_shape'         : (
-					optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ]),
-
+			'candidate_shape'         : result_shape,
 			'model'                   : robot,
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
@@ -151,7 +149,15 @@ if __name__ == "__main__":
 			'verbose'                 : False
 			}
 
-	result = zeros( mpc_config[ 'candidate_shape' ] )
+	other_config = {
+			'max_iter'                        : max_iter,
+			'tolerance'                       : tolerance,
+			'n_frames'                        : n_frames,
+			'trajectory'                      : trajectory,
+			'optimization_horizon_lower_bound': optimization_horizon_lower_bound,
+			'command_upper_bound'             : command_upper_bound,
+			'command_lower_bound'             : command_lower_bound,
+			}
 
 	previous_states_record = [ deepcopy( state ) ]
 	previous_actuation_record = [ deepcopy( actuation ) ]
@@ -160,14 +166,6 @@ if __name__ == "__main__":
 	note = ''
 
 	folder = (f'./plots/{robot.__name__}_'
-						f'{note}_'
-						f'dt={mpc_config[ "time_step" ]}_'
-						f'opth={optimization_horizon}_'
-						f'preh=_{mpc_config[ "prediction_horizon" ]}'
-						f'dtpu={time_steps_per_actuation}_'
-						f'{max_iter=}_'
-						f'{tolerance=}_'
-						f'{n_frames=}_'
 						f'{int( time() )}')
 
 	if path.exists( folder ):
@@ -182,7 +180,9 @@ if __name__ == "__main__":
 		mkdir( folder )
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( mpc_config | { 'trajectory': trajectory }, f, default = serialize_others )
+		dump( mpc_config | other_config, f, default = serialize_others )
+
+	logger = Logger()
 
 	for frame in range( n_frames ):
 
@@ -203,7 +203,7 @@ if __name__ == "__main__":
 		mpc_config[ 'state_record' ] = [ ]
 		mpc_config[ 'actuation_record' ] = [ ]
 
-		print( f"frame {frame + 1}/{n_frames}\t", end = ' ' )
+		logger.log( f"frame {frame + 1}/{n_frames}" )
 
 		result = result[ 1:mpc_config[ 'candidate_shape' ][ 0 ] ]
 		difference = result.shape[ 0 ] - mpc_config[ 'candidate_shape' ][ 0 ]
@@ -239,11 +239,10 @@ if __name__ == "__main__":
 
 		n_f_eval = len( mpc_config[ 'state_record' ] )
 
-		print(
-				f"actuation={actuation}\t"
-				f"state={state[ : state.shape[ 0 ] // 2 ]}\t"
-				f"{compute_time=:.6f}s - {n_f_eval=}\t", end = ' '
-				)
+		logger.log( f"actuation={actuation}" )
+		logger.log( f"state={state[ : state.shape[ 0 ] // 2 ]}" )
+		logger.log( f"{compute_time=:.6f}s" )
+		logger.log( f"{n_f_eval=}" )
 
 		ti = perf_counter()
 
@@ -295,7 +294,7 @@ if __name__ == "__main__":
 		state_r = Rotation.from_euler( 'xyz', state[ 3:6 ] ).as_matrix()
 		target_r = Rotation.from_euler( 'xyz', mpc_config[ 'target_pose' ][ 3: ] ).as_matrix()
 
-		quiver_scale = .3
+		quiver_scale = .5
 		view.quiver( *state[ :3 ], *(state_r @ (quiver_scale * array( [ 1., 0., 0. ] ))) )
 		view.quiver(
 				*mpc_config[ 'target_pose' ][ :3 ],
@@ -350,19 +349,19 @@ if __name__ == "__main__":
 
 		for f_eval in range( n_f_eval ):
 			pos_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, :3 ]
-		ang_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 3:6 ]
+			ang_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 3:6 ]
 
-		view.plot(
-				pos_record_array[ :, 0 ],
-				pos_record_array[ :, 1 ],
-				pos_record_array[ :, 2 ],
-				'b',
-				linewidth = .1
-				)
+			view.plot(
+					pos_record_array[ :, 0 ],
+					pos_record_array[ :, 1 ],
+					pos_record_array[ :, 2 ],
+					'b',
+					linewidth = .1
+					)
 
-		ax_pos.plot( time_prediction, pos_record_array, linewidth = .1 )
-		ax_ang.plot( time_prediction, ang_record_array, linewidth = .1 )
-		ax_act.plot( time_prediction, mpc_config[ 'actuation_record' ][ f_eval ], linewidth = .1 )
+			ax_pos.plot( time_prediction, pos_record_array, linewidth = .1 )
+			ax_ang.plot( time_prediction, ang_record_array, linewidth = .1 )
+			ax_act.plot( time_prediction, mpc_config[ 'actuation_record' ][ f_eval ], linewidth = .1 )
 
 		# plot vertical line from y min to y max
 		ax_pos.axvline( color = 'g' )
@@ -376,11 +375,12 @@ if __name__ == "__main__":
 		tf = perf_counter()
 		save_time = tf - ti
 
-		print( f'saved figure in {save_time:.6f}s\t', end = '' )
-		print()
+		logger.lognl( f'saved figure {frame}.png in {save_time:.6f}s' )
+
+	logger.save_at( folder )
 
 	# create gif from frames
-	print( 'creating gif ...', end = ' ' )
+	logger.log( 'creating gif ...' )
 	names = [ image for image in glob( f"{folder}/*.png" ) ]
 	names.sort( key = lambda x: path.getmtime( x ) )
 	frames = [ Image.open( name ) for name in names ]
@@ -388,4 +388,4 @@ if __name__ == "__main__":
 	frame_one.save(
 			f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True
 			)
-	print( f'saved at {folder}/animation.gif' )
+	logger.log( f'saved at {folder}/animation.gif' )

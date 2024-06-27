@@ -30,7 +30,7 @@ def model_predictive_control_cost_function(
 		) -> float:
 
 	if norm( pose_weight_matrix ) == 0 and final_cost_weight == 0 and objective_function is None:
-		raise ValueError( "Cannot compute model_predictive_control_cost_function" )
+		raise ValueError( "Cannot compute cost" )
 
 	candidate_actuations = candidate_actuations.reshape( candidate_shape )
 
@@ -152,3 +152,42 @@ def serialize_others( obj: any ) -> str:
 		return obj.__name__
 	if isinstance( obj, ndarray ):
 		return obj.tolist()
+
+
+class Logger:
+	def __init__( self ):
+		self.logs: str = ''
+
+	def log( self, log: str ):
+		'''
+		:param log: text to be printed and saved. ends with a tabluation
+		:return: None
+		'''
+		print( log, end = '\t' )
+		self.logs += log
+		self.logs += '\t'
+
+	def lognl( self, log: str ):
+		'''
+		:param log: text to be printed and saved. ends with a new line
+		:return: None
+		'''
+		print( log )
+		self.logs += log
+		self.logs += '\n'
+
+	def logrl( self, log: str ):
+		'''
+		:param log: text to be printed and saved. ends with a return to the beginning of the line,
+		the saved text goes to a new line
+		:return: None
+		'''
+		print( log, end = '\r' )
+		self.logs += log
+		self.logs += '\n'
+
+	def save_at( self, path: str, file: str = 'logs' ):
+		self.log( 'saving logs ...' )
+		with open( f'{path}/logs.txt', 'w' ) as f:
+			f.write( self.logs )
+		self.lognl( f'saved at {path}/{file}.txt' )

@@ -52,33 +52,44 @@ def pendulum_objective(
 
 if __name__ == "__main__":
 
+	n_frames = 300
+	time_step = 0.05
+	max_iter = 1000
+	tolerance = 1e-6
+
 	state = array( [ 0., 0., 0., 0. ] )
+	trajectory = [ (time_step * .34 * n_frames, [ 1., pi ]),
+								 (time_step * 1.0 * n_frames, [ -1., pi ]) ]
 	actuation = array( [ 0. ] )
 
 	model_kwargs = { "cart_mass": 1, "arm_length": 1, "mass": 1 }
 
 	optimization_horizon = 25
-	time_steps_per_actuation = 2
+	time_steps_per_actuation = 3
 
 	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
 	# weight_matrix[0, 0] = 2.
 
 	actuation_weight_matrix = .1 * eye( actuation.shape[ 0 ] )
 
-	mpc_config = {
-			'candidate_shape'         : (
-					optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ]),
+	result_shape = (optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ])
+	result = zeros( result_shape )
 
+	command_upper_bound = 50
+	command_lower_bound = -50
+	command_derivative_upper_bound = int( 25 / time_step )
+	command_derivative_lower_bound = int( -25 / time_step )
+
+	mpc_config = {
+			'candidate_shape'         : result_shape,
 			'model'                   : pendulum,
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
 			'model_kwargs'            : model_kwargs,
-			'target_pose'             : array(
-					[ 1., pi ]
-					),
+			'target_pose'             : trajectory[ 0 ][ 1 ],
 			'optimization_horizon'    : optimization_horizon,
 			'prediction_horizon'      : 0,
-			'time_step'               : 0.05,
+			'time_step'               : time_step,
 			'time_steps_per_actuation': time_steps_per_actuation,
 			'objective_function'      : pendulum_objective,
 			'pose_weight_matrix'      : pose_weight_matrix,
@@ -91,17 +102,16 @@ if __name__ == "__main__":
 			'verbose'                 : False
 			}
 
-	result = zeros( mpc_config[ 'candidate_shape' ] )
-
-	command_upper_bound = 50
-	command_lower_bound = -50
-	command_derivative_upper_bound = int( 25 / mpc_config[ 'time_step' ] )
-	command_derivative_lower_bound = int( -25 / mpc_config[ 'time_step' ] )
-
-	n_frames = 200
-
-	max_iter = 1000
-	tolerance = 1e-6
+	other_config = {
+			'max_iter'                      : max_iter,
+			'tolerance'                     : tolerance,
+			'n_frames'                      : n_frames,
+			'trajectory'                    : trajectory,
+			'command_upper_bound'           : command_upper_bound,
+			'command_lower_bound'           : command_lower_bound,
+			'command_derivative_upper_bound': command_derivative_upper_bound,
+			'command_derivative_lower_bound': command_derivative_lower_bound,
+			}
 
 	previous_states_record = [ deepcopy( state ) ]
 	previous_actuation_record = [ deepcopy( actuation ) ]
@@ -109,14 +119,9 @@ if __name__ == "__main__":
 	previous_target_record = [ ]
 
 	folder = (f'./plots/{pendulum.__name__}_'
-						f'dt={mpc_config[ "time_step" ]}_'
-						f'opth={optimization_horizon}_'
-						f'preh=_{mpc_config[ "prediction_horizon" ]}'
-						f'dtpu={time_steps_per_actuation}_'
-						f'{max_iter=}_'
-						f'{tolerance=}_'
-						f'{n_frames=}_'
 						f'{int( time() )}')
+
+	logger = Logger()
 
 	if path.exists( folder ):
 		files_in_dir = glob( f'{folder}/*' )
@@ -130,15 +135,15 @@ if __name__ == "__main__":
 		mkdir( folder )
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( mpc_config, f, default = serialize_others )
+		dump( mpc_config | other_config, f, default = serialize_others )
 
 	for frame in range( n_frames ):
 
-		if frame == 75:
-			previous_target_record.append(
-					(frame * mpc_config[ 'time_step' ], deepcopy( mpc_config[ 'target' ] ))
-					)
-			mpc_config[ 'target' ] = array( [ -1, pi ] )
+		for index in range( len( previous_target_record ) + 1, len( trajectory ) ):
+			if trajectory[ index - 1 ][ 0 ] < frame * time_step:
+				previous_target_record.append( trajectory[ index - 1 ] )
+				mpc_config[ 'target_pose' ] = trajectory[ index ][ 1 ]
+				break
 
 		mpc_config[ 'state_record' ] = [ ]
 		mpc_config[ 'actuation_record' ] = [ ]
@@ -174,12 +179,11 @@ if __name__ == "__main__":
 
 		n_f_eval = len( mpc_config[ 'state_record' ] )
 
-		print(
-				f"actuation={actuation}\t"
-				f"state={state[ : state.shape[ 0 ] // 2 ]}\t"
-				f"objective={pendulum_objective( state, actuation, **model_kwargs )}\t"
-				f"{compute_time=:.6f}s - {n_f_eval=}\t", end = ' '
-				)
+		logger.log( f"{actuation=}" )
+		logger.log( f"state={state[ : state.shape[ 0 ] // 2 ]}" )
+		logger.log( f"objective={pendulum_objective( state, actuation, **model_kwargs )}" )
+		logger.log( f"{compute_time=:.6f}s" )
+		logger.log( f"{n_f_eval=}" )
 
 		ti = perf_counter()
 
@@ -248,8 +252,8 @@ if __name__ == "__main__":
 					)
 			t1 = t2 + mpc_config[ 'time_step' ]
 
-		ax_pos.axhline( mpc_config[ 'target' ][ 0 ], t1, 1, color = 'r', linewidth = 5 )
-		ax_ang.axhline( mpc_config[ 'target' ][ 1 ], t1, 1, color = 'g', linewidth = 5 )
+		ax_pos.axhline( mpc_config[ 'target_pose' ][ 0 ], t1, 1, color = 'r', linewidth = 5 )
+		ax_ang.axhline( mpc_config[ 'target_pose' ][ 1 ], t1, 1, color = 'g', linewidth = 5 )
 
 		ax_pos.plot( time_previous, array( previous_states_record )[ :, 0 ], 'b' )
 		ax_ang.plot( time_previous, array( previous_states_record )[ :, 1 ], 'b' )
@@ -276,11 +280,12 @@ if __name__ == "__main__":
 		tf = perf_counter()
 		save_time = tf - ti
 
-		print( f'saved figure in {save_time:.6f}s\t', end = '' )
-		print()
+		logger.lognl( f'saved figure {frame}.png in {save_time:.6f}s' )
+
+	logger.save_at( folder )
 
 	# create gif from frames
-	print( 'creating gif ...', end = ' ' )
+	logger.log( 'creating gif ...' )
 	names = [ image for image in glob( f"{folder}/*.png" ) ]
 	names.sort( key = lambda x: path.getmtime( x ) )
 	frames = [ Image.open( name ) for name in names ]
@@ -288,4 +293,4 @@ if __name__ == "__main__":
 	frame_one.save(
 			f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True
 			)
-	print( f'saved at {folder}/animation.gif' )
+	logger.log( f'saved at {folder}/animation.gif' )

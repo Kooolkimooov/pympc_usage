@@ -1,0 +1,301 @@
+actuation=[5.29067406]	state=[0. 0.]	objective=9.841639040039645	compute_time=0.210881s - n_f_eval=230	saved figure 0.png in 0.723579s
+actuation=[5.93337748]	state=[ 0.01322669 -0.01322669]	objective=9.963293914605876	compute_time=0.189260s - n_f_eval=210	saved figure 1.png in 0.628963s
+actuation=[5.26491568]	state=[ 0.04128681 -0.04128681]	objective=10.133204649187004	compute_time=0.132400s - n_f_eval=151	saved figure 2.png in 0.504737s
+actuation=[4.45185491]	state=[ 0.08217234 -0.08184695]	objective=10.296114626152855	compute_time=0.145046s - n_f_eval=150	saved figure 3.png in 0.561654s
+actuation=[3.80188271]	state=[ 0.13309144 -0.13142019]	objective=10.412265934800642	compute_time=0.113110s - n_f_eval=121	saved figure 4.png in 0.408164s
+actuation=[3.33861946]	state=[ 0.19126816 -0.18622239]	objective=10.460715496265506	compute_time=0.143622s - n_f_eval=210	saved figure 5.png in 0.565556s
+actuation=[3.08098513]	state=[ 0.25413238 -0.24245893]	objective=10.442737186223333	compute_time=0.148207s - n_f_eval=220	saved figure 6.png in 0.623689s
+actuation=[2.93561753]	state=[ 0.31956475 -0.29668004]	objective=10.373014581613367	compute_time=0.191061s - n_f_eval=211	saved figure 7.png in 0.696356s
+actuation=[2.75694698]	state=[ 0.38586619 -0.34585859]	objective=10.271042542551843	compute_time=0.179358s - n_f_eval=220	saved figure 8.png in 0.664021s
+actuation=[2.23017177]	state=[ 0.45155138 -0.38728045]	objective=10.145730815483123	compute_time=0.260821s - n_f_eval=200	saved figure 9.png in 0.593800s
+actuation=[-3.47843179]	state=[ 0.51470248 -0.41800703]	objective=9.758362518002038	compute_time=0.553561s - n_f_eval=402	saved figure 10.png in 1.261439s
+actuation=[-12.47084335]	state=[ 0.56242772 -0.42519096]	objective=9.403412882377825	compute_time=0.309420s - n_f_eval=330	saved figure 11.png in 0.821041s
+actuation=[-19.44211513]	state=[ 0.57556    -0.39080812]	objective=10.001891617053786	compute_time=0.267107s - n_f_eval=281	saved figure 12.png in 0.761903s
+actuation=[-22.36336161]	state=[ 0.53886503 -0.30092166]	objective=12.13882919512753	compute_time=0.267476s - n_f_eval=291	saved figure 13.png in 0.833888s
+actuation=[-22.38620924]	state=[ 0.44311794 -0.14709627]	objective=15.755965882074262	compute_time=0.230509s - n_f_eval=273	saved figure 14.png in 1.086222s
+actuation=[-19.78306951]	state=[0.28309818 0.07538036]	objective=20.299197990170974	compute_time=1.062491s - n_f_eval=252	saved figure 15.png in 0.880077s
+actuation=[-15.99008257]	state=[0.06407922 0.35981236]	objective=24.592768527616606	compute_time=0.232552s - n_f_eval=251	saved figure 16.png in 0.900355s
+actuation=[-12.15020533]	state=[-0.18680056  0.67416838]	objective=25.971595137522606	compute_time=0.186228s - n_f_eval=210	saved figure 17.png in 0.551740s
+actuation=[-8.35128627]	state=[-0.42656063  0.96948449]	objective=23.716460797493752	compute_time=0.122615s - n_f_eval=201	saved figure 18.png in 0.622288s
+actuation=[-4.26241695]	state=[-0.63356532  1.22390679]	objective=19.747107866420368	compute_time=0.197449s - n_f_eval=221	saved figure 19.png in 0.700178s
+actuation=[0.92575154]	state=[-0.80833263  1.43987534]	objective=15.131155438153376	compute_time=0.180886s - n_f_eval=222	saved figure 20.png in 0.603777s
+actuation=[8.25337141]	state=[-0.95443481  1.62304219]	objective=10.185165179719146	compute_time=0.180679s - n_f_eval=242	saved figure 21.png in 0.656309s
+actuation=[16.21396753]	state=[-1.07175694  1.77814508]	objective=5.346840441289185	compute_time=0.116475s - n_f_eval=173	saved figure 22.png in 0.493917s
+actuation=[21.69677428]	state=[-1.15739566  1.91041937]	objective=1.2541180592839	compute_time=0.224500s - n_f_eval=252	saved figure 23.png in 0.955975s
+actuation=[23.84492883]	state=[-1.20910305  2.02568749]	objective=-1.7216628431290042	compute_time=0.302594s - n_f_eval=232	saved figure 24.png in 0.872932s
+actuation=[23.55799589]	state=[-1.22669791  2.12920333]	objective=-3.5746759445398983	compute_time=0.292821s - n_f_eval=262	saved figure 25.png in 0.919310s
+actuation=[21.93075975]	state=[-1.21172727  2.22500379]	objective=-4.500843826360041	compute_time=0.256960s - n_f_eval=232	saved figure 26.png in 0.780114s
+actuation=[19.69923472]	state=[-1.16674752  2.31591161]	objective=-4.748950448947814	compute_time=0.270837s - n_f_eval=143	saved figure 27.png in 0.599324s
+actuation=[17.27199649]	state=[-1.09478889  2.40378221]	objective=-4.5475479843895545	compute_time=0.116395s - n_f_eval=142	saved figure 28.png in 0.653917s
+actuation=[14.81856192]	state=[-0.99904393  2.48976132]	objective=-4.085064493674759	compute_time=0.161167s - n_f_eval=143	saved figure 29.png in 0.862148s
+actuation=[12.42690198]	state=[-0.88277123  2.57443821]	objective=-3.507348409358353	compute_time=0.214677s - n_f_eval=172	saved figure 30.png in 0.672455s
+actuation=[10.13495084]	state=[-0.74925205  2.65795276]	objective=-2.922637909914834	compute_time=0.212686s - n_f_eval=172	saved figure 31.png in 0.750795s
+actuation=[7.96721897]	state=[-0.60178352  2.74006149]	objective=-2.4065709041811854	compute_time=0.154118s - n_f_eval=144	saved figure 32.png in 0.615458s
+actuation=[5.9685221]	state=[-0.44365893  2.82020377]	objective=-2.003157843051312	compute_time=0.212818s - n_f_eval=175	saved figure 33.png in 0.585941s
+actuation=[4.04663143]	state=[-0.27806364  2.89764077]	objective=-1.7514135020003243	compute_time=0.144122s - n_f_eval=134	saved figure 34.png in 0.690159s
+actuation=[2.28518084]	state=[-0.10822853  2.97135607]	objective=-1.6615413839323896	compute_time=0.125193s - n_f_eval=104	saved figure 35.png in 0.600095s
+actuation=[0.68675021]	state=[0.06281514 3.04032243]	objective=-1.7311697301127502	compute_time=0.152836s - n_f_eval=115	saved figure 36.png in 0.703799s
+actuation=[-0.7526184]	state=[0.23233186 3.1036304 ]	objective=-1.9495249665092498	compute_time=0.202951s - n_f_eval=115	saved figure 37.png in 1.312465s
+actuation=[-2.02854438]	state=[0.39794624 3.16057747]	objective=-2.298478807018828	compute_time=0.368030s - n_f_eval=124	saved figure 38.png in 1.331307s
+actuation=[-3.15078757]	state=[0.55769098 3.21072865]	objective=-2.756879771613715	compute_time=0.322244s - n_f_eval=194	saved figure 39.png in 0.944382s
+actuation=[-4.0696808]	state=[0.70997903 3.25388988]	objective=-3.2934008790318625	compute_time=0.141746s - n_f_eval=125	saved figure 40.png in 0.588979s
+actuation=[-4.84928914]	state=[0.85369467 3.29019284]	objective=-3.885587994845971	compute_time=0.215484s - n_f_eval=185	saved figure 41.png in 0.774689s
+actuation=[-5.42420023]	state=[0.9879878  3.31987998]	objective=-4.502293545556697	compute_time=0.142411s - n_f_eval=125	saved figure 42.png in 0.571383s
+actuation=[-5.87876902]	state=[1.11239639 3.34342131]	objective=-5.125147093779542	compute_time=0.211626s - n_f_eval=185	saved figure 43.png in 0.741172s
+actuation=[-6.1552688]	state=[1.2266094  3.36127655]	objective=-5.730779799347429	compute_time=0.107895s - n_f_eval=124	saved figure 44.png in 0.682826s
+actuation=[-6.31710758]	state=[1.33059614 3.37402773]	objective=-6.305772460414227	compute_time=0.138050s - n_f_eval=124	saved figure 45.png in 0.551031s
+actuation=[-6.38805747]	state=[1.42445016 3.38223241]	objective=-6.840964164832278	compute_time=0.234989s - n_f_eval=163	saved figure 46.png in 0.677327s
+actuation=[-6.33417937]	state=[1.50834259 3.38639072]	objective=-7.326570146387381	compute_time=0.186992s - n_f_eval=133	saved figure 47.png in 0.659418s
+actuation=[-6.21099653]	state=[1.58261631 3.38705039]	objective=-7.759692750345602	compute_time=0.159975s - n_f_eval=123	saved figure 48.png in 0.573221s
+actuation=[-6.02536798]	state=[1.64766878 3.38470559]	objective=-8.139397324146984	compute_time=0.138667s - n_f_eval=133	saved figure 49.png in 0.461778s
+actuation=[-5.79048405]	state=[1.70395323 3.37981312]	objective=-8.466817039246354	compute_time=0.118143s - n_f_eval=142	saved figure 50.png in 0.714157s
+actuation=[-5.5130416]	state=[1.7519634  3.37279147]	objective=-8.744408125080296	compute_time=0.099375s - n_f_eval=102	saved figure 51.png in 0.591100s
+actuation=[-5.20909542]	state=[1.7922323  3.36403243]	objective=-8.975983751451112	compute_time=0.103974s - n_f_eval=92	saved figure 52.png in 0.441458s
+actuation=[-4.88617806]	state=[1.825307   3.35388847]	objective=-9.165936179588554	compute_time=0.129868s - n_f_eval=92	saved figure 53.png in 0.512335s
+actuation=[-4.52822152]	state=[1.85174205 3.34267707]	objective=-9.318494290366859	compute_time=0.053080s - n_f_eval=52	saved figure 54.png in 0.587823s
+actuation=[-4.21328989]	state=[1.87214755 3.33073724]	objective=-9.439432344258247	compute_time=0.196172s - n_f_eval=123	saved figure 55.png in 0.571065s
+actuation=[-3.86454509]	state=[1.88701054 3.31826335]	objective=-9.532780856954691	compute_time=0.055777s - n_f_eval=52	saved figure 56.png in 0.660289s
+actuation=[-3.52255122]	state=[1.89688659 3.30550103]	objective=-9.603022431319294	compute_time=0.135792s - n_f_eval=62	saved figure 57.png in 0.690562s
+actuation=[-3.19515628]	state=[1.90230706 3.29266137]	objective=-9.654254612029897	compute_time=0.098158s - n_f_eval=62	saved figure 58.png in 0.488057s
+actuation=[-2.88343299]	state=[1.90376514 3.27991292]	objective=-9.690096446092845	compute_time=0.103307s - n_f_eval=62	saved figure 59.png in 0.604577s
+actuation=[-2.58715795]	state=[1.90171719 3.26738801]	objective=-9.71370788033002	compute_time=0.094011s - n_f_eval=62	saved figure 60.png in 0.493646s
+actuation=[-2.30597003]	state=[1.89658638 3.25519001]	objective=-9.727822077788058	compute_time=0.059252s - n_f_eval=62	saved figure 61.png in 0.480002s
+actuation=[-2.03959269]	state=[1.88876595 3.24339961]	objective=-9.734777309386033	compute_time=0.103525s - n_f_eval=62	saved figure 62.png in 0.616185s
+actuation=[-1.7878459]	state=[1.87862177 3.23207947]	objective=-9.736547982180468	compute_time=0.096753s - n_f_eval=62	saved figure 63.png in 0.393485s
+actuation=[-1.55062968]	state=[1.86649419 3.22127786]	objective=-9.734775355266493	compute_time=0.087594s - n_f_eval=62	saved figure 64.png in 0.393763s
+actuation=[-1.32787516]	state=[1.85269945 3.21103131]	objective=-9.73079861785825	compute_time=0.064033s - n_f_eval=62	saved figure 65.png in 0.605646s
+actuation=[-1.10449622]	state=[1.83753073 3.20136667]	objective=-9.725930049498102	compute_time=0.195350s - n_f_eval=102	saved figure 66.png in 0.536662s
+actuation=[-0.91503054]	state=[1.82129634 3.19233998]	objective=-9.720682971659581	compute_time=0.150258s - n_f_eval=72	saved figure 67.png in 0.506496s
+actuation=[-0.74252403]	state=[1.80423443 3.18395184]	objective=-9.715626409842292	compute_time=0.098754s - n_f_eval=62	saved figure 68.png in 0.583182s
+actuation=[-0.56127599]	state=[1.78655625 3.17619183]	objective=-9.711608721379518	compute_time=0.118494s - n_f_eval=102	saved figure 69.png in 0.679196s
+actuation=[-0.42099967]	state=[1.76851025 3.16910252]	objective=-9.708420358545917	compute_time=0.293900s - n_f_eval=63	saved figure 70.png in 1.199793s
+actuation=[-0.29660034]	state=[1.75025784 3.16265501]	objective=-9.706187755983724	compute_time=0.112596s - n_f_eval=62	saved figure 71.png in 0.547842s
+actuation=[-0.15889069]	state=[1.73193695 3.15681341]	objective=-9.70546507829052	compute_time=0.200794s - n_f_eval=122	saved figure 72.png in 0.697851s
+actuation=[-0.06269989]	state=[1.71373428 3.15160635]	objective=-9.7057072455931	compute_time=0.112087s - n_f_eval=62	saved figure 73.png in 0.551810s
+actuation=[0.01915443]	state=[1.6957475  3.14698831]	objective=-9.706824433214702	compute_time=0.073863s - n_f_eval=62	saved figure 74.png in 0.498701s
+actuation=[0.11435314]	state=[1.67805385 3.14290887]	objective=-9.709159110869402	compute_time=0.214179s - n_f_eval=122	saved figure 75.png in 0.753989s
+actuation=[0.17338077]	state=[1.66077827 3.13937978]	objective=-9.71214067187576	compute_time=0.049409s - n_f_eval=53	saved figure 76.png in 0.394912s
+actuation=[0.2208746]	state=[1.64396838 3.13634865]	objective=-9.71562670727277	compute_time=0.044071s - n_f_eval=62	saved figure 77.png in 0.434154s
+actuation=[0.27998791]	state=[1.62765645 3.13376123]	objective=-9.719826290901349	compute_time=0.129706s - n_f_eval=122	saved figure 78.png in 0.725641s
+actuation=[0.30966056]	state=[1.61191595 3.13161666]	objective=-9.724273415646142	compute_time=0.072681s - n_f_eval=52	saved figure 79.png in 0.412589s
+actuation=[0.3322504]	state=[1.59675761 3.12986223]	objective=-9.728870791941704	compute_time=0.098419s - n_f_eval=62	saved figure 80.png in 0.468321s
+actuation=[0.35013778]	state=[1.5821853  3.12844924]	objective=-9.733552628169654	compute_time=0.119632s - n_f_eval=62	saved figure 81.png in 0.645619s
+actuation=[0.38019745]	state=[1.56820071 3.12733634]	objective=-9.73847689653481	compute_time=0.199996s - n_f_eval=113	saved figure 82.png in 0.604864s
+actuation=[0.38539215]	state=[1.55484434 3.12652938]	objective=-9.743295713676481	compute_time=0.055902s - n_f_eval=32	saved figure 83.png in 0.545875s
+actuation=[0.38190947]	state=[1.54210185 3.12598674]	objective=-9.747904614330988	compute_time=0.023575s - n_f_eval=23	saved figure 84.png in 0.452084s
+actuation=[0.38044011]	state=[1.52994477 3.12566015]	objective=-9.752335266888913	compute_time=0.055554s - n_f_eval=43	saved figure 85.png in 0.500054s
+actuation=[0.372833]	state=[1.51835611 3.12551932]	objective=-9.756522650863246	compute_time=0.046011s - n_f_eval=22	saved figure 86.png in 0.434228s
+actuation=[0.36924885]	state=[1.50730885 3.12552923]	objective=-9.760517927505775	compute_time=0.093976s - n_f_eval=52	saved figure 87.png in 0.562126s
+actuation=[0.35953564]	state=[1.49679058 3.12567401]	objective=-9.764263104782513	compute_time=0.041274s - n_f_eval=22	saved figure 88.png in 0.443145s
+actuation=[0.34769627]	state=[1.48677726 3.12592988]	objective=-9.767747915571382	compute_time=0.045575s - n_f_eval=22	saved figure 89.png in 0.472725s
+actuation=[0.33506937]	state=[1.47724286 3.12627436]	objective=-9.770977180470009	compute_time=0.028705s - n_f_eval=22	saved figure 90.png in 0.424948s
+actuation=[0.32217214]	state=[1.46816209 3.12668842]	objective=-9.773961140871663	compute_time=0.043818s - n_f_eval=22	saved figure 91.png in 0.526853s
+actuation=[0.30919266]	state=[1.45951116 3.12715673]	objective=-9.776711834563743	compute_time=0.016848s - n_f_eval=13	saved figure 92.png in 0.531445s
+actuation=[0.29619456]	state=[1.45126777 3.12766715]	objective=-9.779241779164527	compute_time=0.042346s - n_f_eval=13	saved figure 93.png in 0.971145s
+actuation=[0.2832411]	state=[1.44341092 3.12821016]	objective=-9.781563816804647	compute_time=0.016904s - n_f_eval=13	saved figure 94.png in 0.455867s
+actuation=[0.27025808]	state=[1.43592075 3.12877842]	objective=-9.78368997491002	compute_time=0.014309s - n_f_eval=13	saved figure 95.png in 0.478444s
+actuation=[0.25733568]	state=[1.4287781  3.12936609]	objective=-9.785632623136367	compute_time=0.015130s - n_f_eval=13	saved figure 96.png in 0.559370s
+actuation=[0.24426358]	state=[1.42196462 3.12996875]	objective=-9.787402339978005	compute_time=0.031780s - n_f_eval=12	saved figure 97.png in 0.481739s
+actuation=[0.25161615]	state=[1.41546204 3.13058253]	objective=-9.789136658423178	compute_time=0.218996s - n_f_eval=102	saved figure 98.png in 0.601346s
+actuation=[0.23490898]	state=[1.4093035  3.13125536]	objective=-9.790691712800626	compute_time=0.069121s - n_f_eval=62	saved figure 99.png in 0.577965s
+actuation=[0.21414085]	state=[1.40346228 3.13197557]	objective=-9.792057290065042	compute_time=0.064973s - n_f_eval=42	saved figure 100.png in 0.518913s
+actuation=[0.1925442]	state=[1.39790298 3.13272425]	objective=-9.793242988501959	compute_time=0.091065s - n_f_eval=42	saved figure 101.png in 0.382955s
+actuation=[0.17034651]	state=[1.39258926 3.13348272]	objective=-9.794259123937033	compute_time=0.075301s - n_f_eval=43	saved figure 102.png in 0.622959s
+actuation=[1.16256142]	state=[1.38748398 3.13423221]	objective=-9.798836758977192	compute_time=0.292310s - n_f_eval=203	saved figure 103.png in 0.782568s
+actuation=[0.91957167]	state=[1.38508611 3.13749019]	objective=-9.80055599381217	compute_time=0.250019s - n_f_eval=163	saved figure 104.png in 0.802157s
+actuation=[0.51776194]	state=[1.38480668 3.1426861 ]	objective=-9.800699283361114	compute_time=0.122542s - n_f_eval=92	saved figure 105.png in 0.545975s
+actuation=[0.13966441]	state=[1.38572118 3.14897535]	objective=-9.800214249057676	compute_time=0.294778s - n_f_eval=143	saved figure 106.png in 0.701708s
+actuation=[-0.18365622]	state=[1.3870116  3.15566733]	objective=-9.799240603889743	compute_time=0.150629s - n_f_eval=143	saved figure 107.png in 0.668610s
+actuation=[-0.45318487]	state=[1.38802355 3.16226185]	objective=-9.797517671337031	compute_time=0.201705s - n_f_eval=143	saved figure 108.png in 0.628068s
+actuation=[-0.67349033]	state=[1.38824711 3.1684131 ]	objective=-9.79466091400562	compute_time=0.258021s - n_f_eval=143	saved figure 109.png in 0.725596s
+actuation=[-0.84892507]	state=[1.38729325 3.17389389]	objective=-9.790305690767646	compute_time=0.238006s - n_f_eval=143	saved figure 110.png in 0.644098s
+actuation=[-0.98417891]	state=[1.38487457 3.17856785]	objective=-9.784175501741363	compute_time=0.151444s - n_f_eval=124	saved figure 111.png in 0.873171s
+actuation=[-1.08490397]	state=[1.38078783 3.18236641]	objective=-9.7761006015128	compute_time=0.260707s - n_f_eval=132	saved figure 112.png in 1.934135s
+actuation=[-1.151248]	state=[1.37489645 3.18526786]	objective=-9.766051811565944	compute_time=0.340017s - n_f_eval=132	saved figure 113.png in 0.777146s
+actuation=[-1.18982256]	state=[1.36712825 3.1872934 ]	objective=-9.754100399098242	compute_time=0.138692s - n_f_eval=82	saved figure 114.png in 0.559926s
+actuation=[-1.20579403]	state=[1.35745835 3.18848949]	objective=-9.740393487553733	compute_time=0.162431s - n_f_eval=132	saved figure 115.png in 0.739338s
+actuation=[-1.20006132]	state=[1.34589672 3.18891585]	objective=-9.725177091141905	compute_time=0.141003s - n_f_eval=112	saved figure 116.png in 0.448463s
+actuation=[-1.17707339]	state=[1.33248705 3.18864555]	objective=-9.70873913810018	compute_time=0.149007s - n_f_eval=122	saved figure 117.png in 0.741152s
+actuation=[-1.13876476]	state=[1.31729715 3.18775678]	objective=-9.691418293299403	compute_time=0.185532s - n_f_eval=122	saved figure 118.png in 0.601702s
+actuation=[-1.0710867]	state=[1.30041592 3.1863317 ]	objective=-9.673883159059477	compute_time=0.116131s - n_f_eval=63	saved figure 119.png in 0.704942s
+actuation=[-1.03054392]	state=[1.28199035 3.18449532]	objective=-9.655811118419171	compute_time=0.165551s - n_f_eval=102	saved figure 120.png in 0.540393s
+actuation=[-0.95412311]	state=[1.26208662 3.18227873]	objective=-9.638084411585535	compute_time=0.127550s - n_f_eval=62	saved figure 121.png in 0.673736s
+actuation=[-0.89812062]	state=[1.24085036 3.17978235]	objective=-9.620462508939472	compute_time=0.166723s - n_f_eval=102	saved figure 122.png in 0.531656s
+actuation=[-0.81455702]	state=[1.21836699 3.1770371 ]	objective=-9.603750077821621	compute_time=0.107589s - n_f_eval=52	saved figure 123.png in 0.514088s
+actuation=[-0.72952773]	state=[1.19478391 3.17412901]	objective=-9.588191969297064	compute_time=0.059180s - n_f_eval=62	saved figure 124.png in 0.561050s
+actuation=[-0.67358813]	state=[1.17024616 3.17113564]	objective=-9.573245187643494	compute_time=0.158125s - n_f_eval=122	saved figure 125.png in 0.646367s
+actuation=[-0.59092658]	state=[1.14482221 3.16805407]	objective=-9.559741810904583	compute_time=0.107223s - n_f_eval=52	saved figure 126.png in 0.655041s
+actuation=[-0.50785701]	state=[1.1186452  3.16494396]	objective=-9.547852700663192	compute_time=0.097295s - n_f_eval=62	saved figure 127.png in 0.501287s
+actuation=[-0.43000187]	state=[1.09184716 3.16186171]	objective=-9.537578186000111	compute_time=0.095880s - n_f_eval=63	saved figure 128.png in 0.461687s
+actuation=[-0.35751102]	state=[1.06454645 3.15884937]	objective=-9.5288897475497	compute_time=0.141873s - n_f_eval=72	saved figure 129.png in 0.537860s
+actuation=[-0.29083363]	state=[1.03684874 3.15593701]	objective=-9.521723928098146	compute_time=0.079528s - n_f_eval=73	saved figure 130.png in 0.852401s
+actuation=[-0.22791289]	state=[1.00884689 3.1531436 ]	objective=-9.516055130315825	compute_time=0.258943s - n_f_eval=63	saved figure 131.png in 0.977555s
+actuation=[-0.16926145]	state=[0.98062681 3.15048365]	objective=-9.5118263630506	compute_time=0.123406s - n_f_eval=63	saved figure 132.png in 0.737963s
+actuation=[-0.11474008]	state=[0.95226668 3.14796684]	objective=-9.508969565894647	compute_time=0.090066s - n_f_eval=63	saved figure 133.png in 0.489584s
+actuation=[-0.06413414]	state=[0.92383761 3.14559908]	objective=-9.50740983198941	compute_time=0.109734s - n_f_eval=63	saved figure 134.png in 0.581596s
+actuation=[-0.01688832]	state=[0.89540444 3.14338349]	objective=-9.507077043375748	compute_time=0.113869s - n_f_eval=62	saved figure 135.png in 0.493462s
+actuation=[0.02668931]	state=[0.86702725 3.1413221 ]	objective=-9.507883094039656	compute_time=0.115816s - n_f_eval=62	saved figure 136.png in 0.629350s
+actuation=[0.06662143]	state=[0.83876069 3.13941524]	objective=-9.509733146514508	compute_time=0.081396s - n_f_eval=62	saved figure 137.png in 0.553810s
+actuation=[0.10302001]	state=[0.81065404 3.13766166]	objective=-9.512529798941445	compute_time=0.054509s - n_f_eval=62	saved figure 138.png in 0.515671s
+actuation=[0.13602249]	state=[0.78275157 3.13605888]	objective=-9.5161752484038	compute_time=0.075292s - n_f_eval=62	saved figure 139.png in 0.534916s
+actuation=[0.16576514]	state=[0.75509279 3.13460341]	objective=-9.520572530397756	compute_time=0.126667s - n_f_eval=62	saved figure 140.png in 0.641386s
+actuation=[0.19238366]	state=[0.72771275 3.13329101]	objective=-9.525626611101073	compute_time=0.058299s - n_f_eval=53	saved figure 141.png in 0.404483s
+actuation=[0.21600743]	state=[0.70064233 3.13211686]	objective=-9.531245165782309	compute_time=0.081174s - n_f_eval=53	saved figure 142.png in 0.386022s
+actuation=[0.23674428]	state=[0.67390839 3.13107567]	objective=-9.537338812053763	compute_time=0.068488s - n_f_eval=52	saved figure 143.png in 0.514936s
+actuation=[0.25508503]	state=[0.64753399 3.13016168]	objective=-9.543831756514965	compute_time=0.042561s - n_f_eval=52	saved figure 144.png in 0.382194s
+actuation=[0.27071508]	state=[0.62153945 3.1293697 ]	objective=-9.550641090166406	compute_time=0.052600s - n_f_eval=52	saved figure 145.png in 0.452698s
+actuation=[0.28379387]	state=[0.59594143 3.12869397]	objective=-9.557689880504217	compute_time=0.063194s - n_f_eval=52	saved figure 146.png in 0.597915s
+actuation=[0.29443015]	state=[0.5707532  3.12812834]	objective=-9.564906147397922	compute_time=0.101196s - n_f_eval=43	saved figure 147.png in 0.513814s
+actuation=[0.30257917]	state=[0.54598479 3.12766626]	objective=-9.572219345261987	compute_time=0.075622s - n_f_eval=42	saved figure 148.png in 0.519823s
+actuation=[0.30918904]	state=[0.52164268 3.12730037]	objective=-9.57958450799976	compute_time=0.073235s - n_f_eval=42	saved figure 149.png in 0.557846s
+actuation=[0.31381728]	state=[0.49773209 3.12702453]	objective=-9.586948124035956	compute_time=0.121450s - n_f_eval=42	saved figure 150.png in 0.619291s
+actuation=[0.31641399]	state=[0.47425559 3.12683236]	objective=-9.594258168106508	compute_time=0.044785s - n_f_eval=42	saved figure 151.png in 0.448118s
+actuation=[0.31735804]	state=[0.45121294 3.12671683]	objective=-9.601474000359278	compute_time=0.083889s - n_f_eval=42	saved figure 152.png in 0.489586s
+actuation=[0.31734866]	state=[0.42860176 3.12667087]	objective=-9.608572857350488	compute_time=0.066184s - n_f_eval=43	saved figure 153.png in 1.144314s
+actuation=[0.31521052]	state=[0.40641921 3.1266888 ]	objective=-9.615507861377106	compute_time=0.275323s - n_f_eval=43	saved figure 154.png in 0.849252s
+actuation=[0.31112677]	state=[0.38465881 3.12676302]	objective=-9.62223905044927	compute_time=0.080565s - n_f_eval=23	saved figure 155.png in 0.642514s
+actuation=[0.30908626]	state=[0.3633108  3.12688421]	objective=-9.62881268406845	compute_time=0.061009s - n_f_eval=52	saved figure 156.png in 0.661303s
+actuation=[0.30412391]	state=[0.3423719 3.1270509]	objective=-9.635170692581049	compute_time=0.041242s - n_f_eval=22	saved figure 157.png in 0.326167s
+actuation=[0.29983395]	state=[0.32183267 3.12725662]	objective=-9.641331195685733	compute_time=0.094860s - n_f_eval=52	saved figure 158.png in 0.383730s
+actuation=[0.29360004]	state=[0.30168648 3.12749885]	objective=-9.64725996304071	compute_time=0.039990s - n_f_eval=22	saved figure 159.png in 0.398036s
+actuation=[0.26839875]	state=[0.28192279 3.12777207]	objective=-9.652594607414603	compute_time=0.094034s - n_f_eval=92	saved figure 160.png in 0.761652s
+actuation=[0.26355908]	state=[0.26248454 3.12802519]	objective=-9.65774257936623	compute_time=0.086602s - n_f_eval=52	saved figure 161.png in 0.541037s
+actuation=[0.26258528]	state=[0.24336634 3.1282595 ]	objective=-9.66278171432346	compute_time=0.076698s - n_f_eval=42	saved figure 162.png in 0.451084s
+actuation=[0.26199583]	state=[0.22457196 3.12848498]	objective=-9.667721575928342	compute_time=0.049964s - n_f_eval=42	saved figure 163.png in 0.592145s
+actuation=[0.26043514]	state=[0.20610567 3.12871164]	objective=-9.672546467059364	compute_time=0.093727s - n_f_eval=42	saved figure 164.png in 0.438074s
+actuation=[0.25646835]	state=[0.18796909 3.12894664]	objective=-9.677215904718803	compute_time=0.046352s - n_f_eval=22	saved figure 165.png in 0.383574s
+actuation=[0.25405952]	state=[0.17015786 3.12919117]	objective=-9.681761009968739	compute_time=0.093836s - n_f_eval=42	saved figure 166.png in 0.466209s
+actuation=[0.24917181]	state=[0.15267172 3.12945075]	objective=-9.686142040714603	compute_time=0.042871s - n_f_eval=22	saved figure 167.png in 0.572708s
+actuation=[0.24508714]	state=[0.13550446 3.12972513]	objective=-9.69037691604173	compute_time=0.047464s - n_f_eval=43	saved figure 168.png in 0.428307s
+actuation=[0.23914367]	state=[0.11865221 3.13001685]	objective=-9.694438734572675	compute_time=0.037348s - n_f_eval=22	saved figure 169.png in 0.453883s
+actuation=[0.23250721]	state=[0.10210686 3.13032449]	objective=-9.69832122242397	compute_time=0.045750s - n_f_eval=22	saved figure 170.png in 0.415739s
+actuation=[0.20686865]	state=[0.08585897 3.13064577]	objective=-9.701726029141474	compute_time=0.163981s - n_f_eval=83	saved figure 171.png in 0.680566s
+actuation=[0.20171939]	state=[0.06985198 3.13093169]	objective=-9.704990398980469	compute_time=0.043159s - n_f_eval=42	saved figure 172.png in 0.533372s
+actuation=[0.20052511]	state=[0.05408091 3.13118513]	objective=-9.708180396860831	compute_time=0.082964s - n_f_eval=42	saved figure 173.png in 0.457978s
+actuation=[0.19815723]	state=[0.03854977 3.13141713]	objective=-9.711280533446399	compute_time=0.044839s - n_f_eval=22	saved figure 174.png in 0.531365s
+actuation=[0.19825731]	state=[0.02325886 3.1316342 ]	objective=-9.71433058975349	compute_time=0.066379s - n_f_eval=42	saved figure 175.png in 0.376511s
+actuation=[0.19562986]	state=[0.00821411 3.13184795]	objective=-9.717291396506877	compute_time=0.026024s - n_f_eval=22	saved figure 176.png in 0.404495s
+actuation=[0.19361595]	state=[-0.00658571  3.13206246]	objective=-9.720174218551737	compute_time=0.085135s - n_f_eval=42	saved figure 177.png in 0.457369s
+actuation=[0.18980289]	state=[-0.02114041  3.13228319]	objective=-9.72295523982477	compute_time=0.049786s - n_f_eval=22	saved figure 178.png in 1.496201s
+actuation=[0.18593827]	state=[-0.03545426  3.13251111]	objective=-9.725636477514712	compute_time=0.181176s - n_f_eval=52	saved figure 179.png in 0.765049s
+actuation=[0.18125362]	state=[-0.04953151  3.13274739]	objective=-9.728209301783558	compute_time=0.047639s - n_f_eval=22	saved figure 180.png in 0.514031s
+actuation=[0.17624605]	state=[-0.06337828  3.13299149]	objective=-9.73067237644971	compute_time=0.067237s - n_f_eval=22	saved figure 181.png in 0.560711s
+actuation=[0.1710925]	state=[-0.07700129  3.13324248]	objective=-9.733026905638674	compute_time=0.034788s - n_f_eval=13	saved figure 182.png in 0.622347s
+actuation=[0.1658566]	state=[-0.09040745  3.13349946]	objective=-9.735274971430188	compute_time=0.015677s - n_f_eval=13	saved figure 183.png in 0.451754s
+actuation=[0.16056093]	state=[-0.10360369  3.13376162]	objective=-9.737418935311071	compute_time=0.028038s - n_f_eval=13	saved figure 184.png in 0.436999s
+actuation=[0.1552125]	state=[-0.11659695  3.13402835]	objective=-9.739461211149877	compute_time=0.016094s - n_f_eval=13	saved figure 185.png in 0.402361s
+actuation=[0.14980297]	state=[-0.12939418  3.13429912]	objective=-9.741404057951428	compute_time=0.030409s - n_f_eval=13	saved figure 186.png in 0.457327s
+actuation=[0.14445268]	state=[-0.14200235  3.13457349]	objective=-9.743251177928457	compute_time=0.021781s - n_f_eval=12	saved figure 187.png in 0.395474s
+actuation=[0.10163153]	state=[-0.1544282   3.13485135]	objective=-9.744544644859024	compute_time=0.191707s - n_f_eval=93	saved figure 188.png in 0.765399s
+actuation=[0.0999344]	state=[-0.16677206  3.13503913]	objective=-9.745795982634743	compute_time=0.042892s - n_f_eval=62	saved figure 189.png in 0.370195s
+actuation=[0.10522846]	state=[-0.17903136  3.13514619]	objective=-9.747092454703168	compute_time=0.041692s - n_f_eval=42	saved figure 190.png in 0.492118s
+actuation=[0.11180595]	state=[-0.19118825  3.13519498]	objective=-9.748449878797976	compute_time=0.030987s - n_f_eval=42	saved figure 191.png in 0.585697s
+actuation=[0.11768463]	state=[-0.20322368  3.1352072 ]	objective=-9.749859101388722	compute_time=0.135454s - n_f_eval=42	saved figure 192.png in 0.640394s
+actuation=[0.12238468]	state=[-0.21512174  3.13519992]	objective=-9.751304964551506	compute_time=0.096984s - n_f_eval=42	saved figure 193.png in 0.650678s
+actuation=[0.12444421]	state=[-0.2268704   3.13518551]	objective=-9.75275552848286	compute_time=0.044284s - n_f_eval=22	saved figure 194.png in 0.671052s
+actuation=[0.12869221]	state=[-0.23846467  3.13516874]	objective=-9.754235156240314	compute_time=0.091585s - n_f_eval=42	saved figure 195.png in 0.577798s
+actuation=[0.12982121]	state=[-0.2498943   3.13515954]	objective=-9.755707261723066	compute_time=0.045478s - n_f_eval=22	saved figure 196.png in 0.517132s
+actuation=[0.13231406]	state=[-0.26115687  3.13515989]	objective=-9.757186538039138	compute_time=0.092423s - n_f_eval=42	saved figure 197.png in 0.584871s
+actuation=[0.13219626]	state=[-0.27224638  3.1351756 ]	objective=-9.758643564102716	compute_time=0.038570s - n_f_eval=22	saved figure 198.png in 0.594685s
+actuation=[0.13279657]	state=[-0.28316311  3.13520636]	objective=-9.760086084082202	compute_time=0.087379s - n_f_eval=42	saved figure 199.png in 0.669496s
+actuation=[0.13157095]	state=[-0.29390517  3.13525447]	objective=-9.761494597466474	compute_time=0.046023s - n_f_eval=22	saved figure 200.png in 0.869295s
+actuation=[0.13086832]	state=[-0.30447488  3.13531836]	objective=-9.762875028586796	compute_time=0.187969s - n_f_eval=43	saved figure 201.png in 1.194299s
+actuation=[0.12885258]	state=[-0.31487281  3.13539863]	objective=-9.76421427762118	compute_time=0.060068s - n_f_eval=22	saved figure 202.png in 0.554518s
+actuation=[0.12634374]	state=[-0.32510244  3.13549337]	objective=-9.765508202087316	compute_time=0.015873s - n_f_eval=22	saved figure 203.png in 0.318020s
+actuation=[0.12363378]	state=[-0.33516807  3.13560026]	objective=-9.766755821144947	compute_time=0.025436s - n_f_eval=22	saved figure 204.png in 0.448781s
+actuation=[0.12082826]	state=[-0.34507415  3.13571717]	objective=-9.767957296569074	compute_time=0.020729s - n_f_eval=13	saved figure 205.png in 0.416455s
+actuation=[0.1179644]	state=[-0.35482507  3.13584231]	objective=-9.769113200896037	compute_time=0.020495s - n_f_eval=13	saved figure 206.png in 0.559401s
+actuation=[0.11505436]	state=[-0.36442514  3.13597426]	objective=-9.770224250163453	compute_time=0.017843s - n_f_eval=13	saved figure 207.png in 0.436948s
+actuation=[0.09177485]	state=[-0.37387854  3.1361119 ]	objective=-9.771101432303709	compute_time=0.150983s - n_f_eval=91	saved figure 208.png in 0.646411s
+actuation=[0.09140583]	state=[-0.38324026  3.13620347]	objective=-9.771961567073758	compute_time=0.113596s - n_f_eval=52	saved figure 209.png in 0.586581s
+actuation=[0.09492611]	state=[-0.39250783  3.13625483]	objective=-9.772841012049094	compute_time=0.071152s - n_f_eval=42	saved figure 210.png in 0.601952s
+actuation=[0.09741249]	state=[-0.4016702   3.13627925]	objective=-9.773730131777603	compute_time=0.041218s - n_f_eval=23	saved figure 211.png in 0.762749s
+actuation=[0.10228056]	state=[-0.41071992  3.13628546]	objective=-9.774649848573546	compute_time=0.079108s - n_f_eval=42	saved figure 212.png in 0.593897s
+actuation=[0.1040233]	state=[-0.4196442   3.13628685]	objective=-9.775571562449773	compute_time=0.055280s - n_f_eval=22	saved figure 213.png in 0.659469s
+actuation=[0.10730921]	state=[-0.42843853  3.13628806]	objective=-9.776508198076984	compute_time=0.085501s - n_f_eval=42	saved figure 214.png in 0.508701s
+actuation=[0.1078392]	state=[-0.43709468  3.13629737]	objective=-9.777435361719666	compute_time=0.018916s - n_f_eval=22	saved figure 215.png in 0.403658s
+actuation=[0.10927626]	state=[-0.44561128  3.13631619]	objective=-9.778360494315617	compute_time=0.055147s - n_f_eval=42	saved figure 216.png in 0.491445s
+actuation=[0.10867327]	state=[-0.45398451  3.13634854]	objective=-9.77926638631401	compute_time=0.039138s - n_f_eval=22	saved figure 217.png in 0.571210s
+actuation=[0.10732136]	state=[-0.46221543  3.13639385]	objective=-9.780147178512816	compute_time=0.021948s - n_f_eval=22	saved figure 218.png in 0.391040s
+actuation=[0.10764656]	state=[-0.47030661  3.13645033]	objective=-9.781016646686261	compute_time=0.047598s - n_f_eval=42	saved figure 219.png in 0.438938s
+actuation=[0.10614815]	state=[-0.47825613  3.13652101]	objective=-9.781860517904553	compute_time=0.039644s - n_f_eval=22	saved figure 220.png in 0.371986s
+actuation=[0.10397832]	state=[-0.48606635  3.13660491]	objective=-9.782674153253566	compute_time=0.017638s - n_f_eval=22	saved figure 221.png in 0.542179s
+actuation=[0.10154753]	state=[-0.49374097  3.13670007]	objective=-9.783456303476925	compute_time=0.047250s - n_f_eval=22	saved figure 222.png in 0.483222s
+actuation=[0.09900555]	state=[-0.50128401  3.13680454]	objective=-9.784206944606176	compute_time=0.028967s - n_f_eval=13	saved figure 223.png in 0.470157s
+actuation=[0.0964059]	state=[-0.50869948  3.13691662]	objective=-9.784926490866168	compute_time=0.014222s - n_f_eval=13	saved figure 224.png in 0.401508s
+actuation=[0.09376771]	state=[-0.51599133  3.13703493]	objective=-9.78561551496234	compute_time=0.029442s - n_f_eval=13	saved figure 225.png in 0.440352s
+actuation=[0.09110888]	state=[-0.52316339  3.13715838]	objective=-9.78627472492002	compute_time=0.043580s - n_f_eval=12	saved figure 226.png in 1.169356s
+actuation=[0.08852043]	state=[-0.53021943  3.13728612]	objective=-9.78690545912322	compute_time=0.042737s - n_f_eval=13	saved figure 227.png in 0.611631s
+actuation=[0.08580151]	state=[-0.53716288  3.13741774]	objective=-9.787507647180641	compute_time=0.033636s - n_f_eval=13	saved figure 228.png in 0.435603s
+actuation=[0.08303321]	state=[-0.54399741  3.13755269]	objective=-9.788081791277627	compute_time=0.016483s - n_f_eval=13	saved figure 229.png in 0.452850s
+actuation=[0.08270739]	state=[-0.55072671  3.13769052]	objective=-9.78864489904981	compute_time=0.101355s - n_f_eval=42	saved figure 230.png in 0.686377s
+actuation=[0.05627061]	state=[-0.55734829  3.13783702]	objective=-9.789026370779435	compute_time=0.122289s - n_f_eval=82	saved figure 231.png in 0.554256s
+actuation=[0.05627866]	state=[-0.56392486  3.13793286]	objective=-9.78940133772174	compute_time=0.096517s - n_f_eval=62	saved figure 232.png in 0.574768s
+actuation=[0.05778574]	state=[-0.57045281  3.13798525]	objective=-9.789780097628713	compute_time=0.051582s - n_f_eval=22	saved figure 233.png in 0.575251s
+actuation=[0.06309562]	state=[-0.57692602  3.13800265]	objective=-9.790187233701838	compute_time=0.085815s - n_f_eval=42	saved figure 234.png in 0.420343s
+actuation=[0.06569109]	state=[-0.58332993  3.1380009 ]	objective=-9.790605079887701	compute_time=0.029190s - n_f_eval=22	saved figure 235.png in 0.326625s
+actuation=[0.06987596]	state=[-0.58965763  3.13798736]	objective=-9.791043226984854	compute_time=0.061748s - n_f_eval=42	saved figure 236.png in 0.321568s
+actuation=[0.07145364]	state=[-0.5958987   3.13797239]	objective=-9.791484922819807	compute_time=0.015663s - n_f_eval=22	saved figure 237.png in 0.472551s
+actuation=[0.07396444]	state=[-0.60204952  3.13795927]	objective=-9.791935508061371	compute_time=0.048439s - n_f_eval=42	saved figure 238.png in 0.455365s
+actuation=[0.07448587]	state=[-0.60810419  3.13795355]	objective=-9.792382613436915	compute_time=0.017520s - n_f_eval=22	saved figure 239.png in 0.422524s
+actuation=[0.07427885]	state=[-0.61406173  3.13795588]	objective=-9.79282184526614	compute_time=0.015876s - n_f_eval=22	saved figure 240.png in 0.447794s
+actuation=[0.07587404]	state=[-0.61992278  3.13796548]	objective=-9.793263620262396	compute_time=0.042372s - n_f_eval=42	saved figure 241.png in 0.591180s
+actuation=[0.07555776]	state=[-0.62568331  3.13798643]	objective=-9.793696781566167	compute_time=0.047495s - n_f_eval=22	saved figure 242.png in 0.467403s
+actuation=[0.07454156]	state=[-0.63134388  3.13801843]	objective=-9.794117505193862	compute_time=0.049331s - n_f_eval=22	saved figure 243.png in 0.467926s
+actuation=[0.07325852]	state=[-0.6369065   3.13805996]	objective=-9.794524556871957	compute_time=0.045356s - n_f_eval=22	saved figure 244.png in 0.444471s
+actuation=[0.0718664]	state=[-0.64237361  3.13810937]	objective=-9.79491763785228	compute_time=0.030732s - n_f_eval=13	saved figure 245.png in 0.583375s
+actuation=[0.07042142]	state=[-0.64774766  3.13816523]	objective=-9.795296784877998	compute_time=0.027926s - n_f_eval=13	saved figure 246.png in 0.396074s
+actuation=[0.0689442]	state=[-0.65303105  3.13822635]	objective=-9.795662161799143	compute_time=0.030031s - n_f_eval=13	saved figure 247.png in 0.389497s
+actuation=[0.0707509]	state=[-0.65822612  3.13829177]	objective=-9.796030873015459	compute_time=0.056007s - n_f_eval=31	saved figure 248.png in 0.401080s
+actuation=[0.0696525]	state=[-0.66332684  3.138369  ]	objective=-9.796388074511995	compute_time=0.023796s - n_f_eval=22	saved figure 249.png in 0.462858s
+actuation=[0.06754166]	state=[-0.66833435  3.13845852]	objective=-9.796729047676989	compute_time=0.025652s - n_f_eval=22	saved figure 250.png in 0.530955s
+actuation=[0.06504975]	state=[-0.67325204  3.13855882]	objective=-9.797052405830232	compute_time=0.044675s - n_f_eval=22	saved figure 251.png in 0.449410s
+actuation=[0.06240975]	state=[-0.67808395  3.13866806]	objective=-9.797357966313497	compute_time=0.013858s - n_f_eval=13	saved figure 252.png in 0.452438s
+actuation=[0.05970532]	state=[-0.68283421  3.13878458]	objective=-9.79764596748862	compute_time=0.019570s - n_f_eval=13	saved figure 253.png in 0.971416s
+actuation=[0.05695921]	state=[-0.68750691  3.13890695]	objective=-9.797916757154205	compute_time=0.058240s - n_f_eval=13	saved figure 254.png in 0.921049s
+actuation=[0.05421183]	state=[-0.69210606  3.13903403]	objective=-9.798170861881859	compute_time=0.032036s - n_f_eval=12	saved figure 255.png in 0.652392s
+actuation=[0.05139369]	state=[-0.69663552  3.13916495]	objective=-9.798408481904122	compute_time=0.032430s - n_f_eval=13	saved figure 256.png in 0.472159s
+actuation=[0.04861518]	state=[-0.70109922  3.1392989 ]	objective=-9.798630297991483	compute_time=0.030102s - n_f_eval=13	saved figure 257.png in 0.422004s
+actuation=[0.04546132]	state=[-0.70550091  3.13943535]	objective=-9.798835159892864	compute_time=0.025372s - n_f_eval=12	saved figure 258.png in 0.391008s
+actuation=[0.0151532]	state=[-0.70984518  3.13957298]	objective=-9.798906115531228	compute_time=0.130754s - n_f_eval=93	saved figure 259.png in 0.696000s
+actuation=[0.01518236]	state=[-0.71420446  3.13964271]	objective=-9.79897452104623	compute_time=0.048352s - n_f_eval=53	saved figure 260.png in 0.521208s
+actuation=[0.02037547]	state=[-0.71857529  3.13965137]	objective=-9.799063450617918	compute_time=0.083391s - n_f_eval=42	saved figure 261.png in 0.487515s
+actuation=[0.02464384]	state=[-0.722943    3.13961535]	objective=-9.799169217631736	compute_time=0.032124s - n_f_eval=22	saved figure 262.png in 0.606048s
+actuation=[0.03226324]	state=[-0.72729668  3.13954576]	objective=-9.79930628189686	compute_time=0.089161s - n_f_eval=42	saved figure 263.png in 0.524785s
+actuation=[0.0365477]	state=[-0.73161819  3.13945987]	objective=-9.799459895803999	compute_time=0.051538s - n_f_eval=22	saved figure 264.png in 0.380153s
+actuation=[0.04256401]	state=[-0.73589851  3.13936499]	objective=-9.799636937465616	compute_time=0.039162s - n_f_eval=42	saved figure 265.png in 0.429551s
+actuation=[0.04558467]	state=[-0.74012471  3.13927194]	objective=-9.799824178277369	compute_time=0.043196s - n_f_eval=22	saved figure 266.png in 0.523161s
+actuation=[0.04989264]	state=[-0.74429156  3.13918361]	objective=-9.800026447414076	compute_time=0.077370s - n_f_eval=42	saved figure 267.png in 0.458523s
+actuation=[0.05174334]	state=[-0.74839058  3.13910623]	objective=-9.80023317266919	compute_time=0.034949s - n_f_eval=22	saved figure 268.png in 0.428768s
+actuation=[0.05270151]	state=[-0.75241929  3.13904009]	objective=-9.800440499470861	compute_time=0.049084s - n_f_eval=22	saved figure 269.png in 0.431980s
+actuation=[0.0561192]	state=[-0.75637722  3.13898378]	objective=-9.800657789103074	compute_time=0.085703s - n_f_eval=42	saved figure 270.png in 0.553073s
+actuation=[0.05699527]	state=[-0.76025743  3.1389426 ]	objective=-9.800874775960997	compute_time=0.039520s - n_f_eval=22	saved figure 271.png in 0.392116s
+actuation=[0.05694962]	state=[-0.76405911  3.138916  ]	objective=-9.801087851282947	compute_time=0.035652s - n_f_eval=22	saved figure 272.png in 0.322206s
+actuation=[0.05656082]	state=[-0.76778338  3.13890182]	objective=-9.801295744537189	compute_time=0.045144s - n_f_eval=22	saved figure 273.png in 0.335115s
+actuation=[0.0560401]	state=[-0.77143188  3.13889781]	objective=-9.801498025108428	compute_time=0.014542s - n_f_eval=13	saved figure 274.png in 0.536554s
+actuation=[0.05546267]	state=[-0.77500625  3.13890195]	objective=-9.801694561091773	compute_time=0.011233s - n_f_eval=13	saved figure 275.png in 0.432421s
+actuation=[0.05485808]	state=[-0.77850803  3.13891261]	objective=-9.801885340471676	compute_time=0.018091s - n_f_eval=13	saved figure 276.png in 0.496356s
+actuation=[0.05924605]	state=[-0.78193863  3.13892848]	objective=-9.802087201423078	compute_time=0.050947s - n_f_eval=32	saved figure 277.png in 0.445755s
+actuation=[0.05929622]	state=[-0.78528682  3.13896106]	objective=-9.802285204984926	compute_time=0.021471s - n_f_eval=22	saved figure 278.png in 0.435689s
+actuation=[0.05779003]	state=[-0.78855209  3.13901124]	objective=-9.802474371562452	compute_time=0.034722s - n_f_eval=22	saved figure 279.png in 0.569036s
+actuation=[0.05570608]	state=[-0.7917374   3.13907686]	objective=-9.802653158464238	compute_time=0.026790s - n_f_eval=22	saved figure 280.png in 1.079067s
+actuation=[0.05340822]	state=[-0.79484673  3.13915517]	objective=-9.802821263366608	compute_time=0.116408s - n_f_eval=22	saved figure 281.png in 0.680964s
+actuation=[0.05102855]	state=[-0.79788423  3.13924364]	objective=-9.80297881955147	compute_time=0.022357s - n_f_eval=13	saved figure 282.png in 0.469219s
+actuation=[0.04861233]	state=[-0.80085391  3.13934017]	objective=-9.803126103080809	compute_time=0.017921s - n_f_eval=13	saved figure 283.png in 0.599409s
+actuation=[0.0461961]	state=[-0.80375965  3.13944305]	objective=-9.803263493660213	compute_time=0.025029s - n_f_eval=10	saved figure 284.png in 0.523671s
+actuation=[0.04372782]	state=[-0.80660512  3.13955097]	objective=-9.803391216281742	compute_time=0.025140s - n_f_eval=13	saved figure 285.png in 0.381015s
+actuation=[0.04130254]	state=[-0.80939397  3.13966281]	objective=-9.803509752990934	compute_time=0.014141s - n_f_eval=13	saved figure 286.png in 0.437714s
+actuation=[0.0387485]	state=[-0.81212963  3.13977779]	objective=-9.803619103919184	compute_time=0.010667s - n_f_eval=12	saved figure 287.png in 0.454987s
+actuation=[0.03634086]	state=[-0.81481572  3.13989502]	objective=-9.803719998589816	compute_time=0.013202s - n_f_eval=13	saved figure 288.png in 0.522980s
+actuation=[0.03377769]	state=[-0.81745546  3.14001411]	objective=-9.803812345369733	compute_time=0.010189s - n_f_eval=12	saved figure 289.png in 0.349987s
+actuation=[0.02680824]	state=[-0.82005237  3.14013441]	objective=-9.80388515753254	compute_time=0.028068s - n_f_eval=42	saved figure 290.png in 0.353680s
+actuation=[0.02375751]	state=[-0.82262096  3.14024432]	objective=-9.803948897942039	compute_time=0.050735s - n_f_eval=22	saved figure 291.png in 0.362432s
+actuation=[0.02212038]	state=[-0.82516592  3.14034213]	objective=-9.804007415325545	compute_time=0.043332s - n_f_eval=22	saved figure 292.png in 0.579082s
+actuation=[0.02099019]	state=[-0.82768862  3.14042912]	objective=-9.804062180816638	compute_time=0.036996s - n_f_eval=22	saved figure 293.png in 0.426194s
+actuation=[0.02003671]	state=[-0.83018951  3.14050727]	objective=-9.804113788193598	compute_time=0.022342s - n_f_eval=22	saved figure 294.png in 0.367875s
+actuation=[0.01914067]	state=[-0.83266884  3.14057847]	objective=-9.804162502933663	compute_time=0.016459s - n_f_eval=13	saved figure 295.png in 0.452587s
+actuation=[0.01826005]	state=[-0.83512692  3.14064429]	objective=-9.804208465672923	compute_time=0.014810s - n_f_eval=13	saved figure 296.png in 0.421163s
+actuation=[0.01737943]	state=[-0.83756421  3.14070604]	objective=-9.804251764577053	compute_time=0.008545s - n_f_eval=10	saved figure 297.png in 0.520175s
+actuation=[0.01646651]	state=[-0.83998131  3.14076473]	objective=-9.804292399499897	compute_time=0.027851s - n_f_eval=13	saved figure 298.png in 0.445359s
+actuation=[0.01557323]	state=[-0.84237898  3.14082111]	objective=-9.804330487100483	compute_time=0.009686s - n_f_eval=13	saved figure 299.png in 0.435128s
+saving logs ...	
