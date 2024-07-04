@@ -4,8 +4,7 @@ from os import mkdir, path, remove
 from time import perf_counter, time
 
 from cycler import cycler
-from matplotlib import pyplot as plt
-from numpy import array, concatenate, cos, cross, cumsum, diag, eye, multiply, pi, sin, tan
+from numpy import array, concatenate, cos, cross, cumsum, diag, eye, multiply, sin, tan
 from numpy.linalg import inv
 from PIL import Image
 from scipy.spatial.transform import Rotation
@@ -100,29 +99,31 @@ if __name__ == "__main__":
 	time_step = 0.025
 
 	state = array( [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ] )
-	trajectory = [ (time_step * .25 * n_frames, [ 0., 0., 1., 0., 0., pi ]),
-								 (time_step * .50 * n_frames, [ 1., 1., 1., 0., 0., -pi ]),
-								 (time_step * .75 * n_frames, [ -1., -1., 1., 0., 0., pi ]),
-								 (time_step * 1. * n_frames, [ 0., 0., 0., 0., 0., 0. ]) ]
+	trajectory = [ (time_step * 0.0 * n_frames, [ 0., 0., 0., 0., 0., 0. ]),
+								 (time_step * .25 * n_frames, [ 0., 0., 1., 0., 0., 0. ]),
+								 (time_step * .50 * n_frames, [ 0., 0., 1., 0., 0., -pi ]),
+								 (time_step * .75 * n_frames, [ -1., -1., 1., 0., 0., -pi ]),
+								 (time_step * 1.0 * n_frames, [ 0., 0., 1., 0., 0., 0. ]) ]
+	trajectory = generate_trajectory( trajectory, n_frames )
 	actuation = array( [ 0., 0., 0., 0., 0., 0. ] )
 
 	model_kwargs = { 'robot_configuration': bluerov_configuration }
 
 	sequence_time = n_frames * time_step
 
-	base_optimization_horizon = 80
+	base_optimization_horizon = 40
 	optimization_horizon = base_optimization_horizon
 	time_steps_per_actuation = 40
-	result_shape = (optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ])
+	result_shape = (optimization_horizon // time_steps_per_actuation + (
+			1 if optimization_horizon % time_steps_per_actuation != 0 else 0), actuation.shape[ 0 ])
 
 	result = zeros( result_shape )
 
-	optimization_horizon_lower_bound = 50
-
-	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
+	pose_weight_matrix = 100 * eye( state.shape[ 0 ] // 2 )
 	pose_weight_matrix[ :3, :3 ] *= 2.
-	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
-	actuation_weight_matrix[ :3, :3 ] *= .01
+	actuation_weight_matrix = zeros( (actuation.shape[ 0 ], actuation.shape[ 0 ]) )
+	# actuation_weight_matrix = eye( actuation.shape[ 0 ] )
+	# actuation_weight_matrix[ :3, :3 ] *= .001
 
 	command_upper_bound = 50
 	command_lower_bound = -50
@@ -133,7 +134,7 @@ if __name__ == "__main__":
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
 			'model_kwargs'            : model_kwargs,
-			'target_pose'             : trajectory[ 0 ][ 1 ],
+			'target_trajectory'       : trajectory,
 			'optimization_horizon'    : optimization_horizon,
 			'prediction_horizon'      : 0,
 			'time_step'               : time_step,
@@ -142,7 +143,7 @@ if __name__ == "__main__":
 			'pose_weight_matrix'      : pose_weight_matrix,
 			'actuation_weight_matrix' : actuation_weight_matrix,
 			'objective_weight'        : 0.,
-			'final_cost_weight'       : 1.,
+			'final_cost_weight'       : 10.,
 			'state_record'            : [ ],
 			'actuation_record'        : [ ],
 			'objective_record'        : None,
@@ -150,20 +151,16 @@ if __name__ == "__main__":
 			}
 
 	other_config = {
-			'max_iter'                        : max_iter,
-			'tolerance'                       : tolerance,
-			'n_frames'                        : n_frames,
-			'trajectory'                      : trajectory,
-			'optimization_horizon_lower_bound': optimization_horizon_lower_bound,
-			'command_upper_bound'             : command_upper_bound,
-			'command_lower_bound'             : command_lower_bound,
+			'max_iter'           : max_iter,
+			'tolerance'          : tolerance,
+			'n_frames'           : n_frames,
+			'trajectory'         : trajectory,
+			'command_upper_bound': command_upper_bound,
+			'command_lower_bound': command_lower_bound,
 			}
 
 	previous_states_record = [ deepcopy( state ) ]
 	previous_actuation_record = [ deepcopy( actuation ) ]
-	previous_target_record = [ ]
-
-	note = ''
 
 	folder = (f'./plots/{robot.__name__}_'
 						f'{int( time() )}')
@@ -186,19 +183,8 @@ if __name__ == "__main__":
 
 	for frame in range( n_frames ):
 
-		if optimization_horizon > optimization_horizon_lower_bound:
-			optimization_horizon -= 1
-
-		for index in range( len( previous_target_record ) + 1, len( trajectory ) ):
-			if trajectory[ index - 1 ][ 0 ] < frame * time_step:
-				previous_target_record.append( trajectory[ index - 1 ] )
-				mpc_config[ 'target_pose' ] = trajectory[ index ][ 1 ]
-				optimization_horizon = base_optimization_horizon
-				break
-
-		mpc_config[ 'optimization_horizon' ] = optimization_horizon
-		mpc_config[ 'candidate_shape' ] = (
-				optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ])
+		mpc_config[ 'target_trajectory' ] = [ (p[ 0 ] - frame * time_step, p[ 1 ]) for p in
+																					trajectory ]
 
 		mpc_config[ 'state_record' ] = [ ]
 		mpc_config[ 'actuation_record' ] = [ ]
@@ -215,14 +201,16 @@ if __name__ == "__main__":
 		result = optimize(
 				cost_function = model_predictive_control_cost_function,
 				cost_kwargs = mpc_config,
-				initial_guess = result,
+				initial_guess = zeros( result_shape ),
+				# result,
 				tolerance = tolerance,
 				max_iter = max_iter,
 				constraints = NonlinearConstraint(
 						lambda x: (actuation + cumsum(
-								x.reshape( mpc_config[ 'candidate_shape' ] ), axis = 0
+								x.reshape( result_shape ), axis = 0
 								)).flatten(), command_lower_bound, command_upper_bound
-						)
+						),
+				# verbose = True
 				)
 
 		actuation += result[ 0 ]
@@ -292,46 +280,9 @@ if __name__ == "__main__":
 		fig.suptitle( f"{frame + 1}/{n_frames} - {compute_time=:.6f}s - {n_f_eval=}" )
 
 		state_r = Rotation.from_euler( 'xyz', state[ 3:6 ] ).as_matrix()
-		target_r = Rotation.from_euler( 'xyz', mpc_config[ 'target_pose' ][ 3: ] ).as_matrix()
 
 		quiver_scale = .5
 		view.quiver( *state[ :3 ], *(state_r @ (quiver_scale * array( [ 1., 0., 0. ] ))) )
-		view.quiver(
-				*mpc_config[ 'target_pose' ][ :3 ],
-				*(target_r @ (quiver_scale * array( [ 1., 0., 0. ] ))),
-				color = 'r'
-				)
-
-		t1 = 0.
-		timespan = time_prediction[ -1 ] - time_previous[ 0 ]
-		for index in range( len( previous_target_record ) ):
-			t2 = (previous_target_record[ index ][ 0 ] - 2 * time_step) / timespan
-			ax_pos.axhline(
-					previous_target_record[ index ][ 1 ][ 0 ], t1, t2, color = 'b', linestyle = ':'
-					)
-			ax_pos.axhline(
-					previous_target_record[ index ][ 1 ][ 1 ], t1, t2, color = 'r', linestyle = ':'
-					)
-			ax_pos.axhline(
-					previous_target_record[ index ][ 1 ][ 2 ], t1, t2, color = 'g', linestyle = ':'
-					)
-			ax_ang.axhline(
-					previous_target_record[ index ][ 1 ][ 3 ], t1, t2, color = 'b', linestyle = ':'
-					)
-			ax_ang.axhline(
-					previous_target_record[ index ][ 1 ][ 4 ], t1, t2, color = 'r', linestyle = ':'
-					)
-			ax_ang.axhline(
-					previous_target_record[ index ][ 1 ][ 5 ], t1, t2, color = 'g', linestyle = ':'
-					)
-			t1 = t2 + time_step
-
-		ax_pos.axhline( mpc_config[ 'target_pose' ][ 0 ], t1, 1, color = 'b', linestyle = ':' )
-		ax_pos.axhline( mpc_config[ 'target_pose' ][ 1 ], t1, 1, color = 'r', linestyle = ':' )
-		ax_pos.axhline( mpc_config[ 'target_pose' ][ 2 ], t1, 1, color = 'g', linestyle = ':' )
-		ax_ang.axhline( mpc_config[ 'target_pose' ][ 3 ], t1, 1, color = 'b', linestyle = ':' )
-		ax_ang.axhline( mpc_config[ 'target_pose' ][ 4 ], t1, 1, color = 'r', linestyle = ':' )
-		ax_ang.axhline( mpc_config[ 'target_pose' ][ 5 ], t1, 1, color = 'g', linestyle = ':' )
 
 		view.plot(
 				array( previous_states_record )[ :, 0 ],
@@ -339,6 +290,13 @@ if __name__ == "__main__":
 				array( previous_states_record )[ :, 2 ],
 				'b'
 				)
+
+		trajectory_time = [ p[ 0 ] for p in mpc_config[ 'target_trajectory' ] ]
+		trajectory_pos = array( [ p[ 1 ][ :3 ] for p in mpc_config[ 'target_trajectory' ] ] )
+		trajectory_ang = array( [ p[ 1 ][ 3: ] for p in mpc_config[ 'target_trajectory' ] ] )
+
+		ax_pos.plot( trajectory_time, trajectory_pos, ':' )
+		ax_ang.plot( trajectory_time, trajectory_ang, ':' )
 
 		previous_pos_record_array = array( previous_states_record )[ :, :3 ]
 		previous_ang_record_array = array( previous_states_record )[ :, 3:6 ]
