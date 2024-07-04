@@ -110,9 +110,9 @@ if __name__ == "__main__":
 
 	sequence_time = n_frames * time_step
 
-	base_optimization_horizon = 25
+	base_optimization_horizon = 80
 	optimization_horizon = base_optimization_horizon
-	time_steps_per_actuation = 5
+	time_steps_per_actuation = 40
 	result_shape = (optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ])
 
 	result = zeros( result_shape )
