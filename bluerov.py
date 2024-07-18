@@ -9,49 +9,11 @@ from numpy.linalg import inv
 from PIL import Image
 from scipy.spatial.transform import Rotation
 
+import matplotlib.pyplot as plt
+
 from mpc import *
 
-mass = 11.5
-inertial_coefficients = array( [ .16, .16, .16, 0.0, 0.0, 0.0 ] )
-center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
-inertial_matrix = eye( 6 )
-for i in range( 3 ):
-	inertial_matrix[ i, i ] = mass
-	inertial_matrix[ i + 3, i + 3 ] = inertial_coefficients[ i ]
-inertial_matrix[ 0, 4 ] = mass * center_of_mass[ 2 ]
-inertial_matrix[ 0, 5 ] = - mass * center_of_mass[ 1 ]
-inertial_matrix[ 1, 3 ] = - mass * center_of_mass[ 2 ]
-inertial_matrix[ 1, 5 ] = mass * center_of_mass[ 0 ]
-inertial_matrix[ 2, 3 ] = mass * center_of_mass[ 1 ]
-inertial_matrix[ 2, 4 ] = - mass * center_of_mass[ 0 ]
-inertial_matrix[ 4, 0 ] = mass * center_of_mass[ 2 ]
-inertial_matrix[ 5, 0 ] = - mass * center_of_mass[ 1 ]
-inertial_matrix[ 3, 1 ] = - mass * center_of_mass[ 2 ]
-inertial_matrix[ 5, 1 ] = mass * center_of_mass[ 0 ]
-inertial_matrix[ 3, 2 ] = mass * center_of_mass[ 1 ]
-inertial_matrix[ 4, 2 ] = - mass * center_of_mass[ 0 ]
-inertial_matrix[ 3, 4 ] = - inertial_coefficients[ 3 ]
-inertial_matrix[ 3, 5 ] = - inertial_coefficients[ 4 ]
-inertial_matrix[ 4, 5 ] = - inertial_coefficients[ 5 ]
-inertial_matrix[ 4, 3 ] = - inertial_coefficients[ 3 ]
-inertial_matrix[ 5, 3 ] = - inertial_coefficients[ 4 ]
-inertial_matrix[ 5, 4 ] = - inertial_coefficients[ 5 ]
 
-bluerov_configuration = {
-		"mass"                     : mass,
-		"center_of_mass"           : center_of_mass,
-		"buoyancy"                 : 120.0,
-		"center_of_volume"         : array( [ 0.0, 0.0, - 0.02 ] ),
-		"inertial_matrix_inv"      : inv( inertial_matrix ),
-		"hydrodynamic_coefficients": array(
-				[ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
-				),
-		"robot_max_actuation"      : array( [ 40, 40, 40, 40, 40, 40 ] ),
-		"robot_max_actuation_ramp" : array( [ 80, 80, 80, 80, 80, 80 ] )
-		}
-
-
-# double pendulum with cart
 def robot(
 		x: ndarray, u: ndarray, robot_configuration
 		) -> ndarray:
@@ -79,16 +41,50 @@ def robot(
 	center_of_volume = robot_configuration[ "center_of_volume" ]
 	Fw = mass * array( [ 0, 0, 9.80665 ] )
 	Fb = buoyancy * array( [ 0, 0, -1 ] )
-	S = zeros( 6 )
-	S[ :3 ] = J[ :3, :3 ].T @ (Fw + Fb)
-	S[ 3: ] = J[ :3, :3 ].T @ (cross( center_of_mass, Fw ) + cross( center_of_volume, Fb ))
+	s = zeros( 6 )
+	s[ :3 ] = J[ :3, :3 ].T @ (Fw + Fb)
+	s[ 3: ] = (
+			cross( center_of_mass, J[ :3, :3 ].T @ Fw ) + cross( center_of_volume, J[ :3, :3 ].T @ Fb ))
 
 	I_inv = robot_configuration[ 'inertial_matrix_inv' ]
 	xdot = zeros( x.shape )
 	xdot[ :6 ] = J @ x[ 6: ]
-	xdot[ 6: ] = I_inv @ (D @ x[ 6: ] + S + u)
+	xdot[ 6: ] = I_inv @ (D @ x[ 6: ] + s + u)
 
 	return xdot
+
+
+def robot_objective(
+		x: ndarray, u: ndarray, robot_configuration
+		):
+	return - norm( x[ 6: ] )
+
+
+def build_inertial_matrix( mass: float, inertial_coefficients: list[ float ] ):
+	inertial_matrix = eye( 6 )
+	for i in range( 3 ):
+		inertial_matrix[ i, i ] = mass
+		inertial_matrix[ i + 3, i + 3 ] = inertial_coefficients[ i ]
+	inertial_matrix[ 0, 4 ] = mass * center_of_mass[ 2 ]
+	inertial_matrix[ 0, 5 ] = - mass * center_of_mass[ 1 ]
+	inertial_matrix[ 1, 3 ] = - mass * center_of_mass[ 2 ]
+	inertial_matrix[ 1, 5 ] = mass * center_of_mass[ 0 ]
+	inertial_matrix[ 2, 3 ] = mass * center_of_mass[ 1 ]
+	inertial_matrix[ 2, 4 ] = - mass * center_of_mass[ 0 ]
+	inertial_matrix[ 4, 0 ] = mass * center_of_mass[ 2 ]
+	inertial_matrix[ 5, 0 ] = - mass * center_of_mass[ 1 ]
+	inertial_matrix[ 3, 1 ] = - mass * center_of_mass[ 2 ]
+	inertial_matrix[ 5, 1 ] = mass * center_of_mass[ 0 ]
+	inertial_matrix[ 3, 2 ] = mass * center_of_mass[ 1 ]
+	inertial_matrix[ 4, 2 ] = - mass * center_of_mass[ 0 ]
+	inertial_matrix[ 3, 4 ] = - inertial_coefficients[ 3 ]
+	inertial_matrix[ 3, 5 ] = - inertial_coefficients[ 4 ]
+	inertial_matrix[ 4, 5 ] = - inertial_coefficients[ 5 ]
+	inertial_matrix[ 4, 3 ] = - inertial_coefficients[ 3 ]
+	inertial_matrix[ 5, 3 ] = - inertial_coefficients[ 4 ]
+	inertial_matrix[ 5, 4 ] = - inertial_coefficients[ 5 ]
+
+	return inertial_matrix
 
 
 if __name__ == "__main__":
@@ -98,32 +94,55 @@ if __name__ == "__main__":
 	tolerance = 1e-6
 	time_step = 0.025
 
+	sequence_time = n_frames * time_step
 	state = array( [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ] )
-	trajectory = [ (time_step * 0.0 * n_frames, [ 0., 0., 0., 0., 0., 0. ]),
-								 (time_step * .25 * n_frames, [ 0., 0., 1., 0., 0., 0. ]),
-								 (time_step * .50 * n_frames, [ 0., 0., 1., 0., 0., -pi ]),
-								 (time_step * .75 * n_frames, [ -1., -1., 1., 0., 0., -pi ]),
-								 (time_step * 1.0 * n_frames, [ 0., 0., 1., 0., 0., 0. ]) ]
-	trajectory = generate_trajectory( trajectory, n_frames )
 	actuation = array( [ 0., 0., 0., 0., 0., 0. ] )
+
+	base_optimization_horizon = 25
+	optimization_horizon = base_optimization_horizon
+	time_steps_per_actuation = 5
+	result_shape = (optimization_horizon // time_steps_per_actuation + (
+			1 if optimization_horizon % time_steps_per_actuation != 0 else 0), actuation.shape[ 0 ])
+	result = zeros( result_shape )
+
+	trajectory = [ (time_step * 0.0 * n_frames, [ 0., 0., 0., 0., 0., 0. ]),
+								 (time_step * .2 * n_frames, [ 0., 0., 1., 0., 0., 0. ]),
+								 (time_step * .4 * n_frames, [ 0., 0., 1., 0., 0., -pi ]),
+								 (time_step * .6 * n_frames, [ -1., -1., 1., 0., 0., -pi ]),
+								 (time_step * .8 * n_frames, [ -1., -1., 0., 0., 0., -pi ]),
+								 (time_step * 1.0 * n_frames, [ 0., 0., 0., 0., 0., 0. ]),
+								 (time_step * (n_frames + optimization_horizon), [ 0., 0., 0., 0., 0., 0. ]) ]
+
+	trajectory = generate_trajectory(
+			trajectory, n_frames // 20 + 1 if n_frames % 20 != 0 else 0
+			)
+	target_pose = trajectory[ 0 ][ 1 ]
+
+	mass = 11.5
+	inertial_coefficients = [ .16, .16, .16, 0.0, 0.0, 0.0 ]
+	center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
+	inertial_matrix = build_inertial_matrix( mass, inertial_coefficients )
+
+	bluerov_configuration = {
+			"mass"                     : mass,
+			"center_of_mass"           : center_of_mass,
+			"buoyancy"                 : 120.0,
+			"center_of_volume"         : array( [ 0.0, 0.0, - 0.02 ] ),
+			"inertial_matrix_inv"      : inv( inertial_matrix ),
+			"hydrodynamic_coefficients": array(
+					[ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+					),
+			"robot_max_actuation"      : array( [ 40, 40, 40, 40, 40, 40 ] ),
+			"robot_max_actuation_ramp" : array( [ 80, 80, 80, 80, 80, 80 ] )
+			}
 
 	model_kwargs = { 'robot_configuration': bluerov_configuration }
 
-	sequence_time = n_frames * time_step
-
-	base_optimization_horizon = 40
-	optimization_horizon = base_optimization_horizon
-	time_steps_per_actuation = 40
-	result_shape = (optimization_horizon // time_steps_per_actuation + (
-			1 if optimization_horizon % time_steps_per_actuation != 0 else 0), actuation.shape[ 0 ])
-
-	result = zeros( result_shape )
-
-	pose_weight_matrix = 100 * eye( state.shape[ 0 ] // 2 )
+	pose_weight_matrix = eye( actuation.shape[ 0 ] )
 	pose_weight_matrix[ :3, :3 ] *= 2.
-	actuation_weight_matrix = zeros( (actuation.shape[ 0 ], actuation.shape[ 0 ]) )
-	# actuation_weight_matrix = eye( actuation.shape[ 0 ] )
-	# actuation_weight_matrix[ :3, :3 ] *= .001
+	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
+	actuation_weight_matrix[ :3, :3 ] *= 0.01
+	final_cost_weight_matrix = eye( actuation.shape[ 0 ] )
 
 	command_upper_bound = 50
 	command_lower_bound = -50
@@ -139,11 +158,11 @@ if __name__ == "__main__":
 			'prediction_horizon'      : 0,
 			'time_step'               : time_step,
 			'time_steps_per_actuation': time_steps_per_actuation,
-			'objective_function'      : None,
+			'objective_function'      : robot_objective,
 			'pose_weight_matrix'      : pose_weight_matrix,
 			'actuation_weight_matrix' : actuation_weight_matrix,
+			'final_cost_weight_matrix': final_cost_weight_matrix,
 			'objective_weight'        : 0.,
-			'final_cost_weight'       : 10.,
 			'state_record'            : [ ],
 			'actuation_record'        : [ ],
 			'objective_record'        : None,
@@ -154,7 +173,6 @@ if __name__ == "__main__":
 			'max_iter'           : max_iter,
 			'tolerance'          : tolerance,
 			'n_frames'           : n_frames,
-			'trajectory'         : trajectory,
 			'command_upper_bound': command_upper_bound,
 			'command_lower_bound': command_lower_bound,
 			}
@@ -191,26 +209,24 @@ if __name__ == "__main__":
 
 		logger.log( f"frame {frame + 1}/{n_frames}" )
 
-		result = result[ 1:mpc_config[ 'candidate_shape' ][ 0 ] ]
-		difference = result.shape[ 0 ] - mpc_config[ 'candidate_shape' ][ 0 ]
-		if difference < 0:
-			result = concatenate( (result, array( [ [ 0., 0., 0., 0., 0., 0. ] ] * abs( difference ) )) )
+		result = concatenate( (result[ 1: ], array( [ [ 0., 0., 0., 0., 0., 0. ] ] )) )
 
 		ti = perf_counter()
 
 		result = optimize(
 				cost_function = model_predictive_control_cost_function,
 				cost_kwargs = mpc_config,
-				initial_guess = zeros( result_shape ),
-				# result,
+				initial_guess = result,
 				tolerance = tolerance,
 				max_iter = max_iter,
-				constraints = NonlinearConstraint(
-						lambda x: (actuation + cumsum(
-								x.reshape( result_shape ), axis = 0
-								)).flatten(), command_lower_bound, command_upper_bound
-						),
-				# verbose = True
+				bounds = None,
+				constraints = None,
+				# NonlinearConstraint(
+				# lambda x: (actuation + cumsum(
+				# 		x.reshape( result_shape ), axis = 0
+				# 		)).flatten(), command_lower_bound, command_upper_bound
+				# ),
+				verbose = False
 				)
 
 		actuation += result[ 0 ]
@@ -279,10 +295,18 @@ if __name__ == "__main__":
 		plt.subplots_adjust( hspace = 0., wspace = .5 )
 		fig.suptitle( f"{frame + 1}/{n_frames} - {compute_time=:.6f}s - {n_f_eval=}" )
 
+		filtered_traj = list(
+				filter( lambda x: 0.0 <= x[ 0 ] <= time_step, mpc_config[ 'target_trajectory' ] )
+				)
+		if len( filtered_traj ) > 0:
+			target_pose = list( filtered_traj )[ 0 ][ 1 ]
+
 		state_r = Rotation.from_euler( 'xyz', state[ 3:6 ] ).as_matrix()
+		target_r = Rotation.from_euler( 'xyz', target_pose[ 3:6 ] ).as_matrix()
 
 		quiver_scale = .5
 		view.quiver( *state[ :3 ], *(state_r @ (quiver_scale * array( [ 1., 0., 0. ] ))) )
+		view.quiver( *target_pose[ :3 ], *(target_r @ (quiver_scale * array( [ 1., 0., 0. ] ))) )
 
 		view.plot(
 				array( previous_states_record )[ :, 0 ],
@@ -294,6 +318,8 @@ if __name__ == "__main__":
 		trajectory_time = [ p[ 0 ] for p in mpc_config[ 'target_trajectory' ] ]
 		trajectory_pos = array( [ p[ 1 ][ :3 ] for p in mpc_config[ 'target_trajectory' ] ] )
 		trajectory_ang = array( [ p[ 1 ][ 3: ] for p in mpc_config[ 'target_trajectory' ] ] )
+
+		view.plot( trajectory_pos[ :, 0 ], trajectory_pos[ :, 1 ], trajectory_pos[ :, 2 ], ':' )
 
 		ax_pos.plot( trajectory_time, trajectory_pos, ':' )
 		ax_ang.plot( trajectory_time, trajectory_ang, ':' )
@@ -335,7 +361,7 @@ if __name__ == "__main__":
 
 		logger.lognl( f'saved figure {frame}.png in {save_time:.6f}s' )
 
-	logger.save_at( folder )
+		logger.save_at( folder )
 
 	# create gif from frames
 	logger.log( 'creating gif ...' )

@@ -22,15 +22,17 @@ def model_predictive_control_cost_function(
 		time_steps_per_actuation: int,
 		pose_weight_matrix: ndarray,
 		actuation_weight_matrix: ndarray,
+		final_cost_weight_matrix: ndarray,
 		objective_weight: float,
-		final_cost_weight: float,
 		state_record: list,
 		actuation_record: list,
 		objective_record: list,
 		verbose: bool
 		) -> float:
 
-	if norm( pose_weight_matrix ) == 0 and final_cost_weight == 0 and objective_function is None:
+	if norm( pose_weight_matrix ) == 0 and norm(
+			final_cost_weight_matrix
+			) == 0 and objective_function is None:
 		raise ValueError( "Cannot compute cost" )
 
 	candidate_actuations_derivative = candidate_actuations_derivative.reshape( candidate_shape )
@@ -100,10 +102,9 @@ def model_predictive_control_cost_function(
 			if objective_record is not None:
 				objectives[ optimization_horizon + i ] = objective
 
-	error = state[ :len( state ) // 2 ] - target_pose
-	cost += final_cost_weight * pow( norm( error @ pose_weight_matrix @ error.T ), 2 )
+	cost += error @ final_cost_weight_matrix @ error.T
 	if objective_function is not None:
-		cost += final_cost_weight * objective_weight * objective_function(
+		cost += objective_weight * objective_function(
 				state, actuation, **model_kwargs
 				)
 
@@ -117,7 +118,7 @@ def model_predictive_control_cost_function(
 		objective_record.append( objectives )
 
 	if verbose:
-		print( f'{cost=}; {candidate_actuations_derivative}' )
+		print( f'{cost=};' )
 
 	return cost
 
@@ -145,7 +146,9 @@ def optimize(
 			tol = tolerance,
 			bounds = bounds,
 			constraints = constraints,
-			options = { 'maxiter': max_iter }
+			options = {
+					'maxiter': max_iter, 'disp': verbose
+					}
 			)
 
 	if verbose:

@@ -1,0 +1,15 @@
+frame 1/400	actuation=[ 2.59085829e-08 -7.46838887e-08  1.84196283e+01 -8.14258488e-09
+ -7.67652491e-09 -7.01138254e-08]	state=[0. 0. 0. 0. 0. 0.]	compute_time=0.250482s	n_f_eval=84	saved figure 0.png in 0.590334s
+saving logs ...	saved at ./plots/robot_1720175547/logs.txt
+frame 2/400	actuation=[-2.27509229e-08 -1.12131313e-07  1.82544482e+01 -8.39632720e-09
+ -7.09827466e-09 -1.00517533e-08]	state=[ 1.40807516e-12 -4.05890700e-12  6.08483874e-04 -3.18069722e-11
+ -2.99864254e-11 -2.73882131e-10]	compute_time=0.288040s	n_f_eval=84	saved figure 1.png in 0.869531s
+saving logs ...	saved at ./plots/robot_1720175547/logs.txt
+frame 3/400	actuation=[ 7.10951620e-08 -6.70968387e-08  1.80798429e+01 -8.00779937e-09
+ -7.84246645e-09 -1.93381943e-09]	state=[ 1.55559429e-12 -1.42281501e-11  1.82332650e-03 -9.67599862e-11
+ -8.80284628e-11 -5.90024508e-10]	compute_time=0.460798s	n_f_eval=56	saved figure 2.png in 1.040688s
+saving logs ...	saved at ./plots/robot_1720175547/logs.txt
+frame 4/400	actuation=[ 9.04258698e-08 -8.74849950e-08  1.78259743e+01 -7.97858807e-09
+ -7.95602047e-09 -6.22113199e-08]	state=[ 5.43316580e-12 -2.80321806e-11  3.64186658e-03 -1.93405700e-10
+ -1.77058847e-10 -9.17178676e-10]	compute_time=0.323366s	n_f_eval=70	saved figure 3.png in 0.713534s
+saving logs ...	

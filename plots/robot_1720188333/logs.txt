@@ -1,0 +1,431 @@
+frame 1/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[0. 0. 0. 0. 0. 0.]	compute_time=0.014851s	n_f_eval=7	saved figure 0.png in 0.586836s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 2/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.00039258  0.          0.          0.        ]	compute_time=0.035612s	n_f_eval=7	saved figure 1.png in 0.865544s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 3/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.00118217  0.          0.          0.        ]	compute_time=0.029813s	n_f_eval=7	saved figure 2.png in 1.163567s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 4/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.00237323  0.          0.          0.        ]	compute_time=0.028064s	n_f_eval=7	saved figure 3.png in 2.713251s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 5/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.00397029  0.          0.          0.        ]	compute_time=0.047118s	n_f_eval=7	saved figure 4.png in 0.795469s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 6/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.00597791  0.          0.          0.        ]	compute_time=0.010623s	n_f_eval=7	saved figure 5.png in 0.757493s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 7/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.00840072  0.          0.          0.        ]	compute_time=0.019880s	n_f_eval=7	saved figure 6.png in 0.658813s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 8/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.         0.        -0.0112434  0.         0.         0.       ]	compute_time=0.014630s	n_f_eval=7	saved figure 7.png in 0.604105s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 9/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.01451068  0.          0.          0.        ]	compute_time=0.012865s	n_f_eval=7	saved figure 8.png in 0.578577s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 10/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.01820733  0.          0.          0.        ]	compute_time=0.015009s	n_f_eval=7	saved figure 9.png in 0.508688s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 11/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.02233818  0.          0.          0.        ]	compute_time=0.025553s	n_f_eval=7	saved figure 10.png in 0.613759s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 12/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.02690814  0.          0.          0.        ]	compute_time=0.046384s	n_f_eval=7	saved figure 11.png in 0.774431s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 13/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.03192215  0.          0.          0.        ]	compute_time=0.011761s	n_f_eval=7	saved figure 12.png in 0.460873s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 14/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.         0.        -0.0373852  0.         0.         0.       ]	compute_time=0.014870s	n_f_eval=7	saved figure 13.png in 0.528511s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 15/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.04330235  0.          0.          0.        ]	compute_time=0.016176s	n_f_eval=7	saved figure 14.png in 0.507980s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 16/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.04967871  0.          0.          0.        ]	compute_time=0.021741s	n_f_eval=7	saved figure 15.png in 0.804494s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 17/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.05651946  0.          0.          0.        ]	compute_time=0.012544s	n_f_eval=7	saved figure 16.png in 0.797760s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 18/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.06382983  0.          0.          0.        ]	compute_time=0.013480s	n_f_eval=7	saved figure 17.png in 0.613496s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 19/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.         0.        -0.0716151  0.         0.         0.       ]	compute_time=0.021047s	n_f_eval=7	saved figure 18.png in 0.627501s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 20/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.07988062  0.          0.          0.        ]	compute_time=0.016749s	n_f_eval=7	saved figure 19.png in 0.656271s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 21/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.08863181  0.          0.          0.        ]	compute_time=0.009530s	n_f_eval=7	saved figure 20.png in 1.012992s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 22/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.09787412  0.          0.          0.        ]	compute_time=0.016409s	n_f_eval=7	saved figure 21.png in 0.865352s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 23/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.10761309  0.          0.          0.        ]	compute_time=0.012152s	n_f_eval=7	saved figure 22.png in 0.680394s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 24/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.11785431  0.          0.          0.        ]	compute_time=0.030150s	n_f_eval=7	saved figure 23.png in 0.632880s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 25/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.12860344  0.          0.          0.        ]	compute_time=0.008630s	n_f_eval=7	saved figure 24.png in 0.614170s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 26/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.         0.        -0.1398662  0.         0.         0.       ]	compute_time=0.028119s	n_f_eval=7	saved figure 25.png in 0.647631s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 27/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.15164837  0.          0.          0.        ]	compute_time=0.015715s	n_f_eval=7	saved figure 26.png in 1.040928s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 28/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.         0.        -0.1639558  0.         0.         0.       ]	compute_time=0.042830s	n_f_eval=7	saved figure 27.png in 1.119702s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 29/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.17679441  0.          0.          0.        ]	compute_time=0.015560s	n_f_eval=7	saved figure 28.png in 1.169345s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 30/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.19017017  0.          0.          0.        ]	compute_time=0.021287s	n_f_eval=7	saved figure 29.png in 1.340785s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 31/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.20408914  0.          0.          0.        ]	compute_time=0.044976s	n_f_eval=7	saved figure 30.png in 1.037328s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 32/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.21855743  0.          0.          0.        ]	compute_time=0.015857s	n_f_eval=7	saved figure 31.png in 1.304530s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 33/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.23358123  0.          0.          0.        ]	compute_time=0.044671s	n_f_eval=7	saved figure 32.png in 1.284021s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 34/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.24916679  0.          0.          0.        ]	compute_time=0.059817s	n_f_eval=7	saved figure 33.png in 1.850820s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 35/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.26532044  0.          0.          0.        ]	compute_time=0.030370s	n_f_eval=7	saved figure 34.png in 1.878107s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 36/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.28204858  0.          0.          0.        ]	compute_time=0.044995s	n_f_eval=7	saved figure 35.png in 1.678275s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 37/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.29935768  0.          0.          0.        ]	compute_time=0.081129s	n_f_eval=7	saved figure 36.png in 1.210353s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 38/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.31725427  0.          0.          0.        ]	compute_time=0.020954s	n_f_eval=7	saved figure 37.png in 1.205845s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 39/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.          0.         -0.33574498  0.          0.          0.        ]	compute_time=0.039103s	n_f_eval=7	saved figure 38.png in 1.505199s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 40/400	actuation=[0. 0. 0. 0. 0. 0.]	state=[ 0.         0.        -0.3548365  0.         0.         0.       ]	compute_time=0.031911s	n_f_eval=7	saved figure 39.png in 0.967893s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 41/400	actuation=[ 0.00000000e+00  0.00000000e+00  1.40847207e+00 -5.08502126e-06
+ -5.08502126e-06 -5.08502126e-06]	state=[ 0.          0.         -0.37453558  0.          0.          0.        ]	compute_time=0.159038s	n_f_eval=49	saved figure 40.png in 1.434122s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 42/400	actuation=[ 0.00000000e+00  0.00000000e+00  2.81694414e+00 -1.01700425e-05
+ -1.01700425e-05 -1.01700425e-05]	state=[ 0.00000000e+00  0.00000000e+00 -3.94772525e-01 -1.98633643e-08
+ -1.98633643e-08 -1.98633643e-08]	compute_time=0.015608s	n_f_eval=7	saved figure 41.png in 1.112549s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 43/400	actuation=[ 0.00000000e+00  0.00000000e+00  4.22541621e+00 -1.52550638e-05
+ -1.52550638e-05 -1.52550638e-05]	state=[ 4.11257456e-10 -4.11257473e-10 -4.15476846e-01 -7.96707115e-08
+ -7.96707139e-08 -7.96707115e-08]	compute_time=0.041173s	n_f_eval=7	saved figure 42.png in 1.208272s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 44/400	actuation=[ 0.00000000e+00  0.00000000e+00  5.63388828e+00 -2.03400850e-05
+ -2.03400850e-05 -2.03400850e-05]	state=[ 2.08454404e-09 -2.08454427e-09 -4.36577256e-01 -1.99536067e-07
+ -1.99536089e-07 -1.99722286e-07]	compute_time=0.037232s	n_f_eval=7	saved figure 43.png in 1.369675s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 45/400	actuation=[ 0.00000000e+00  0.00000000e+00  7.04236035e+00 -2.54251063e-05
+ -2.54251063e-05 -2.54251063e-05]	state=[ 6.32034293e-09 -6.32030727e-09 -4.58001668e-01 -3.99418964e-07
+ -3.99419065e-07 -4.00540352e-07]	compute_time=0.039726s	n_f_eval=7	saved figure 44.png in 1.410215s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 46/400	actuation=[ 0.00000000e+00  0.00000000e+00  8.45083242e+00 -3.05101275e-05
+ -3.05101275e-05 -3.05101275e-05]	state=[ 1.48601327e-08 -1.48598777e-08 -4.79677184e-01 -6.98934170e-07
+ -6.98934513e-07 -7.02871607e-07]	compute_time=0.042906s	n_f_eval=7	saved figure 45.png in 1.752832s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 47/400	actuation=[ 0.00000000e+00  0.00000000e+00  9.85930449e+00 -3.55951488e-05
+ -3.55951488e-05 -3.55951488e-05]	state=[ 2.98582094e-08 -2.98571801e-08 -5.01530083e-01 -1.11716078e-06
+ -1.11716172e-06 -1.12768962e-06]	compute_time=0.031490s	n_f_eval=7	saved figure 46.png in 1.643011s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 48/400	actuation=[ 4.49686051e-05 -2.62898222e-05  1.63423429e+01  3.01217196e-04
+  3.01180150e-04  4.13422902e-05]	state=[ 5.38338238e-08 -5.38307172e-08 -5.23485816e-01 -1.67245246e-06
+ -1.67245466e-06 -1.69619731e-06]	compute_time=0.468151s	n_f_eval=84	saved figure 47.png in 3.609150s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 49/400	actuation=[ 8.99372103e-05 -5.25796443e-05  2.28253812e+01  6.38029540e-04
+  6.37955449e-04  1.18279729e-04]	state=[ 9.15864443e-08 -9.05634959e-08 -5.45193202e-01 -1.04671453e-06
+ -1.04686281e-06 -2.10943141e-06]	compute_time=0.019535s	n_f_eval=7	saved figure 48.png in 1.083452s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 50/400	actuation=[ 1.34905815e-04 -7.88694665e-05  2.93084196e+01  9.74841885e-04
+  9.74730748e-04  1.95217168e-04]	state=[ 1.19371349e-07 -1.15288263e-07 -5.66297105e-01  2.09384880e-06
+  2.09326493e-06 -2.06515729e-06]	compute_time=0.022007s	n_f_eval=7	saved figure 49.png in 1.162820s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 51/400	actuation=[ 1.79874421e-04 -1.05159289e-04  3.57914580e+01  1.31165423e-03
+  1.31150605e-03  2.72154607e-04]	state=[ 8.98731661e-08 -7.96614328e-08 -5.86438391e-01  9.08655283e-06
+  9.08509241e-06 -1.25781390e-06]	compute_time=0.043189s	n_f_eval=7	saved figure 50.png in 1.701052s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 52/400	actuation=[ 2.24843026e-04 -1.31449111e-04  4.22744964e+01  1.64846657e-03
+  1.64828135e-03  3.49092046e-04]	state=[-5.76957970e-08  7.81349449e-08 -6.05253879e-01  2.12597744e-05
+  2.12568238e-05  6.21559547e-07]	compute_time=0.026041s	n_f_eval=7	saved figure 51.png in 1.510731s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 53/400	actuation=[ 2.69811631e-04 -1.57738933e-04  4.87575347e+01  1.98527892e-03
+  1.98505665e-03  4.26029485e-04]	state=[-3.82301917e-07  4.18092557e-07 -6.22376302e-01  3.99203289e-05
+  3.99150576e-05  3.88541430e-06]	compute_time=0.022816s	n_f_eval=7	saved figure 52.png in 1.464233s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 54/400	actuation=[ 3.14780236e-04 -1.84028755e-04  5.52405731e+01  2.32209126e-03
+  2.32183194e-03  5.02966924e-04]	state=[-9.20627157e-07  9.77903540e-07 -6.37434256e-01  6.63407966e-05
+  6.63320826e-05  8.84979872e-06]	compute_time=0.018464s	n_f_eval=7	saved figure 53.png in 1.869125s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 55/400	actuation=[ 3.59748841e-04 -2.10318577e-04  6.17236115e+01  2.65890361e-03
+  2.65860724e-03  5.79904363e-04]	state=[-1.66156230e-06  1.74744081e-06 -6.50052153e-01  1.01746917e-04
+  1.01733233e-04  1.58344781e-05]	compute_time=0.180887s	n_f_eval=7	saved figure 54.png in 1.954501s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 56/400	actuation=[ 4.04102773e-04 -2.35990001e-04  6.82065663e+01  1.94070629e-03
+  1.94047719e-03  4.14042281e-04]	state=[-2.51588420e-06  2.63842070e-06 -6.59850177e-01  1.47305170e-04
+  1.47284425e-04  2.51630643e-05]	compute_time=0.097973s	n_f_eval=14	saved figure 55.png in 2.201385s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 57/400	actuation=[ 4.48456706e-04 -2.61661425e-04  7.46895211e+01  1.22250897e-03
+  1.22234713e-03  2.48180200e-04]	state=[-3.28148142e-06  3.44961369e-06 -6.66444240e-01  1.99989391e-04
+  1.99959404e-04  3.62141087e-05]	compute_time=0.036621s	n_f_eval=7	saved figure 56.png in 1.425482s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 58/400	actuation=[ 4.92810638e-04 -2.87332849e-04  8.11724759e+01  5.04311652e-04
+  5.04217076e-04  8.23181182e-05]	state=[-3.59208891e-06  3.81556538e-06 -6.69445927e-01  2.56645068e-04
+  2.56603736e-04  4.83589622e-05]	compute_time=0.016897s	n_f_eval=7	saved figure 57.png in 1.189783s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 59/400	actuation=[ 5.37164570e-04 -3.13004273e-04  8.76554307e+01 -2.13885667e-04
+ -2.13912980e-04 -8.35439633e-05]	state=[-2.94225462e-06  3.23155289e-06 -6.68462452e-01  3.14016263e-04
+  3.13961815e-04  6.09614739e-05]	compute_time=0.022750s	n_f_eval=7	saved figure 58.png in 1.284511s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 60/400	actuation=[ 5.81518502e-04 -3.38675697e-04  9.41383855e+01 -9.32082985e-04
+ -9.32043036e-04 -2.49406045e-04]	state=[-7.26596045e-07  1.09283427e-06 -6.63096603e-01  3.68774046e-04
+  3.68705362e-04  7.33777911e-05]	compute_time=0.022396s	n_f_eval=7	saved figure 59.png in 1.018022s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 61/400	actuation=[ 6.25872434e-04 -3.64347121e-04  1.00621340e+02 -1.65028030e-03
+ -1.65017309e-03 -4.15268126e-04]	state=[ 3.70641517e-06 -3.25157355e-06 -6.52946697e-01  4.17546218e-04
+  4.17463154e-04  8.49562720e-05]	compute_time=0.034339s	n_f_eval=7	saved figure 60.png in 1.384804s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 62/400	actuation=[ 6.70226367e-04 -3.90018545e-04  1.07104295e+02 -2.36847762e-03
+ -2.36830315e-03 -5.81130208e-04]	state=[ 1.09861590e-05 -1.04306087e-05 -6.37606527e-01  4.56948066e-04
+  4.56851741e-04  9.50375208e-05]	compute_time=0.015620s	n_f_eval=7	saved figure 61.png in 0.917015s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 63/400	actuation=[ 7.14580299e-04 -4.15689969e-04  1.13587250e+02 -3.08667494e-03
+ -3.08643320e-03 -7.46992289e-04]	state=[ 2.16373508e-05 -2.09686581e-05 -6.16665314e-01  4.83613872e-04
+  4.83506876e-04  1.02954547e-04]	compute_time=0.019290s	n_f_eval=7	saved figure 62.png in 0.980905s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 64/400	actuation=[ 7.58934231e-04 -4.41361393e-04  1.20070205e+02 -3.80487226e-03
+ -3.80456326e-03 -9.12854371e-04]	state=[ 3.59838697e-05 -3.51893955e-05 -5.89707648e-01  4.94228923e-04
+  4.94115386e-04  1.08033043e-04]	compute_time=0.019438s	n_f_eval=7	saved figure 63.png in 1.040746s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 65/400	actuation=[-1.37112713e-03  1.67551639e-03  1.21263008e+02 -1.88145548e-03
+ -1.88156847e-03 -8.90694291e-04]	state=[ 5.40397799e-05 -5.31068100e-05 -5.56313446e-01  4.85561703e-04
+  4.85447185e-04  1.09591777e-04]	compute_time=0.682754s	n_f_eval=112	saved figure 64.png in 4.010998s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 66/400	actuation=[-3.50118848e-03  3.79239417e-03  1.22455811e+02  4.19613028e-05
+  4.14263132e-05 -8.68534211e-04]	state=[ 7.51309089e-05 -7.40485347e-05 -5.16345400e-01  4.64815148e-04
+  4.64703672e-04  1.07682543e-04]	compute_time=0.023981s	n_f_eval=7	saved figure 65.png in 1.099203s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 67/400	actuation=[-5.63124984e-03  5.90927195e-03  1.23648614e+02  1.96537808e-03
+  1.96442110e-03 -8.46374131e-04]	state=[ 9.85276543e-05 -9.72863150e-05 -4.69664655e-01  4.39451912e-04
+  4.39345569e-04  1.02358110e-04]	compute_time=0.022910s	n_f_eval=7	saved figure 66.png in 1.094749s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 68/400	actuation=[-7.76148349e-03  8.02632482e-03  1.24840916e+02  2.73299934e-03
+  2.73189975e-03 -7.38181266e-04]	state=[ 1.23642897e-04 -1.22233862e-04 -4.16130793e-01  4.17129567e-04
+  4.17028350e-04  9.36713993e-05]	compute_time=0.036781s	n_f_eval=14	saved figure 67.png in 1.156480s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 69/400	actuation=[-9.89171714e-03  1.01433777e-02  1.26033218e+02  3.50062059e-03
+  3.49937841e-03 -6.29988400e-04]	state=[ 1.50245100e-04 -1.48659915e-04 -3.55601844e-01  4.01117984e-04
+  4.01020662e-04  8.20093944e-05]	compute_time=0.037791s	n_f_eval=7	saved figure 68.png in 1.344086s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 70/400	actuation=[-1.20221026e-02  1.22605870e-02  1.27224586e+02  3.16580085e-03
+  3.16469547e-03 -4.12759082e-04]	state=[ 1.78378956e-04 -1.76608876e-04 -2.87934237e-01  3.94694188e-04
+  3.94598494e-04  6.77631182e-05]	compute_time=0.060910s	n_f_eval=14	saved figure 69.png in 1.076747s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 71/400	actuation=[-1.46928616e-02  1.48997449e-02  1.22415461e+02 -9.01572485e-04
+ -9.01495779e-04  1.00951703e-04]	state=[ 2.08464927e-04 -2.06500363e-04 -2.12982838e-01  3.96805517e-04
+  3.96709149e-04  5.17521203e-05]	compute_time=0.437733s	n_f_eval=119	saved figure 70.png in 3.387549s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 72/400	actuation=[-1.73636149e-02  1.75388916e-02  1.17606149e+02 -3.75257893e-03
+ -3.75165728e-03  5.20541166e-04]	state=[ 2.40887976e-04 -2.38718924e-04 -1.30926990e-01  3.91718036e-04
+  3.91621939e-04  3.59574839e-05]	compute_time=0.032598s	n_f_eval=14	saved figure 71.png in 1.499989s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 73/400	actuation=[-2.00344354e-02  2.01780979e-02  1.12796408e+02 -5.20699640e-03
+ -5.20560232e-03  8.13630947e-04]	state=[ 2.74815282e-04 -2.72430361e-04 -4.19480660e-02  3.68197222e-04
+  3.68104153e-04  2.20162864e-05]	compute_time=0.107843s	n_f_eval=14	saved figure 72.png in 2.309666s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 74/400	actuation=[-2.27054197e-02  2.28174644e-02  1.07985988e+02 -5.27990486e-03
+ -5.27840716e-03  9.64116614e-04]	state=[ 3.08187263e-04 -3.05572646e-04  5.37704962e-02  3.20408461e-04
+  3.20321800e-04  1.10925733e-05]	compute_time=0.155120s	n_f_eval=14	saved figure 73.png in 1.114714s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 75/400	actuation=[-2.53766947e-02  2.54571065e-02  1.03174625e+02 -4.15935696e-03
+ -4.15806113e-03  9.73458483e-04]	state=[ 3.37978803e-04 -3.35117119e-04  1.56043157e-01  2.48022267e-04
+  2.47945341e-04  3.81005918e-06]	compute_time=0.045033s	n_f_eval=14	saved figure 74.png in 1.114134s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 76/400	actuation=[-2.93662310e-02  2.93998033e-02  9.21457523e+01  1.53022871e-03
+  1.53072486e-03  4.32888525e-04]	state=[ 3.60667064e-04 -3.57536371e-04  2.64682234e-01  1.55594506e-04
+  1.55530346e-04  2.50987955e-07]	compute_time=0.457289s	n_f_eval=119	saved figure 75.png in 3.194476s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 77/400	actuation=[-3.33554097e-02  3.33421572e-02  8.11166749e+01  5.74206622e-03
+  5.74182229e-03  3.77688018e-05]	state=[ 3.72687588e-04 -3.69261271e-04  3.79160024e-01  6.58086617e-05
+  6.57588726e-05 -1.64683591e-06]	compute_time=0.091255s	n_f_eval=14	saved figure 76.png in 1.012238s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 78/400	actuation=[-3.73424153e-02  3.72821761e-02  7.00857301e+01  4.87355301e-03
+  4.87299379e-03  1.07752856e-04]	state=[ 3.72977713e-04 -3.69223508e-04  4.98942867e-01 -3.98778527e-06
+ -4.02376134e-06 -3.40835438e-06]	compute_time=0.093524s	n_f_eval=21	saved figure 77.png in 1.248067s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 79/400	actuation=[-4.13294210e-02  4.12221949e-02  5.90547853e+01  4.00503979e-03
+  4.00416529e-03  1.77736911e-04]	state=[ 3.62819808e-04 -3.58698821e-04  6.23490992e-01 -5.61271481e-05
+ -5.61511227e-05 -4.76337945e-06]	compute_time=0.044690s	n_f_eval=7	saved figure 78.png in 1.314569s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 80/400	actuation=[-4.53164266e-02  4.51622137e-02  4.80238405e+01  3.13652658e-03
+  3.13533679e-03  2.47720965e-04]	state=[ 3.43600324e-04 -3.39065895e-04  7.52258553e-01 -9.31546808e-05
+ -9.31696660e-05 -5.43707271e-06]	compute_time=0.023639s	n_f_eval=7	saved figure 79.png in 1.576456s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 81/400	actuation=[-4.66746634e-02  4.64671320e-02  3.07289928e+01  3.59295680e-03
+  3.59478438e-03  9.29315925e-05]	state=[ 3.16682486e-04 -3.11679082e-04  8.84693554e-01 -1.17809018e-04
+ -1.17819209e-04 -5.15027871e-06]	compute_time=0.672511s	n_f_eval=98	saved figure 80.png in 4.804237s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 82/400	actuation=[-4.80329002e-02  4.77720503e-02  1.34341452e+01  4.04938702e-03
+  4.05423198e-03 -6.18577803e-05]	state=[ 2.83473023e-04 -2.77935501e-04  1.01989736e+00 -1.27824749e-04
+ -1.27822714e-04 -4.49847669e-06]	compute_time=0.062252s	n_f_eval=7	saved figure 81.png in 1.422873s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 83/400	actuation=[-4.93911369e-02  4.90769687e-02 -3.86070250e+00  4.50581723e-03
+  4.51367958e-03 -2.16647153e-04]	state=[ 2.45865164e-04 -2.39716548e-04  1.15696121e+00 -1.21027625e-04
+ -1.20994258e-04 -4.08324178e-06]	compute_time=0.029232s	n_f_eval=7	saved figure 82.png in 1.335915s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 84/400	actuation=[-5.07493737e-02  5.03818870e-02 -2.11555502e+01  4.96224745e-03
+  4.97312718e-03 -3.71436526e-04]	state=[ 2.06168900e-04 -1.99318058e-04  1.29496611e+00 -9.53568470e-05
+ -9.52613224e-05 -4.51197520e-06]	compute_time=0.034582s	n_f_eval=7	saved figure 83.png in 1.015906s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 85/400	actuation=[-5.21058224e-02  5.16850768e-02 -3.84512346e+01  4.17025839e-03
+  4.18099645e-03 -3.86154984e-04]	state=[ 1.67015699e-04 -1.59355060e-04  1.43298273e+00 -4.88867541e-05
+ -4.86864610e-05 -6.39761461e-06]	compute_time=0.040446s	n_f_eval=14	saved figure 84.png in 1.882190s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 86/400	actuation=[-4.55213928e-02  4.46607903e-02 -6.08434024e+01  7.57019658e-04
+  7.59398668e-04 -1.42522212e-04]	state=[ 1.31238777e-04 -1.22642213e-04  1.57007121e+00  1.52756323e-05
+  1.56229200e-05 -9.81095016e-06]	compute_time=0.562438s	n_f_eval=126	saved figure 85.png in 3.610224s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 87/400	actuation=[-3.89369633e-02  3.76365038e-02 -8.32355701e+01 -2.65621907e-03
+ -2.66219911e-03  1.01110560e-04]	state=[ 1.01496253e-04 -9.18400920e-05  1.70500415e+00  8.35549856e-05
+  8.40587512e-05 -1.38141228e-05]	compute_time=0.051216s	n_f_eval=7	saved figure 86.png in 1.995528s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 88/400	actuation=[-3.23525337e-02  3.06122174e-02 -1.05627738e+02 -6.06945780e-03
+ -6.08379689e-03  3.44743332e-04]	state=[ 7.83134343e-05 -6.74834272e-05  1.83654029e+00  1.42061836e-04
+  1.42697662e-04 -1.74622743e-05]	compute_time=0.095311s	n_f_eval=7	saved figure 87.png in 1.423393s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 89/400	actuation=[-2.57735459e-02  2.35935564e-02 -1.28021374e+02 -4.81134742e-03
+ -4.82104275e-03  3.14902190e-04]	state=[ 6.01546627e-05 -4.80528021e-05  1.96342443e+00  1.76716434e-04
+  1.77425079e-04 -1.98036935e-05]	compute_time=0.137465s	n_f_eval=21	saved figure 88.png in 1.919622s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 90/400	actuation=[-1.91945581e-02  1.65748953e-02 -1.50415010e+02 -3.55323704e-03
+ -3.55828860e-03  2.85061049e-04]	state=[ 4.36892210e-05 -3.02399171e-05  2.08438713e+00  1.91624046e-04
+  1.92362203e-04 -2.09429831e-05]	compute_time=0.030146s	n_f_eval=7	saved figure 89.png in 1.186442s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 91/400	actuation=[-1.26155703e-02  9.55623428e-03 -1.72808646e+02 -2.29512666e-03
+ -2.29553445e-03  2.55219908e-04]	state=[ 2.63388452e-05 -1.14882442e-05  2.19814467e+00  1.91158358e-04
+  1.91899580e-04 -2.09839711e-05]	compute_time=0.016395s	n_f_eval=7	saved figure 90.png in 0.973321s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 92/400	actuation=[-6.03658246e-03  2.53757325e-03 -1.95202283e+02 -1.03701629e-03
+ -1.03278030e-03  2.25378766e-04]	state=[ 6.35028098e-06  9.93438491e-06  2.30339886e+00  1.79925954e-04
+  1.80661380e-04 -2.00305132e-05]	compute_time=0.013266s	n_f_eval=7	saved figure 91.png in 0.929227s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 93/400	actuation=[ 5.42405348e-04 -4.48108779e-03 -2.17595919e+02  2.21094090e-04
+  2.29973844e-04  1.95537625e-04]	state=[-1.71993126e-05  3.49300958e-05  2.39883689e+00  1.62727888e-04
+  1.63466759e-04 -1.81871631e-05]	compute_time=0.020961s	n_f_eval=7	saved figure 92.png in 1.423412s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 94/400	actuation=[ 7.12139316e-03 -1.14997488e-02 -2.39989555e+02  1.47920447e-03
+  1.49272799e-03  1.65696483e-04]	state=[-4.44685064e-05  6.36365746e-05  2.48313120e+00  1.44518655e-04
+  1.45288614e-04 -1.55596629e-05]	compute_time=0.018295s	n_f_eval=7	saved figure 93.png in 1.399538s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 95/400	actuation=[ 1.37003810e-02 -1.85184099e-02 -2.62383191e+02  2.73731485e-03
+  2.75548214e-03  1.35855342e-04]	state=[-7.49925708e-05  9.55672279e-05  2.55493924e+00  1.30362873e-04
+  1.31210068e-04 -1.22552168e-05]	compute_time=0.085723s	n_f_eval=7	saved figure 94.png in 1.114840s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 96/400	actuation=[ 2.02793688e-02 -2.55370709e-02 -2.84776827e+02  3.99542522e-03
+  4.01823629e-03  1.06014200e-04]	state=[-1.07901325e-04  1.29827945e-04  2.61290336e+00  1.25390058e-04
+  1.26379037e-04 -8.38251621e-06]	compute_time=0.019655s	n_f_eval=7	saved figure 95.png in 0.879451s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 97/400	actuation=[ 2.68596679e-02 -3.25571624e-02 -3.07170415e+02  3.96285662e-03
+  3.98268206e-03  3.30789007e-05]	state=[-1.42214613e-04  1.65411206e-04  2.65565062e+00  1.34747865e-04
+  1.35961275e-04 -4.05150184e-06]	compute_time=0.045706s	n_f_eval=14	saved figure 96.png in 2.638158s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 98/400	actuation=[ 3.34415763e-02 -3.95788633e-02 -3.29563711e+02  2.93411559e-03
+  2.94553138e-03 -6.35194429e-05]	state=[-1.77214677e-04  2.01566808e-04  2.68179262e+00  1.58512459e-04
+  1.60020809e-04  4.58124783e-07]	compute_time=0.107476s	n_f_eval=14	saved figure 97.png in 2.169494s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 99/400	actuation=[ 4.00234848e-02 -4.66005642e-02 -3.51957007e+02  1.90537456e-03
+  1.90838071e-03 -1.60117787e-04]	state=[-2.12934717e-04  2.38288282e-04  2.68992536e+00  1.92735177e-04
+  1.94574770e-04  4.77115245e-06]	compute_time=0.042611s	n_f_eval=7	saved figure 98.png in 1.234529s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 100/400	actuation=[ 4.66053932e-02 -5.36222651e-02 -3.74350303e+02  8.76633536e-04
+  8.71230033e-04 -2.56716130e-04]	state=[-2.50240644e-04  2.76395044e-04  2.67862900e+00  2.33289051e-04
+  2.35461053e-04  8.50823687e-06]	compute_time=0.055177s	n_f_eval=7	saved figure 99.png in 1.311075s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 101/400	actuation=[ 5.89152829e-02 -6.62690495e-02 -3.89931180e+02 -2.09515611e-03
+ -2.11327429e-03 -2.41968629e-04]	state=[-2.90619765e-04  3.17323221e-04  2.64646772e+00  2.75903858e-04
+  2.78373715e-04  1.12854429e-05]	compute_time=0.337537s	n_f_eval=112	saved figure 100.png in 2.518853s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 102/400	actuation=[ 7.12251725e-02 -7.89158339e-02 -4.05512056e+02 -5.06694576e-03
+ -5.09777861e-03 -2.27221129e-04]	state=[-3.35481599e-04  3.62435760e-04  2.59235979e+00  3.08613334e-04
+  3.11293450e-04  1.31467968e-05]	compute_time=0.013902s	n_f_eval=7	saved figure 101.png in 0.750086s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 103/400	actuation=[ 8.35332443e-02 -9.15607109e-02 -4.21092023e+02 -6.65048362e-03
+ -6.68786206e-03 -2.10268256e-04]	state=[-3.85578030e-04  4.12439547e-04  2.51521128e+00  3.19300999e-04
+  3.22050507e-04  1.41350644e-05]	compute_time=0.066624s	n_f_eval=14	saved figure 102.png in 0.950833s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 104/400	actuation=[ 8.81160155e-02 -9.59971635e-02 -4.29365025e+02 -4.34757976e-03
+ -4.37445019e-03 -1.96178648e-04]	state=[-4.39847362e-04  4.66234779e-04  2.41391599e+00  3.01233601e-04
+  3.03882635e-04  1.43036237e-05]	compute_time=0.386187s	n_f_eval=126	saved figure 103.png in 2.021845s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 105/400	actuation=[ 9.26987868e-02 -1.00433616e-01 -4.37638027e+02 -2.04467591e-03
+ -2.06103831e-03 -1.82089039e-04]	state=[-4.95107736e-04  5.20638500e-04  2.28775239e+00  2.62992173e-04
+  2.65409367e-04  1.37019787e-05]	compute_time=0.009793s	n_f_eval=7	saved figure 104.png in 0.887274s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 106/400	actuation=[ 9.69308570e-02 -1.04814232e-01 -4.39805215e+02 -4.82746081e-04
+ -4.89115188e-04 -1.30881831e-04]	state=[-5.47299009e-04  5.71594831e-04  2.13599081e+00  2.13521234e-04
+  2.15615632e-04  1.23810886e-05]	compute_time=0.716530s	n_f_eval=112	saved figure 105.png in 3.844063s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 107/400	actuation=[ 1.01162927e-01 -1.09194849e-01 -4.41972404e+02  1.07918374e-03
+  1.08280793e-03 -7.96746220e-05]	state=[-5.92272395e-04  6.14945615e-04  1.95822522e+00  1.59157885e-04
+  1.60878502e-04  1.05360453e-05]	compute_time=0.025198s	n_f_eval=7	saved figure 106.png in 1.033152s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 108/400	actuation=[ 1.05164343e-01 -1.13063184e-01 -4.37109235e+02  1.58319630e-03
+  1.59174440e-03 -2.95526939e-05]	state=[-6.26240321e-04  6.46891376e-04  1.75404500e+00  1.06413789e-04
+  1.07750955e-04  8.36295250e-06]	compute_time=0.683896s	n_f_eval=112	saved figure 107.png in 3.034118s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 109/400	actuation=[ 1.09165760e-01 -1.16931518e-01 -4.32246066e+02  2.08720885e-03
+  2.10068088e-03  2.05692343e-05]	state=[-6.46441433e-04  6.64667764e-04  1.52341702e+00  5.77851647e-05
+  5.87517370e-05  6.05398531e-06]	compute_time=0.018939s	n_f_eval=7	saved figure 108.png in 1.845251s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 110/400	actuation=[ 1.12130419e-01 -1.19909614e-01 -4.19519612e+02  1.29636486e-03
+  1.30609993e-03  1.41125504e-05]	state=[-6.50881680e-04  6.66271167e-04  1.26630774e+00  1.57803143e-05
+  1.64120916e-05  3.80293699e-06]	compute_time=0.558484s	n_f_eval=98	saved figure 109.png in 2.285013s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 111/400	actuation=[ 1.15095078e-01 -1.22887710e-01 -4.06793158e+02  5.05520877e-04
+  5.11518991e-04  7.65586652e-06]	state=[-6.38653552e-04  6.50767756e-04  9.83110629e-01 -2.21616775e-05
+ -2.18395847e-05  1.58426474e-06]	compute_time=0.029120s	n_f_eval=7	saved figure 110.png in 1.350714s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 112/400	actuation=[ 1.16779972e-01 -1.24548804e-01 -3.85706812e+02  1.25946906e-03
+  1.27132929e-03  1.86918774e-05]	state=[-6.08622148e-04  6.16995015e-04  6.74223567e-01 -5.86918243e-05
+ -5.86654654e-05 -6.27342172e-07]	compute_time=1.650027s	n_f_eval=112	saved figure 111.png in 4.133984s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 113/400	actuation=[ 1.18464866e-01 -1.26209897e-01 -3.64620467e+02  2.01341723e-03
+  2.03113958e-03  2.97278882e-05]	state=[-5.59216776e-04  5.63356636e-04  3.40503261e-01 -9.04938749e-05
+ -9.07233304e-05 -2.78906691e-06]	compute_time=0.017215s	n_f_eval=7	saved figure 112.png in 0.706200s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 114/400	actuation=[ 1.18460228e-01 -1.26136254e-01 -3.34729794e+02  2.03831105e-03
+  2.05806827e-03 -2.91639789e-05]	state=[-4.90262268e-04  4.89639619e-04 -1.71839323e-02 -1.14228554e-04
+ -1.14647760e-04 -4.85804805e-06]	compute_time=0.255896s	n_f_eval=105	saved figure 113.png in 2.057961s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 115/400	actuation=[ 1.18455591e-01 -1.26062611e-01 -3.04839122e+02  2.06320486e-03
+  2.08499696e-03 -8.80558460e-05]	state=[-4.03435844e-04  3.97471006e-04 -3.97483409e-01 -1.29412235e-04
+ -1.29944065e-04 -7.06402190e-06]	compute_time=0.012081s	n_f_eval=7	saved figure 114.png in 0.811333s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 116/400	actuation=[ 1.15883688e-01 -1.24016645e-01 -2.65798790e+02  9.99912927e-04
+  1.01565629e-03 -7.04157735e-04]	state=[-3.01260737e-04  2.89313457e-04 -7.99025310e-01 -1.35631623e-04
+ -1.36188409e-04 -9.63905004e-06]	compute_time=0.234406s	n_f_eval=98	saved figure 115.png in 2.074705s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 117/400	actuation=[ 1.13311784e-01 -1.21970680e-01 -2.26758458e+02 -6.33790017e-05
+ -5.36843829e-05 -1.32025962e-03]	state=[-1.87257034e-04  1.68583325e-04 -1.21992709e+00 -1.36799494e-04
+ -1.37315808e-04 -1.49935228e-05]	compute_time=0.021298s	n_f_eval=7	saved figure 116.png in 0.573777s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 118/400	actuation=[ 1.08184732e-01 -1.17175842e-01 -1.78690790e+02  1.13461880e-03
+  1.16787209e-03 -2.20485844e-03]	state=[-6.37812308e-05  3.75367535e-05 -1.65828500e+00 -1.36955452e-04
+ -1.37389187e-04 -2.55639689e-05]	compute_time=0.216644s	n_f_eval=112	saved figure 117.png in 2.055348s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 119/400	actuation=[ 1.03057679e-01 -1.12381005e-01 -1.30623122e+02  2.33261660e-03
+  2.38942856e-03 -3.08945726e-03]	state=[ 6.81716147e-05 -1.02915200e-04 -2.11168323e+00 -1.31397332e-04
+ -1.31615214e-04 -4.48635586e-05]	compute_time=0.026533s	n_f_eval=7	saved figure 118.png in 1.602773s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 120/400	actuation=[ 9.38634008e-02 -1.00114709e-01 -7.39492777e+01  7.97799539e-04
+  8.38006507e-04 -2.19191835e-03]	state=[ 2.05318905e-04 -2.49618515e-04 -2.57767879e+00 -1.15381204e-04
+ -1.15157837e-04 -7.64437932e-05]	compute_time=0.788445s	n_f_eval=126	saved figure 119.png in 4.170896s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 121/400	actuation=[ 8.46691221e-02 -8.78484131e-02 -1.72754330e+01 -7.37017523e-04
+ -7.13415546e-04 -1.29437944e-03]	state=[ 3.41618668e-04 -3.96522217e-04 -3.05333344e+00 -9.48411835e-05
+ -9.40135788e-05 -1.16931871e-04]	compute_time=0.023443s	n_f_eval=7	saved figure 120.png in 1.240924s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 122/400	actuation=[ 7.34096353e-02 -7.73236018e-02  4.75695345e+01  8.17660796e-04
+  8.67496078e-04 -1.65837045e-03]	state=[ 4.73754924e-04 -5.40268501e-04 -3.53567584e+00 -7.58741730e-05
+ -7.43448685e-05 -1.62918356e-04]	compute_time=0.554238s	n_f_eval=112	saved figure 121.png in 2.714063s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 123/400	actuation=[ 6.21472875e-02 -6.67968831e-02  1.12415201e+02  1.66709696e-03
+  1.73458248e-03 -8.33606421e-04]	state=[ 6.01352111e-04 -6.80607339e-04 -4.02125712e+00 -5.26170200e-05
+ -5.01906076e-05 -2.15885775e-04]	compute_time=0.056563s	n_f_eval=14	saved figure 122.png in 1.586430s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 124/400	actuation=[ 4.01138681e-02 -4.39107972e-02  1.84138720e+02  1.83065083e-04
+  2.71651017e-04  6.96715612e-04]	state=[ 7.21352054e-04 -8.14644603e-04 -4.50658953e+00 -2.18832040e-05
+ -1.82983895e-05 -2.72688625e-04]	compute_time=0.467329s	n_f_eval=126	saved figure 123.png in 5.730879s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 125/400	actuation=[ 1.80804486e-02 -2.10247114e-02  2.55862239e+02 -1.30096679e-03
+ -1.19128044e-03  2.22703764e-03]	state=[ 8.28791718e-04 -9.37510899e-04 -4.98777226e+00  1.03932645e-05
+  1.54761478e-05 -3.27390253e-04]	compute_time=0.026409s	n_f_eval=7	saved figure 124.png in 1.129264s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 126/400	actuation=[ 4.37345585e-03  4.42602415e-03  3.33271645e+02 -1.60673722e-03
+ -1.53874684e-03  3.59406223e-03]	state=[ 9.21942266e-04 -1.04758429e-03 -5.46086056e+00  3.81442772e-05
+  4.51398968e-05 -3.73989759e-04]	compute_time=0.550976s	n_f_eval=112	saved figure 125.png in 2.973912s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 127/400	actuation=[-9.33353693e-03  2.98767597e-02  4.10681052e+02 -1.91250765e-03
+ -1.88621324e-03  4.96108681e-03]	state=[ 1.00274206e-03 -1.14631942e-03 -5.92155625e+00  5.98242989e-05
+  6.89730461e-05 -4.07059044e-04]	compute_time=0.013733s	n_f_eval=7	saved figure 126.png in 1.953589s
+saving logs ...	saved at ./plots/robot_1720188333/logs.txt
+frame 128/400	actuation=[-2.30405297e-02  5.53274953e-02  4.88090459e+02 -2.21827807e-03
+ -2.23367964e-03  6.32811139e-03]	state=[ 1.07411783e-03 -1.23603043e-03 -6.36551273e+00  7.39136501e-05
+  8.52752289e-05 -4.21110723e-04]	compute_time=0.303149s	n_f_eval=7	saved figure 127.png in 1.031216s
+saving logs ...	
