@@ -114,7 +114,7 @@ if __name__ == "__main__":
 								 (time_step * (n_frames + optimization_horizon), [ 0., 0., 0., 0., 0., 0. ]) ]
 
 	trajectory = generate_trajectory(
-			trajectory, n_frames // 20 + 1 if n_frames % 20 != 0 else 0
+			trajectory, n_frames // 20 + (1 if n_frames % 20 != 0 else 0)
 			)
 	target_pose = trajectory[ 0 ][ 1 ]
 

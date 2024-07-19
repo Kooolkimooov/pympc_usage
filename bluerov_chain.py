@@ -4,17 +4,16 @@ from os import mkdir, path, remove
 from time import perf_counter, time
 
 from cycler import cycler
-from numpy import array, concatenate, cos, cross, cumsum, diag, eye, multiply, sin, tan, ones
+from numpy import array, concatenate, cos, cross, diag, eye, meshgrid, multiply, ones, sin, tan
 from numpy.linalg import inv
 from PIL import Image
 from scipy.spatial.transform import Rotation
 
-import matplotlib.pyplot as plt
-
+from calc_catenary_from_ext_points import get_catenary_param, get_coor_marker_points_ideal_catenary
 from mpc import *
 
 
-def two_robots_chain(
+def three_robots_chain(
 		x: ndarray, u: ndarray, robot_configuration
 		) -> ndarray:
 	"""
@@ -26,21 +25,33 @@ def two_robots_chain(
 	"""
 
 	x0 = x[ :6 ]
-	x0d = x[ 12:18 ]
-	x1 = x[ 6:12 ]
-	x1d = x[ 18: ]
+	x0d = x[ 18:24 ]
 	u0 = u[ :6 ]
-	u1 = u[ 6: ]
+
+	x1 = x[ 6:12 ]
+	x1d = x[ 24:30 ]
+	u1 = u[ 6:12 ]
+
+	x2 = x[ 12:18 ]
+	x2d = x[ 30:36 ]
+	u2 = u[ 12:18 ]
+
 	Phi0, Theta0, Psi0 = x0[ 3 ], x0[ 4 ], x0[ 5 ]
-	Phi1, Theta1, Psi1 = x1[ 3 ], x1[ 4 ], x1[ 5 ]
 	cPhi0, sPhi0 = cos( Phi0 ), sin( Phi0 )
-	cPhi1, sPhi1 = cos( Phi1 ), sin( Phi1 )
 	cTheta0, sTheta0, tTheta0 = cos( Theta0 ), sin( Theta0 ), tan( Theta0 )
-	cTheta1, sTheta1, tTheta1 = cos( Theta1 ), sin( Theta1 ), tan( Theta1 )
 	cPsi0, sPsi0 = cos( Psi0 ), sin( Psi0 )
+
+	Phi1, Theta1, Psi1 = x1[ 3 ], x1[ 4 ], x1[ 5 ]
+	cTheta1, sTheta1, tTheta1 = cos( Theta1 ), sin( Theta1 ), tan( Theta1 )
+	cPhi1, sPhi1 = cos( Phi1 ), sin( Phi1 )
 	cPsi1, sPsi1 = cos( Psi1 ), sin( Psi1 )
+
+	Phi2, Theta2, Psi2 = x2[ 3 ], x2[ 4 ], x2[ 5 ]
+	cPhi2, sPhi2 = cos( Phi2 ), sin( Phi2 )
+	cTheta2, sTheta2, tTheta2 = cos( Theta2 ), sin( Theta2 ), tan( Theta2 )
+	cPsi2, sPsi2 = cos( Psi2 ), sin( Psi2 )
+
 	J0 = zeros( (6, 6) )
-	J1 = zeros( (6, 6) )
 	J0[ 0, :3 ] = array(
 			[ cPsi0 * cTheta0, -sPsi0 * cPhi0 + cPsi0 * sTheta0 * sPhi0,
 				sPsi0 * sPhi0 + cPsi0 * sTheta0 * cPhi0 ]
@@ -53,6 +64,8 @@ def two_robots_chain(
 	J0[ 3, 3: ] = array( [ 1, sPhi0 * tTheta0, cPhi0 * tTheta0 ] )
 	J0[ 4, 3: ] = array( [ 0, cPhi0, -sPhi0 ] )
 	J0[ 5, 3: ] = array( [ 0, sPhi0 / cTheta0, cPhi0 / cTheta0 ] )
+
+	J1 = zeros( (6, 6) )
 	J1[ 0, :3 ] = array(
 			[ cPsi1 * cTheta1, -sPsi1 * cPhi1 + cPsi1 * sTheta1 * sPhi1,
 				sPsi1 * sPhi1 + cPsi1 * sTheta1 * cPhi1 ]
@@ -66,51 +79,115 @@ def two_robots_chain(
 	J1[ 4, 3: ] = array( [ 1, cPhi1, -sPhi1 ] )
 	J1[ 5, 3: ] = array( [ 1, sPhi1 / cTheta1, cPhi1 / cTheta1 ] )
 
+	J2 = zeros( (6, 6) )
+	J2[ 0, :3 ] = array(
+			[ cPsi2 * cTheta2, -sPsi2 * cPhi2 + cPsi2 * sTheta2 * sPhi2,
+				sPsi2 * sPhi2 + cPsi2 * sTheta2 * cPhi2 ]
+			)
+	J2[ 1, :3 ] = array(
+			[ sPsi2 * cTheta2, cPsi2 * cPhi2 + sPsi2 * sTheta2 * sPhi2,
+				-cPsi2 * sPhi2 + sPsi2 * sTheta2 * cPhi2 ]
+			)
+	J2[ 2, :3 ] = array( [ -sTheta2, cTheta2 * sPhi2, cTheta2 * cPhi2 ] )
+	J2[ 3, 3: ] = array( [ 1, sPhi2 * tTheta2, cPhi2 * tTheta2 ] )
+	J2[ 4, 3: ] = array( [ 1, cPhi2, -sPhi2 ] )
+	J2[ 5, 3: ] = array( [ 1, sPhi2 / cTheta2, cPhi2 / cTheta2 ] )
+
 	hydrodynamic_coefficients = robot_configuration[ "hydrodynamic_coefficients" ]
+
 	D0 = diag( hydrodynamic_coefficients[ :6 ] ) + diag(
 			multiply( hydrodynamic_coefficients[ 6: ], abs( x0d ) )
 			)
 	D1 = diag( hydrodynamic_coefficients[ :6 ] ) + diag(
 			multiply( hydrodynamic_coefficients[ 6: ], abs( x1d ) )
 			)
+	D2 = diag( hydrodynamic_coefficients[ :6 ] ) + diag(
+			multiply( hydrodynamic_coefficients[ 6: ], abs( x2d ) )
+			)
+
 	buoyancy = robot_configuration[ "buoyancy" ]
 	center_of_volume = robot_configuration[ "center_of_volume" ]
 	Fw = mass * array( [ 0, 0, 9.80665 ] )
 	Fb = buoyancy * array( [ 0, 0, -1 ] )
 	s0 = zeros( 6 )
-	s1 = zeros( 6 )
 	s0[ :3 ] = J0[ :3, :3 ].T @ (Fw + Fb)
-	s1[ :3 ] = J1[ :3, :3 ].T @ (Fw + Fb)
 	s0[ 3: ] = cross( center_of_mass, J0[ :3, :3 ].T @ Fw ) + cross(
 			center_of_volume, J0[ :3, :3 ].T @ Fb
 			)
+
+	s1 = zeros( 6 )
+	s1[ :3 ] = J1[ :3, :3 ].T @ (Fw + Fb)
 	s1[ 3: ] = cross( center_of_mass, J1[ :3, :3 ].T @ Fw ) + cross(
 			center_of_volume, J1[ :3, :3 ].T @ Fb
 			)
 
+	s2 = zeros( 6 )
+	s2[ :3 ] = J2[ :3, :3 ].T @ (Fw + Fb)
+	s2[ 3: ] = cross( center_of_mass, J2[ :3, :3 ].T @ Fw ) + cross(
+			center_of_volume, J2[ :3, :3 ].T @ Fb
+			)
+
 	I_inv = robot_configuration[ 'inertial_matrix_inv' ]
+
 	xdot = zeros( x.shape )
 	xdot[ :6 ] = J0 @ x0d
 	xdot[ 6:12 ] = J1 @ x1d
-	xdot[ 12:18 ] = I_inv @ (D0 @ x0 + s0 + u0)
-	xdot[ 18: ] = I_inv @ (D1 @ x1 + s1 + u1)
+	xdot[ 12:18 ] = J2 @ x2d
+	xdot[ 18:24 ] = I_inv @ (D0 @ x0d + s0 + u0)
+	xdot[ 24:30 ] = I_inv @ (D1 @ x1d + s1 + u1)
+	xdot[ 30:36 ] = I_inv @ (D2 @ x2d + s2 + u2)
 
 	return xdot
 
 
-def two_robot_chain_objective(
+def three_robot_chain_objective(
 		x: ndarray, u: ndarray, robot_configuration
 		) -> ndarray:
 	"""
-	:param x: state of the chain such that x = [pose_robot_0_wf, pose_robot_1_wf, vel_robot_0_rf,
-	vel_robot_1_rf]
+	:param x: state of the chain such that
+	x = [pose_robot_0_wf, pose_robot_1_wf, pose_robot2_wf, vel_robot_0_rf, vel_robot_1_rf,
+	vel_robot_2_rf]
 	:param u: actuation of the chain such that u = [actuation_robot_0, actuation_robot_1]
 	:param robot_configuration: configuration of the robots considered identical
 	:return: objective to minimize
 	"""
-	# 													ideal distance is .5m horizontally
-	dist = x[ :3 ] - x[ 6:9 ] - .5 * array( [ 1., 1., 0. ] )
-	return dist @ eye( 3 ) @ dist.T
+	# # 													ideal distance is .5m horizontally
+	# dist01 = x[ :3 ] - x[ 6:9 ] - .5 * array( [ 1., 1., 0. ] )
+	# dist12 = x[ 6:9 ] - x[ 12:15 ] - .5 * array( [ 1., 1., 0. ] )
+	# return dist01 @ eye( 3 ) @ dist01.T + dist12 @ eye( 3 ) @ dist12.T
+
+	floor_depth = 1.5
+
+	dp01 = norm( x[ 6:8 ] - x[ 0:2 ] )
+	dz01 = x[ 8 ] - x[ 2 ]
+	_, _, H01 = get_catenary_param( dz01, dp01, 3 )
+
+	dp12 = norm( x[ 12:14 ] - x[ 6:8 ] )
+	dz12 = x[ 14 ] - x[ 8 ]
+	_, _, H12 = get_catenary_param( dz12, dp12, 3 )
+
+	dist01 = max( x[ 2 ], x[ 8 ] ) + H01 - floor_depth - .1
+	dist12 = max( x[ 14 ], x[ 8 ] ) + H12 - floor_depth - .1
+
+	if .3 < dp01 < 2.7:
+		dp01 = 0.
+	else:
+		dp01 -= 1.5
+
+	if .3 < dp12 < 2.7:
+		dp12 = 0.
+	else:
+		dp12 -= 1.5
+
+	if dist01 < 0.:
+		dist01 = 0.
+	if dist12 < 0.:
+		dist12 = 0.
+
+	objective = 2 * (pow( dist01, 2 ) + pow( dist12, 2 ))
+	objective += pow( dp01, 2 ) + pow( dp12, 2 )
+
+	return objective
 
 
 def build_inertial_matrix( mass: float, inertial_coefficients: list[ float ] ):
@@ -142,38 +219,37 @@ def build_inertial_matrix( mass: float, inertial_coefficients: list[ float ] ):
 
 if __name__ == "__main__":
 
-	n_frames = 500
+	n_frames = 300
 	max_iter = 1000
 	tolerance = 1e-3
 	time_step = 0.025
-
 	sequence_time = n_frames * time_step
-	state = zeros( (24,) )
-	actuation = zeros( (12,) )
+	n_robots = 3
+	state = zeros( (12 * n_robots,) )
+	state[ 6 ] = 1
+	state[ 12 ] = 2
+	actuation = zeros( (6 * n_robots,) )
 
 	base_optimization_horizon = 25
 	optimization_horizon = base_optimization_horizon
-	time_steps_per_actuation = 20
+	time_steps_per_actuation = 25
 	result_shape = (optimization_horizon // time_steps_per_actuation + (
 			1 if optimization_horizon % time_steps_per_actuation != 0 else 0), actuation.shape[ 0 ])
 	result = zeros( result_shape )
 
-	trajectory = [
+	key_frames = [
 
-			(time_step * 0.0 * n_frames, [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ]),
-			(time_step * .2 * n_frames, [ 0., 0., 1., 0., 0., 0., 0., 0., 0., 0., 0., 0. ]),
-			(time_step * .4 * n_frames, [ 0., 0., 1., 0., 0., -pi, 0., 0., 0., 0., 0., 0. ]),
-			(time_step * .6 * n_frames, [ 1., -1., 1., 0., 0., -pi, 0., 0., 0., 0., 0., 0. ]),
-			(time_step * .8 * n_frames, [ 1., -1., 0., 0., 0., -pi, 0., 0., 0., 0., 0., 0. ]),
-			(time_step * 1.0 * n_frames, [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ]), (
-					time_step * (n_frames + optimization_horizon + 1),
-					[ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ])
+			(time_step * 0.0 * n_frames, [ 0., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
+			(time_step * .2 * n_frames, [ 0., 0., 1., 0., 0., 0. ] + [ 0. ] * 12),
+			(time_step * .4 * n_frames, [ 0., 0., 1., 0., 0., -pi ] + [ 0. ] * 12),
+			(time_step * .6 * n_frames, [ 1., -1., 1., 0., 0., -pi ] + [ 0. ] * 12),
+			(time_step * .8 * n_frames, [ 1., -1., 0., 0., 0., -pi ] + [ 0. ] * 12),
+			(time_step * 1.0 * n_frames, [ 0., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
+			(time_step * (n_frames + optimization_horizon + 1), [ 0., 0., 0., 0., 0., 0. ] + [ 0. ] * 12)
 
 			]
 
-	trajectory = generate_trajectory(
-			trajectory, n_frames  # // 20 + (1 if n_frames % 20 != 0 else 0)
-			)
+	trajectory = generate_trajectory( key_frames, n_frames )
 
 	mass = 11.5
 	inertial_coefficients = [ .16, .16, .16, 0.0, 0.0, 0.0 ]
@@ -197,11 +273,12 @@ if __name__ == "__main__":
 
 	pose_weight_matrix = eye( actuation.shape[ 0 ] )
 	pose_weight_matrix[ :3, :3 ] *= 2.
-	# ignore error for robot1, only consider robot0, the objective will determine robot1
-	pose_weight_matrix[ 6:12, 6:12 ] *= 0
+	# ignore error for robot1 and robot2, only consider robot0, the objective will determine robot1
+	pose_weight_matrix[ 6:, 6: ] *= 0
 	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
 	actuation_weight_matrix[ :3, :3 ] *= 0.01
 	actuation_weight_matrix[ 6:9, 6:9 ] *= 0.01
+	actuation_weight_matrix[ 12:15, 12:15 ] *= 0.01
 	final_cost_weight_matrix = eye( actuation.shape[ 0 ] )
 
 	command_upper_bound = 50
@@ -209,7 +286,7 @@ if __name__ == "__main__":
 
 	mpc_config = {
 			'candidate_shape'         : result_shape,
-			'model'                   : two_robots_chain,
+			'model'                   : three_robots_chain,
 			'initial_actuation'       : actuation,
 			'initial_state'           : state,
 			'model_kwargs'            : model_kwargs,
@@ -218,7 +295,7 @@ if __name__ == "__main__":
 			'prediction_horizon'      : 0,
 			'time_step'               : time_step,
 			'time_steps_per_actuation': time_steps_per_actuation,
-			'objective_function'      : two_robot_chain_objective,
+			'objective_function'      : three_robot_chain_objective,
 			'pose_weight_matrix'      : pose_weight_matrix,
 			'actuation_weight_matrix' : actuation_weight_matrix,
 			'final_cost_weight_matrix': final_cost_weight_matrix,
@@ -239,11 +316,13 @@ if __name__ == "__main__":
 
 	previous_states_record = [ deepcopy( state ) ]
 	previous_actuation_record = [ deepcopy( actuation ) ]
-	previous_objective_record = [ two_robot_chain_objective( state, actuation, **model_kwargs ) ]
-	previous_compute_time = [ 0. ]
-	previous_nfeval = [ 0. ]
+	previous_objective_record = [ three_robot_chain_objective( state, actuation, **model_kwargs ) ]
+	previous_compute_time_record = [ 0. ]
+	previous_nfeval_record = [ 0. ]
+	previous_H01_record = [ 0. ]
+	previous_H12_record = [ 0. ]
 
-	folder = (f'./plots/{two_robots_chain.__name__}_'
+	folder = (f'./plots/{three_robots_chain.__name__}_'
 						f'{int( time() )}')
 
 	if path.exists( folder ):
@@ -273,9 +352,7 @@ if __name__ == "__main__":
 
 		logger.log( f"frame {frame + 1}/{n_frames}" )
 
-		result = concatenate(
-				(result[ 1: ], array( [ [ 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0. ] ] ))
-				)
+		result = concatenate( (result[ 1: ], zeros( (1, 6 * n_robots) )) )
 
 		ti = perf_counter()
 
@@ -291,12 +368,14 @@ if __name__ == "__main__":
 				)
 
 		actuation += result[ 0 ]
-		state += two_robots_chain( state, actuation, **model_kwargs ) * time_step
+		state += three_robots_chain( state, actuation, **model_kwargs ) * time_step
 
 		tf = perf_counter()
 		compute_time = tf - ti
-		previous_compute_time += [ compute_time ]
-		previous_objective_record += [ two_robot_chain_objective( state, actuation, **model_kwargs ) ]
+		previous_compute_time_record += [ compute_time ]
+		previous_objective_record += [ three_robot_chain_objective(
+				state, actuation, **model_kwargs
+				) ]
 
 		mpc_config[ 'initial_state' ] = state
 		mpc_config[ 'initial_actuation' ] = actuation
@@ -305,10 +384,10 @@ if __name__ == "__main__":
 		previous_actuation_record.append( deepcopy( actuation ) )
 
 		n_f_eval = len( mpc_config[ 'state_record' ] )
-		previous_nfeval += [ n_f_eval ]
+		previous_nfeval_record += [ n_f_eval ]
 
-		logger.log( f"actuation={actuation[ :3 ]}+{actuation[ 6:9 ]}" )
-		logger.log( f"state={state[ : 3 ]}+{state[ 6:9 ]}" )
+		logger.log( f"actuation={actuation[ :3 ]}-{actuation[ 6:9 ]}-{actuation[ 12:15 ]}" )
+		logger.log( f"state={state[ : 3 ]}-{state[ 6:9 ]}-{state[ 12:15 ]}" )
 		logger.log( f"{compute_time=:.6f}s" )
 		logger.log( f"{n_f_eval=}" )
 
@@ -319,107 +398,165 @@ if __name__ == "__main__":
 				mpc_config[ 'optimization_horizon' ] + mpc_config[ 'prediction_horizon' ]
 				) ]
 
-		fig_grid_shape = (5, 12)
-		r0x = 0
-		r1x = 9
-		fig = plt.figure( figsize = [ 16, 9 ] )
+		fig_grid_shape = (15, 22)
+		vsize = 13
+		psizex = 3
+		psizey = 3
+		r0x = vsize
+		r1x = vsize + psizex
+		r2x = vsize + 2 * psizex
+		fig = plt.figure( figsize = [ 21, 9 ] )
 
-		view = plt.subplot2grid( fig_grid_shape, (0, r0x + 3), 4, 6, fig, projection = '3d' )
+		view = plt.subplot2grid( fig_grid_shape, (0, 0), vsize, vsize, fig, projection = '3d' )
 		view.set_xlabel( "x" )
 		view.set_ylabel( "y" )
+		view.set_zlabel( "z" )
 		view.set_xlim( -1.5, 1.5 )
 		view.set_ylim( -1.5, 1.5 )
 		view.set_zlim( 0, 3 )
 		view.invert_yaxis()
 		view.invert_zaxis()
 
-		ax_pos0 = plt.subplot2grid( fig_grid_shape, (0, r0x), 1, 3, fig )
+		ax_pos0 = plt.subplot2grid( fig_grid_shape, (0, r0x), psizey, psizex, fig )
 		ax_pos0.set_title( 'robot0' )
-		ax_pos0.set_ylabel( 'position' )
 		ax_pos0.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
 		ax_pos0.set_ylim( -3, 3 )
 		ax_pos0.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
-		ax_pos1 = plt.subplot2grid( fig_grid_shape, (0, r1x), 1, 3, fig )
-		ax_pos1.set_title( 'robot1' )
-		ax_pos1.set_ylabel( 'position' )
-		ax_pos1.yaxis.set_label_position( "right" )
-		ax_pos1.yaxis.tick_right()
-		ax_pos1.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
-		ax_pos1.set_ylim( -3, 3 )
-		ax_pos1.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_pos0.yaxis.set_label_position( "right" )
+		ax_pos0.yaxis.tick_right()
 
-		ax_ang0 = plt.subplot2grid( fig_grid_shape, (1, r0x), 1, 3, fig )
-		ax_ang0.set_ylabel( 'angle' )
+		ax_ang0 = plt.subplot2grid( fig_grid_shape, (psizey, r0x), psizey, psizex, fig )
 		ax_ang0.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
 		ax_ang0.set_ylim( -2 * pi, 2 * pi )
 		ax_ang0.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
-		ax_ang1 = plt.subplot2grid( fig_grid_shape, (1, r1x), 1, 3, fig )
-		ax_ang1.set_ylabel( 'angle' )
-		ax_ang1.yaxis.set_label_position( "right" )
-		ax_ang1.yaxis.tick_right()
-		ax_ang1.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
-		ax_ang1.set_ylim( -2 * pi, 2 * pi )
-		ax_ang1.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_ang0.yaxis.set_label_position( "right" )
+		ax_ang0.yaxis.tick_right()
 
-		ax_act_pos0 = plt.subplot2grid( fig_grid_shape, (2, r0x), 1, 3, fig )
-		ax_act_pos0.set_ylabel( 'pos. act.' )
+		ax_act_pos0 = plt.subplot2grid( fig_grid_shape, (2 * psizey, r0x), psizey, psizex, fig )
 		ax_act_pos0.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
 		ax_act_pos0.set_ylim( 1.1 * command_lower_bound, 1.1 * command_upper_bound )
 		ax_act_pos0.set_prop_cycle(
 				cycler( 'color', [ 'blue', 'red', 'green' ] )
 				)
-		ax_act_pos1 = plt.subplot2grid( fig_grid_shape, (2, r1x), 1, 3, fig )
-		ax_act_pos1.set_ylabel( 'pos. act.' )
-		ax_act_pos1.yaxis.set_label_position( "right" )
-		ax_act_pos1.yaxis.tick_right()
-		ax_act_pos1.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
-		ax_act_pos1.set_ylim( 1.1 * command_lower_bound, 1.1 * command_upper_bound )
-		ax_act_pos1.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_act_pos0.yaxis.set_label_position( "right" )
+		ax_act_pos0.yaxis.tick_right()
 
-		ax_act_ang0 = plt.subplot2grid( fig_grid_shape, (3, r0x), 1, 3, fig )
-		ax_act_ang0.set_ylabel( 'ang. act.' )
+		ax_act_ang0 = plt.subplot2grid( fig_grid_shape, (3 * psizey, r0x), psizey, psizex, fig )
 		ax_act_ang0.set_xlabel( 'time' )
 		ax_act_ang0.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
 		ax_act_ang0.set_ylim( 1.1 * command_lower_bound, 1.1 * command_upper_bound )
 		ax_act_ang0.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
-		ax_act_ang1 = plt.subplot2grid( fig_grid_shape, (3, r1x), 1, 3, fig )
-		ax_act_ang1.set_ylabel( 'ang. act.' )
-		ax_act_ang1.yaxis.set_label_position( "right" )
-		ax_act_ang1.yaxis.tick_right()
+		ax_act_ang0.yaxis.set_label_position( "right" )
+		ax_act_ang0.yaxis.tick_right()
+
+		ax_cat_H = plt.subplot2grid(
+				fig_grid_shape, (4 * psizey + 1, r1x - psizex // 2), psizey - 1, psizex, fig
+				)
+		ax_cat_H.set_xlabel( 'time' )
+		ax_cat_H.set_ylabel( 'lowest point' )
+		ax_cat_H.set_xlim( time_previous[ 0 ], time_previous[ -1 ] )
+		ax_cat_H.set_prop_cycle( cycler( 'color', [ 'blue', 'red' ] ) )
+
+		ax_pos1 = plt.subplot2grid( fig_grid_shape, (0, r1x), psizey, psizex, fig )
+		ax_pos1.set_title( 'robot1' )
+		ax_pos1.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_pos1.set_ylim( -3, 3 )
+		ax_pos1.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_pos1.yaxis.set_label_position( "right" )
+		ax_pos1.yaxis.tick_right()
+
+		ax_ang1 = plt.subplot2grid( fig_grid_shape, (psizey, r1x), psizey, psizex, fig )
+		ax_ang1.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_ang1.set_ylim( -2 * pi, 2 * pi )
+		ax_ang1.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_ang1.yaxis.set_label_position( "right" )
+		ax_ang1.yaxis.tick_right()
+
+		ax_act_pos1 = plt.subplot2grid( fig_grid_shape, (2 * psizey, r1x), psizey, psizex, fig )
+		ax_act_pos1.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_act_pos1.set_ylim( 1.1 * command_lower_bound, 1.1 * command_upper_bound )
+		ax_act_pos1.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_act_pos1.yaxis.set_label_position( "right" )
+		ax_act_pos1.yaxis.tick_right()
+
+		ax_act_ang1 = plt.subplot2grid( fig_grid_shape, (3 * psizey, r1x), psizey, psizex, fig )
+		ax_act_ang1.set_xlabel( 'time' )
 		ax_act_ang1.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
 		ax_act_ang1.set_ylim( 1.1 * command_lower_bound, 1.1 * command_upper_bound )
 		ax_act_ang1.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_act_ang1.yaxis.set_label_position( "right" )
+		ax_act_ang1.yaxis.tick_right()
 
-		ax_obj = plt.subplot2grid( fig_grid_shape, (4, r1x), 1, 3, fig )
-		ax_obj.set_ylabel( 'objective' )
-		ax_obj.set_xlabel( 'time' )
-		ax_obj.yaxis.set_label_position( "right" )
+		ax_pos2 = plt.subplot2grid( fig_grid_shape, (0, r2x), psizey, psizex, fig )
+		ax_pos2.set_title( 'robot2' )
+		ax_pos2.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_pos2.set_ylim( -3, 3 )
+		ax_pos2.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_pos2.set_ylabel( 'position' )
+		ax_pos2.yaxis.set_label_position( "right" )
+		ax_pos2.yaxis.tick_right()
+
+		ax_ang2 = plt.subplot2grid( fig_grid_shape, (psizey, r2x), psizey, psizex, fig )
+		ax_ang2.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_ang2.set_ylim( -2 * pi, 2 * pi )
+		ax_ang2.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_ang2.set_ylabel( 'orientation' )
+		ax_ang2.yaxis.set_label_position( "right" )
+		ax_ang2.yaxis.tick_right()
+
+		ax_act_pos2 = plt.subplot2grid( fig_grid_shape, (2 * psizey, r2x), psizey, psizex, fig )
+		ax_act_pos2.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_act_pos2.set_ylim( 1.1 * command_lower_bound, 1.1 * command_upper_bound )
+		ax_act_pos2.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_act_pos2.set_ylabel( 'pos. act.' )
+		ax_act_pos2.yaxis.set_label_position( "right" )
+		ax_act_pos2.yaxis.tick_right()
+
+		ax_act_ang2 = plt.subplot2grid( fig_grid_shape, (3 * psizey, r2x), psizey, psizex, fig )
+		ax_act_ang2.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+		ax_act_ang2.set_ylim( 1.1 * command_lower_bound, 1.1 * command_upper_bound )
+		ax_act_ang2.set_prop_cycle( cycler( 'color', [ 'blue', 'red', 'green' ] ) )
+		ax_act_ang2.set_ylabel( 'ang. act.' )
+		ax_act_ang2.yaxis.set_label_position( "right" )
+		ax_act_ang2.yaxis.tick_right()
+
+		ax_obj = plt.subplot2grid( fig_grid_shape, (4 * psizey, r2x), psizey, psizex, fig )
 		ax_obj.yaxis.tick_right()
 		ax_obj.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
 		ax_obj.set_prop_cycle( cycler( 'color', [ 'blue' ] ) )
+		ax_obj.set_ylabel( 'objective' )
+		ax_obj.set_xlabel( 'time' )
+		ax_obj.yaxis.set_label_position( "right" )
 
-		ax_comp_time = plt.subplot2grid( fig_grid_shape, (4, r0x + 4), 1, 2, fig )
+		ax_comp_time = plt.subplot2grid( fig_grid_shape, (vsize, 1), 2, 5, fig )
+		ax_comp_time.set_prop_cycle( cycler( 'color', [ 'blue' ] ) )
 		ax_comp_time.set_ylabel( 'comp. time' )
 		ax_comp_time.set_xlabel( 'time' )
 		ax_comp_time.set_xlim( time_previous[ 0 ], time_previous[ -1 ] )
 
-		ax_nfeval = plt.subplot2grid( fig_grid_shape, (4, r0x + 6), 1, 2, fig )
+		ax_nfeval = plt.subplot2grid( fig_grid_shape, (vsize, 7), 2, 5, fig )
+		ax_nfeval.set_prop_cycle( cycler( 'color', [ 'blue' ] ) )
 		ax_nfeval.set_ylabel( 'n. eval' )
 		ax_nfeval.set_xlabel( 'time' )
-		ax_nfeval.yaxis.set_label_position( "right" )
-		ax_nfeval.yaxis.tick_right()
 		ax_nfeval.set_xlim( time_previous[ 0 ], time_previous[ -1 ] )
 
-		plt.subplots_adjust( hspace = 0. )
+		plt.subplots_adjust( hspace = 0., wspace = 0. )
 		fig.suptitle( f"{frame + 1}/{n_frames} - {compute_time=:.6f}s - {n_f_eval=}" )
 
 		target_pose = mpc_config[ 'target_trajectory' ][ 0 ][ 1 ]
 
 		state_r0 = Rotation.from_euler( 'xyz', state[ 3:6 ] ).as_matrix()
 		state_r1 = Rotation.from_euler( 'xyz', state[ 9:12 ] ).as_matrix()
+		state_r2 = Rotation.from_euler( 'xyz', state[ 15:18 ] ).as_matrix()
 		target_r0 = Rotation.from_euler( 'xyz', target_pose[ 3:6 ] ).as_matrix()
 
-		quiver_scale = .5
+		surf_x = array( [ -1.5, 1.5 ] )
+		surf_y = array( [ -1.5, 1.5 ] )
+		surf_x, surf_y = meshgrid( surf_x, surf_y )
+		surf_z = ones( surf_x.shape ) * 1.5
+		view.plot_surface( surf_x, surf_y, surf_z, alpha = 0.1 )
+
+		quiver_scale = .25
 		view.quiver(
 				*state[ :3 ], *(state_r0 @ (quiver_scale * array( [ 1., 0., 0. ] ))), color = 'blue'
 				)
@@ -427,7 +564,11 @@ if __name__ == "__main__":
 				*state[ 6:9 ], *(state_r1 @ (quiver_scale * array( [ 1., 0., 0. ] ))), color = 'red'
 				)
 		view.quiver(
-				*target_pose[ :3 ], *(target_r0 @ (quiver_scale * array( [ 1., 0., 0. ] ))), color = 'cyan'
+				*state[ 12:15 ], *(state_r2 @ (quiver_scale * array( [ 1., 0., 0. ] ))), color = 'green'
+				)
+		view.quiver(
+				*target_pose[ :3 ], *(target_r0 @ (quiver_scale * array( [ 1., 0., 0. ] ))),
+				color = 'black'
 				)
 
 		view.plot(
@@ -442,6 +583,12 @@ if __name__ == "__main__":
 				array( previous_states_record )[ :, 8 ],
 				color = 'red'
 				)
+		view.plot(
+				array( previous_states_record )[ :, 12 ],
+				array( previous_states_record )[ :, 13 ],
+				array( previous_states_record )[ :, 14 ],
+				color = 'green'
+				)
 
 		trajectory_time = [ p[ 0 ] - time_step * frame for p in trajectory ]
 		trajectory_pos = array( [ p[ 1 ][ :3 ] for p in trajectory ] )
@@ -449,17 +596,36 @@ if __name__ == "__main__":
 
 		view.plot( trajectory_pos[ :, 0 ], trajectory_pos[ :, 1 ], trajectory_pos[ :, 2 ], ':' )
 
+		cat01, _, _, H01 = get_coor_marker_points_ideal_catenary(
+				state[ 0 ], -state[ 1 ], -state[ 2 ], state[ 6 ], -state[ 7 ], -state[ 8 ], 3., .2
+				)
+		cat12, _, _, H12 = get_coor_marker_points_ideal_catenary(
+				state[ 6 ], -state[ 7 ], -state[ 8 ], state[ 12 ], -state[ 13 ], -state[ 14 ], 3., .2
+				)
+		previous_H01_record.append( H01 + max( state[ 2 ], state[ 8 ] ) )
+		previous_H12_record.append( H12 + max( state[ 8 ], state[ 14 ] ) )
+
+		view.plot( cat01[ :, 0 ], -cat01[ :, 1 ], -cat01[ :, 2 ], 'blue' )
+		view.plot( cat12[ :, 0 ], -cat12[ :, 1 ], -cat12[ :, 2 ], 'red' )
+
+		ax_cat_H.plot( time_previous, previous_H01_record )
+		ax_cat_H.plot( time_previous, previous_H12_record )
+
 		ax_pos0.plot( trajectory_time, trajectory_pos, ':' )
 		ax_ang0.plot( trajectory_time, trajectory_ang, ':' )
 
 		previous_pos_record_array0 = array( previous_states_record )[ :, :3 ]
 		previous_ang_record_array0 = array( previous_states_record )[ :, 3:6 ]
-		previous_pos_record_array1 = array( previous_states_record )[ :, 6:9 ]
-		previous_ang_record_array1 = array( previous_states_record )[ :, 9:12 ]
 		previous_act_pos_record_array0 = array( previous_actuation_record )[ :, :3 ]
 		previous_act_ang_record_array0 = array( previous_actuation_record )[ :, 3:6 ]
+		previous_pos_record_array1 = array( previous_states_record )[ :, 6:9 ]
+		previous_ang_record_array1 = array( previous_states_record )[ :, 9:12 ]
 		previous_act_pos_record_array1 = array( previous_actuation_record )[ :, 6:9 ]
 		previous_act_ang_record_array1 = array( previous_actuation_record )[ :, 9:12 ]
+		previous_pos_record_array2 = array( previous_states_record )[ :, 12:15 ]
+		previous_ang_record_array2 = array( previous_states_record )[ :, 15:18 ]
+		previous_act_pos_record_array2 = array( previous_actuation_record )[ :, 12:15 ]
+		previous_act_ang_record_array2 = array( previous_actuation_record )[ :, 15:18 ]
 
 		ax_pos0.plot( time_previous, previous_pos_record_array0 )
 		ax_ang0.plot( time_previous, previous_ang_record_array0 )
@@ -469,6 +635,10 @@ if __name__ == "__main__":
 		ax_ang1.plot( time_previous, previous_ang_record_array1 )
 		ax_act_pos1.plot( time_previous, previous_act_pos_record_array1 )
 		ax_act_ang1.plot( time_previous, previous_act_ang_record_array1 )
+		ax_pos2.plot( time_previous, previous_pos_record_array2 )
+		ax_ang2.plot( time_previous, previous_ang_record_array2 )
+		ax_act_pos2.plot( time_previous, previous_act_pos_record_array2 )
+		ax_act_ang2.plot( time_previous, previous_act_ang_record_array2 )
 		ax_obj.plot( time_previous, previous_objective_record )
 
 		for f_eval in range( n_f_eval ):
@@ -476,15 +646,16 @@ if __name__ == "__main__":
 			ang_record_array0 = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 3:6 ]
 			pos_record_array1 = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 6:9 ]
 			ang_record_array1 = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 9:12 ]
+			pos_record_array2 = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 12:15 ]
+			ang_record_array2 = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 15:18 ]
 
 			view.plot(
 					pos_record_array0[ :, 0 ],
 					pos_record_array0[ :, 1 ],
 					pos_record_array0[ :, 2 ],
-					'b',
+					'blue',
 					linewidth = .1
 					)
-
 			ax_pos0.plot( time_prediction, pos_record_array0, linewidth = .1 )
 			ax_ang0.plot( time_prediction, ang_record_array0, linewidth = .1 )
 			ax_act_pos0.plot(
@@ -498,7 +669,7 @@ if __name__ == "__main__":
 					pos_record_array1[ :, 0 ],
 					pos_record_array1[ :, 1 ],
 					pos_record_array1[ :, 2 ],
-					'b',
+					'red',
 					linewidth = .1
 					)
 			ax_pos1.plot( time_prediction, pos_record_array1, linewidth = .1 )
@@ -508,6 +679,22 @@ if __name__ == "__main__":
 					)
 			ax_act_ang1.plot(
 					time_prediction, mpc_config[ 'actuation_record' ][ f_eval ][ :, 9:12 ], linewidth = .1
+					)
+
+			view.plot(
+					pos_record_array2[ :, 0 ],
+					pos_record_array2[ :, 1 ],
+					pos_record_array2[ :, 2 ],
+					'green',
+					linewidth = .1
+					)
+			ax_pos2.plot( time_prediction, pos_record_array2, linewidth = .1 )
+			ax_ang2.plot( time_prediction, ang_record_array2, linewidth = .1 )
+			ax_act_pos2.plot(
+					time_prediction, mpc_config[ 'actuation_record' ][ f_eval ][ :, 12:15 ], linewidth = .1
+					)
+			ax_act_ang2.plot(
+					time_prediction, mpc_config[ 'actuation_record' ][ f_eval ][ :, 15:18 ], linewidth = .1
 					)
 
 			ax_obj.plot( time_prediction, mpc_config[ 'objective_record' ][ f_eval ], linewidth = .1 )
@@ -521,10 +708,15 @@ if __name__ == "__main__":
 		ax_ang1.axvline( color = 'g' )
 		ax_act_pos1.axvline( color = 'g' )
 		ax_act_ang1.axvline( color = 'g' )
+		ax_pos2.axvline( color = 'g' )
+		ax_ang2.axvline( color = 'g' )
+		ax_act_pos2.axvline( color = 'g' )
+		ax_act_ang2.axvline( color = 'g' )
 		ax_obj.axvline( color = 'g' )
+		ax_cat_H.axhline( 1.5, color = 'g' )
 
-		ax_comp_time.plot( time_previous, previous_compute_time )
-		ax_nfeval.plot( time_previous, previous_nfeval )
+		ax_comp_time.plot( time_previous, previous_compute_time_record )
+		ax_nfeval.plot( time_previous, previous_nfeval_record )
 
 		plt.savefig( f'{folder}/{frame}.png' )
 		plt.close( 'all' )

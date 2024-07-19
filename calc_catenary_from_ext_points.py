@@ -100,21 +100,21 @@ def NewtonsMethodForDeriv( x, L, DH, dxAB, epsilon = 0.000001 ):
 def get_catenary_param( DH, dxAB, L ):
 	# Eq. of catenary : 	y = (1/C)*(cosh(C*x) - 1) with origin at lowest point
 	# Newton to get the initial guess
-	val = 1 / dxAB * (L ** 2 - DH ** 2) / (dxAB ** 2)
-	if val > 1:
-		x_init = 2.0 * np.arccosh( 1 / dxAB * (L ** 2 - DH ** 2) / (dxAB ** 2) )
-	else:
-		x_init = 2.0
-
-	(x_deriv_zero, niter1) = NewtonsMethodForDeriv( x_init, L, DH, dxAB, eps )
-	# print('x_deriv_zero = %f_gamma' % x_deriv_zero)
-	x_init = 2.0 * x_deriv_zero
-
-	xmax = 2.0 * x_init
-	ymax = 1.5 * np.max(
-			[ np.abs( ma_fonction( x_deriv_zero, L, DH, dxAB ) ),
-				np.abs( ma_fonction( x_init, L, DH, dxAB ) ) ]
-			)
+	# val = 1 / dxAB * (L ** 2 - DH ** 2) / (dxAB ** 2)
+	# if val > 1:
+	# 	x_init = 2.0 * np.arccosh( 1 / dxAB * (L ** 2 - DH ** 2) / (dxAB ** 2) )
+	# else:
+	# 	x_init = 2.0
+	#
+	# (x_deriv_zero, niter1) = NewtonsMethodForDeriv( x_init, L, DH, dxAB, eps )
+	# # print('x_deriv_zero = %f_gamma' % x_deriv_zero)
+	# x_init = 2.0 * x_deriv_zero
+	#
+	# xmax = 2.0 * x_init
+	# ymax = 1.5 * np.max(
+	# 		[ np.abs( ma_fonction( x_deriv_zero, L, DH, dxAB ) ),
+	# 			np.abs( ma_fonction( x_init, L, DH, dxAB ) ) ]
+	# 		)
 	# TraceFonction(xmax,ymax,L,DH,dxAB)
 
 	# (C, niter2) = NewtonsMethod(x_init, L, DH, dxAB, eps)
@@ -172,7 +172,7 @@ def get_coor_marker_points_ideal_catenary( xA, yA, zA, xB, yB, zB, L, d, d0 = 0.
 
 	tabcoord[ nbpts - 1 ] = np.array( [ xB, yB, zB ] )
 
-	return tabcoord
+	return tabcoord, C, D, H
 
 
 eps = 0.001
