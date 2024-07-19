@@ -244,10 +244,8 @@ class Logger:
 		:param path: folder in which to save the current log
 		:param file: name of the file
 		"""
-		self.log( 'saving logs ...' )
 		with open( f'{path}/logs.txt', 'w' ) as f:
 			f.write( self.logs )
-		self.lognl( f'saved at {path}/{file}.txt' )
 
 
 if __name__ == "__main__":

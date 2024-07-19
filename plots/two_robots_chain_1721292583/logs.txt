@@ -1,0 +1,274 @@
+frame 1/400	actuation=[ 4.07509074  4.08027515 13.33629064]+[-5.44118566 -5.50624578 -3.71192864]	state=[0. 0. 0.]+[0. 0. 0.]	compute_time=26.355346s	n_f_eval=4819	saved figure 0.png in 48.531872s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 2/400	actuation=[ 6.42460631  6.43131023 23.12336312]+[-9.67706016 -9.80333287 -5.53392082]	state=[0.00022147 0.00022175 0.00033222]+[-0.00029572 -0.00029925 -0.00059432]	compute_time=24.545073s	n_f_eval=4514	saved figure 1.png in 67.929403s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 3/400	actuation=[ 7.52055318  7.53169974 30.15649183]+[-12.95748039 -13.13485642  -5.933244  ]	state=[0.00079205 0.00079298 0.00152861]+[-0.00111756 -0.00113135 -0.00188181]	compute_time=21.957775s	n_f_eval=4636	saved figure 2.png in 54.329958s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 4/400	actuation=[ 7.72086496  7.74267254 35.05370725]+[-15.48142645 -15.69255509  -5.28732736]	state=[0.001771   0.0017732  0.00397175]+[-0.00264469 -0.00267766 -0.00388345]	compute_time=24.768180s	n_f_eval=4575	saved figure 3.png in 56.469811s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 5/400	actuation=[ 7.29765104  7.33532955 38.2924768 ]+[-17.40621035 -17.62554614  -3.89843113]	state=[0.00316839 0.00317312 0.0079287 ]+[-0.00501627 -0.00507788 -0.00656199]	compute_time=19.353221s	n_f_eval=3843	saved figure 4.png in 39.299900s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 6/400	actuation=[ 6.45567379  6.51300951 40.23774219]+[-18.85240016 -19.04873274  -2.00662971]	state=[0.00495951 0.00496903 0.01357715]+[-0.00834035 -0.00843822 -0.00983725]	compute_time=25.738859s	n_f_eval=3904	saved figure 5.png in 49.779568s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 7/400	actuation=[ 5.35219789  5.42840269 41.1673562 ]+[-19.91032172 -20.04952107   0.1994022 ]	state=[0.00709577 0.00711356 0.0210253 ]+[-0.01270061 -0.01283759 -0.01359777]	compute_time=23.735858s	n_f_eval=4758	saved figure 6.png in 56.743794s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 8/400	actuation=[ 4.10521418  4.19546848 41.2898563 ]+[-20.64403399 -20.69365449   2.57435769]	state=[0.009513   0.00954383 0.03032691]+[-0.01816103 -0.01833213 -0.0177097 ]	compute_time=27.385264s	n_f_eval=4758	saved figure 7.png in 67.043754s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 9/400	actuation=[ 2.80238606  2.89921318 40.76356867]+[-21.09702698 -21.03055952   5.00688057]	state=[0.01213794 0.01218769 0.04149246]+[-0.02476888 -0.02495841 -0.02202345]	compute_time=24.147665s	n_f_eval=4880	saved figure 8.png in 57.194523s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 10/400	actuation=[ 1.50776063  1.6027225  39.7100518 ]+[-21.29758867 -21.09761366   7.41261755]	state=[0.01489321 0.01496848 0.05449746]+[-0.0325561  -0.0327355  -0.02637884]	compute_time=22.588852s	n_f_eval=4880	saved figure 9.png in 54.498664s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 11/400	actuation=[ 0.26708396  0.35245299 38.22464306]+[-21.26364569 -20.92353733   9.72813535]	state=[0.01770113 0.01780884 0.06928883]+[-0.04153983 -0.04166634 -0.03060938]	compute_time=24.162597s	n_f_eval=4819	saved figure 10.png in 52.269180s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 12/400	actuation=[-0.88785836 -0.81788468 36.3843683 ]+[-21.00675705 -20.53095353  11.90597819]	state=[0.02048673 0.02063369 0.08578985]+[-0.05172205 -0.05173847 -0.03454598]	compute_time=22.778821s	n_f_eval=4758	saved figure 11.png in 53.938871s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 13/400	actuation=[-1.93584838 -1.88451955 34.25323231]+[-20.53520443 -19.93823276  13.9109468 ]	state=[0.02318    0.02337254 0.1039042 ]+[-0.06308912 -0.06292451 -0.03802044]	compute_time=29.365803s	n_f_eval=4819	saved figure 12.png in 79.372151s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 14/400	actuation=[-2.86358662 -2.83150195 31.88602242]+[-19.85620909 -19.16086528  15.71730615]	state=[0.02571753 0.0259613  0.12351938]+[-0.07561127 -0.07518248 -0.04086896]	compute_time=32.433531s	n_f_eval=4758	saved figure 13.png in 54.930054s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 15/400	actuation=[-3.66376148 -3.64918641 29.33116943]+[-18.97751137 -18.21259078  17.30663312]	state=[0.02804375 0.0283436  0.14450972]+[-0.08924236 -0.08845615 -0.04293556]	compute_time=22.473203s	n_f_eval=4758	saved figure 14.png in 72.257283s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 16/400	actuation=[-4.33338119 -4.33282549 26.63209086]+[-17.90817354 -17.10602178  18.66649998]	state=[0.03011163 0.03047167 0.16673917]+[-0.10392007 -0.10267557 -0.04407554]	compute_time=31.044634s	n_f_eval=4636	saved figure 15.png in 67.945342s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 17/400	actuation=[-4.87289192 -4.8818111  23.82835047]+[-16.65936327 -15.85349142  19.78944801]	state=[0.03188312 0.03230687 0.19006375]+[-0.11956649 -0.11775791 -0.04415882]	compute_time=35.776239s	n_f_eval=4758	saved figure 16.png in 53.240367s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 18/400	actuation=[-5.28512904 -5.29862354 20.95611823]+[-15.2442996  -14.46729654  20.67215512]	state=[0.03332927 0.03381986 0.21433397]+[-0.13608931 -0.13360863 -0.04307305]	compute_time=22.098613s	n_f_eval=4636	saved figure 17.png in 51.866619s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 19/400	actuation=[-5.57483802 -5.58829416 18.04879415]+[-13.67854242 -12.9602955   21.31491938]	state=[0.03443003 0.03499045 0.23939697]+[-0.15338332 -0.15012299 -0.04072636]	compute_time=22.319003s	n_f_eval=4636	saved figure 18.png in 52.302306s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 20/400	actuation=[-5.74052078 -5.74901549 15.89951803]+[-12.02776591 -11.38432991  21.8579473 ]	state=[0.03517393 0.0358073  0.2650985 ]+[-0.17133241 -0.16718799 -0.03704968]	compute_time=31.152509s	n_f_eval=4697	saved figure 19.png in 70.535988s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 21/400	actuation=[-5.7930651  -5.79435064 14.031048  ]+[-10.31094091  -9.75423583  22.28889494]	state=[0.03555698 0.03626681 0.29132624]+[-0.18981342 -0.18468577 -0.03199061]	compute_time=34.133831s	n_f_eval=4636	saved figure 20.png in 65.805961s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 22/400	actuation=[-5.74023747 -5.73425684 12.3499162 ]+[-8.54960582 -8.08655169 22.61250444]	state=[0.03558253 0.03637284 0.3179839 ]+[-0.20869836 -0.20249562 -0.02551476]	compute_time=32.095910s	n_f_eval=4636	saved figure 21.png in 62.637478s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 23/400	actuation=[-5.59069017 -5.5793031  10.79097103]+[-6.76171077 -6.39496528 22.828638  ]	state=[0.03526068 0.03613597 0.34498627]+[-0.22785651 -0.22049604 -0.01760595]	compute_time=29.887420s	n_f_eval=4636	saved figure 22.png in 61.937364s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 24/400	actuation=[-5.35394344 -5.34050378  9.31067838]+[-4.96256531 -4.69118909 22.93461734]	state=[0.03460763 0.03557278 0.37225572]+[-0.24715632 -0.23856677 -0.00826618]	compute_time=34.927904s	n_f_eval=4636	saved figure 23.png in 73.092014s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 25/400	actuation=[-5.04023699 -5.02918967  7.87815746]+[-3.16549878 -2.98551151 22.92646535]	state=[0.03364489 0.03470492 0.39971979]+[-0.26646728 -0.25659068  0.00248454]	compute_time=32.727628s	n_f_eval=4636	saved figure 24.png in 77.025079s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 26/400	actuation=[-4.66026654 -4.65678301  6.47231737]+[-1.38233388 -1.28716672 22.79979939]	state=[0.03239848 0.0335583  0.42730945]+[-0.28566147 -0.27445545  0.0146086 ]	compute_time=30.250517s	n_f_eval=4636	saved figure 25.png in 58.060985s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 27/400	actuation=[-4.22487235 -4.23454565  5.0796062 ]+[ 0.37610036  0.39523718 22.55050379]	state=[0.03089815 0.03216218 0.45495783]+[-0.30461519 -0.29205516  0.02805152]	compute_time=22.118162s	n_f_eval=4636	saved figure 26.png in 51.285095s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 28/400	actuation=[-3.74483949 -3.77341442  3.69231441]+[ 2.09966065  2.053466   22.17522174]	state=[0.02917645 0.0305483  0.48259931]+[-0.32321038 -0.30929154  0.04274285]	compute_time=22.010577s	n_f_eval=4636	saved figure 27.png in 52.114292s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 29/400	actuation=[-3.23038137 -3.28320126  2.30723489]+[ 3.77872992  3.67921116 21.67159178]	state=[0.027268   0.02875008 0.51016893]+[-0.34133604 -0.32607507  0.05859743]	compute_time=18.450108s	n_f_eval=3843	saved figure 28.png in 46.038494s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 30/400	actuation=[-2.69222206 -2.77463528  0.92439453]+[ 5.40407055  5.2648532  21.03895674]	state=[0.02520864 0.02680185 0.53760205]+[-0.35888942 -0.34232578  0.07551689]	compute_time=19.404504s	n_f_eval=3782	saved figure 29.png in 46.854341s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 31/400	actuation=[-2.13961066 -2.25650729 -0.45355763]+[ 6.96662066  6.80230028 20.2779257 ]	state=[0.02303474 0.02473812 0.56483414]+[-0.37577711 -0.3579737   0.09339133]	compute_time=30.218500s	n_f_eval=3843	saved figure 30.png in 58.215695s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 32/400	actuation=[-1.58113494 -1.73675324 -1.82205352]+[ 8.4576691   8.28344265 19.39077005]	state=[0.02078248 0.02259291 0.59180075]+[-0.39191597 -0.3729592   0.11210122]	compute_time=24.427949s	n_f_eval=3843	saved figure 31.png in 52.759416s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 33/400	actuation=[-1.02394512 -1.22237938 -3.1749266 ]+[ 9.86838166  9.69999712 18.3814455 ]	state=[0.01848734 0.02039927 0.61843766]+[-0.40723375 -0.38723287  0.1315194 ]	compute_time=35.260025s	n_f_eval=4697	saved figure 32.png in 67.568433s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 34/400	actuation=[-0.47617998 -0.71957442 -4.50567109]+[11.19143522 11.04393034 17.25602484]	state=[0.01618357 0.01818883 0.64468107]+[-0.42166961 -0.4007554   0.15151315]	compute_time=33.235606s	n_f_eval=4636	saved figure 33.png in 63.624575s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 35/400	actuation=[ 0.0556293  -0.23363599 -5.80704621]+[12.41958621 12.30732384 16.02222634]	state=[0.01390375 0.0159914  0.67046784]+[-0.43517422 -0.41349702  0.17194632]	compute_time=44.893225s	n_f_eval=4697	saved figure 34.png in 64.686693s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 36/400	actuation=[ 0.56498434  0.23093142 -7.0716488 ]+[13.54652606 13.4824541  14.68977282]	state=[0.01167846 0.01383474 0.6957359 ]+[-0.44770973 -0.42543697  0.19268136]	compute_time=27.514806s	n_f_eval=4148	saved figure 35.png in 67.405468s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 37/400	actuation=[ 1.04776762  0.67068442 -8.29138922]+[14.56637022 14.56243887 13.26905533]	state=[0.00953591 0.01174434 0.72042457]+[-0.45924938 -0.43656265  0.21358129]	compute_time=24.426174s	n_f_eval=3660	saved figure 36.png in 51.559360s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 38/400	actuation=[ 1.49936781  1.08260565 -9.45822677]+[15.47416449 15.54054145 11.77282619]	state=[0.00750183 0.00974331 0.74447499]+[-0.46977702 -0.44686886  0.23451148]	compute_time=26.383951s	n_f_eval=3660	saved figure 37.png in 56.596090s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 39/400	actuation=[  1.91581006   1.46435458 -10.56460876]+[16.2661759  16.41109065 10.21486858]	state=[0.00559928 0.0078523  0.76783062]+[-0.47928637 -0.45635678  0.2553413 ]	compute_time=24.967257s	n_f_eval=3660	saved figure 38.png in 52.079273s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 40/400	actuation=[  2.29366564   1.81407766 -11.60334425]+[16.93969953 17.16935528  8.61003916]	state=[0.00384857 0.00608954 0.79043765]+[-0.48778016 -0.46503312  0.27594556]	compute_time=23.491087s	n_f_eval=3538	saved figure 39.png in 52.609353s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 41/400	actuation=[  2.59722786   2.17430907 -12.5674948 ]+[17.49395862 17.8066548   6.973195  ]	state=[0.00226719 0.00447082 0.81224544]+[-0.49526914 -0.47290909  0.29620572]	compute_time=25.353524s	n_f_eval=3904	saved figure 40.png in 58.108442s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 42/400	actuation=[  2.83852968   2.51803369 -13.44977612]+[17.92810928 18.32277314  5.32110519]	state=[0.000868   0.00301193 0.83320697]+[-0.50177106 -0.47999985  0.31601089]	compute_time=28.526903s	n_f_eval=3782	saved figure 41.png in 54.275388s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 43/400	actuation=[  3.01682046   2.84086653 -14.24550718]+[18.24258967 18.71614073  3.66990933]	state=[-3.40302749e-04  1.72770399e-03  8.53279268e-01]+[-0.50730964 -0.48632348  0.33525858]	compute_time=25.679690s	n_f_eval=3782	saved figure 42.png in 52.198920s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 44/400	actuation=[  3.13300432   3.13811275 -14.94556517]+[18.43839828 18.98673442  2.03617587]	state=[-1.35285339e-03  6.31589634e-04  8.72423715e-01]+[-0.5119136  -0.49190024  0.35385523]	compute_time=25.775217s	n_f_eval=3843	saved figure 43.png in 55.129329s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 45/400	actuation=[  3.18941565   3.4050649  -15.54405167]+[18.51723502 19.13600116  0.43627733]	state=[-2.16818733e-03 -2.64607615e-04  8.90606616e-01]+[-0.51561574 -0.49675191  0.37171664]	compute_time=28.990214s	n_f_eval=3843	saved figure 44.png in 54.835922s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 46/400	actuation=[  3.1895487    3.63721119 -16.03755887]+[18.4815839  19.16675428 -1.11400235]	state=[-0.00278776 -0.00095103  0.90779956]+[-0.51845219 -0.50090115  0.38876808]	compute_time=25.168471s	n_f_eval=3843	saved figure 45.png in 53.578536s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 47/400	actuation=[  3.13782042   3.83046014 -16.4246496 ]+[18.33472175 19.08303126 -2.59981206]	state=[-0.00321542 -0.00142     0.92397967]+[-0.52046175 -0.50437103  0.40494442]	compute_time=27.685576s	n_f_eval=3843	saved figure 46.png in 60.055453s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 48/400	actuation=[  3.03938337   3.98129244 -16.70547851]+[18.08070114 18.88994461 -4.00749109]	state=[-0.00345683 -0.00166628  0.93912967]+[-0.52168526 -0.50718462  0.42019004]	compute_time=24.584493s	n_f_eval=3904	saved figure 47.png in 53.545716s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 49/400	actuation=[  2.89993669   4.08691243 -16.88145118]+[17.72426932 18.59349386 -5.32465636]	state=[-0.00351897 -0.00168717  0.95323797]+[-0.52216522 -0.50936478  0.43445862]	compute_time=27.566017s	n_f_eval=3904	saved figure 48.png in 52.975162s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 50/400	actuation=[  2.72557173   4.14541712 -16.95493856]+[17.2708316  18.20040167 -6.54042678]	state=[-0.00340957 -0.00148266  0.96629854]+[-0.5219454  -0.51093397  0.4477129 ]	compute_time=33.023681s	n_f_eval=3843	saved figure 49.png in 56.605212s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 51/400	actuation=[  2.52257744   4.15574368 -16.92918564]+[16.72634297 17.71795841 -7.64547837]	state=[-0.00313675 -0.00105542  0.97831082]+[-0.52107052 -0.51191422  0.45992434]	compute_time=24.536476s	n_f_eval=3843	saved figure 50.png in 55.041825s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 52/400	actuation=[  2.29724924   4.11779197 -16.80807888]+[16.09729546 17.15388736 -8.63200545]	state=[-2.70857987e-03 -4.10791882e-04  9.89279564e-01]+[-0.51958609 -0.51232719  0.47107274]	compute_time=24.622977s	n_f_eval=3843	saved figure 51.png in 53.855196s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 53/400	actuation=[  2.05571133   4.03242017 -16.59599427]+[15.39063694 16.51619564 -9.49379983]	state=[-2.13286477e-03  4.43308959e-04  9.99214563e-01]+[-0.51753817 -0.51219433  0.48114584]	compute_time=28.300088s	n_f_eval=3782	saved figure 52.png in 51.590251s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 54/400	actuation=[  1.80384901   3.9011114  -16.2980137 ]+[ 14.61364727  15.81312171 -10.22607993]	state=[-0.00141697  0.00149654  1.00813044]+[-0.51497324 -0.51153707  0.49013888]	compute_time=24.336408s	n_f_eval=3782	saved figure 53.png in 53.473547s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 55/400	actuation=[  1.5471288    3.72631072 -15.91933019]+[ 13.77395406  15.05295302 -10.82569073]	state=[-5.67758331e-04  2.73632723e-03  1.01604633e+00]+[-0.51193802 -0.51037702  0.49805414]	compute_time=28.397510s	n_f_eval=3782	saved figure 54.png in 54.857899s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 56/400	actuation=[  1.29058611   3.51101105 -15.46555558]+[ 12.87939358  14.24401459 -11.29086522]	state=[4.08385028e-04 4.14807487e-03 1.02298561e+00]+[-0.50847935 -0.5087363   0.50490056]	compute_time=26.034849s	n_f_eval=3843	saved figure 55.png in 56.195886s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 57/400	actuation=[  1.03863386   3.25878443 -14.94250986]+[ 11.93802673  13.3945638  -11.6212252 ]	state=[0.00150544 0.00571545 1.02897552]+[-0.504644   -0.50663778  0.51069321]	compute_time=27.919051s	n_f_eval=3843	saved figure 56.png in 49.584315s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 58/400	actuation=[  0.79499718   2.97362166 -14.35622959]+[ 10.95802377  12.51269588 -11.81767124]	state=[0.00271759 0.00742065 1.03404689]+[-0.50047847 -0.50410532  0.5154529 ]	compute_time=28.349351s	n_f_eval=3843	saved figure 57.png in 54.540275s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 59/400	actuation=[  0.56274726   2.65983258 -13.71283461]+[  9.94763093  11.60631908 -11.88234066]	state=[0.00403897 0.00924474 1.03823374]+[-0.49602885 -0.50116402  0.51920572]	compute_time=23.940563s	n_f_eval=3843	saved figure 58.png in 55.171479s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 60/400	actuation=[  0.34431966   2.32191902 -13.01852507]+[  8.91510316  10.68311918 -11.81850407]	state=[0.00546347 0.01116795 1.04157297]+[-0.49134053 -0.4978404   0.5219826 ]	compute_time=29.249368s	n_f_eval=3843	saved figure 59.png in 53.139552s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 61/400	actuation=[  0.14160355   1.96436713 -12.27969298]+[  7.86859438   9.75054158 -11.63040635]	state=[0.00698446 0.01317002 1.04410399]+[-0.48645802 -0.49416253  0.52381887]	compute_time=24.965374s	n_f_eval=3843	saved figure 60.png in 57.473109s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 62/400	actuation=[ -0.17711967   1.61885661 -11.50286711]+[  6.83055289   8.76568799 -11.32144197]	state=[0.00859456 0.01523055 1.0458684 ]+[-0.48142472 -0.49016013  0.52475385]	compute_time=32.036429s	n_f_eval=4575	saved figure 61.png in 63.112378s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 63/400	actuation=[ -0.49124605   1.25520969 -10.69387042]+[  5.79252913   7.78028649 -10.89970733]	state=[0.010279   0.01733284 1.0469096 ]+[-0.47628166 -0.48586725  0.52483056]	compute_time=28.469941s	n_f_eval=4453	saved figure 62.png in 61.593722s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 64/400	actuation=[-0.77819136  0.87300395 -9.85861222]+[  4.76078813   6.80861944 -10.37230391]	state=[0.01202272 0.01946004 1.04727251]+[-0.47106829 -0.48131988  0.52409512]	compute_time=28.559909s	n_f_eval=4636	saved figure 63.png in 64.420987s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 65/400	actuation=[-1.023807    0.47576241 -9.00314892]+[ 3.74282937  5.86167418 -9.74681298]	state=[0.01381107 0.02159503 1.04700319]+[-0.46582238 -0.47655548  0.52259629]	compute_time=29.428731s	n_f_eval=4819	saved figure 64.png in 68.811511s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 66/400	actuation=[-1.18796168  0.07258788 -8.13314159]+[ 2.74436416  4.96357007 -9.03194172]	state=[0.01563039 0.02372031 1.04614852]+[-0.4605798  -0.47161251  0.52038501]	compute_time=28.391980s	n_f_eval=4758	saved figure 65.png in 68.079607s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 67/400	actuation=[-1.33363594 -0.33581292 -7.25427567]+[ 1.77736124  4.08774847 -8.23524594]	state=[0.01746982 0.02581752 1.04475592]+[-0.45537462 -0.46652926  0.51751402]	compute_time=33.380448s	n_f_eval=4514	saved figure 66.png in 61.741010s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 68/400	actuation=[-1.42368469 -0.73955907 -6.37171147]+[ 0.84614451  3.25723256 -7.36635051]	state=[0.01931714 0.02786944 1.04287306]+[-0.45023853 -0.46134524  0.51403749]	compute_time=33.691185s	n_f_eval=4819	saved figure 67.png in 69.047707s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 69/400	actuation=[-1.45676645 -1.13044118 -5.49064851]+[-0.0432391   2.47717569 -6.43463433]	state=[0.02116194 0.02985833 1.04054755]+[-0.44520096 -0.45609994  0.51001069]	compute_time=33.639749s	n_f_eval=4819	saved figure 68.png in 64.950969s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 70/400	actuation=[-1.43511017 -1.50087827 -4.61594794]+[-0.88532385  1.75091361 -5.44962783]	state=[0.02299522 0.03176654 1.03782675]+[-0.44028903 -0.45083243  0.50548956]	compute_time=28.575613s	n_f_eval=4758	saved figure 69.png in 70.524966s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 71/400	actuation=[-1.35675147 -1.84091726 -3.75228786]+[-1.67707731  1.08549443 -4.42126164]	state=[0.02480897 0.0335769  1.03475747]+[-0.4355275  -0.44558107  0.50053044]	compute_time=28.663493s	n_f_eval=4697	saved figure 70.png in 64.983452s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 72/400	actuation=[-1.24071345 -2.1514404  -2.9039896 ]+[-2.41106434  0.47215664 -3.35859266]	state=[0.02659622 0.03527304 1.03138576]+[-0.43093893 -0.44038295  0.4951897 ]	compute_time=27.857440s	n_f_eval=4575	saved figure 71.png in 61.544612s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 73/400	actuation=[-1.08651916 -2.42473579 -2.07413584]+[-3.08538167 -0.08363064 -2.27147022]	state=[0.02834923 0.03684048 1.02775672]+[-0.42654347 -0.43527415  0.48952346]	compute_time=23.874414s	n_f_eval=3843	saved figure 72.png in 55.928816s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 74/400	actuation=[-0.90175807 -2.65711732 -1.2676972 ]+[-3.69779654 -0.58198264 -1.1692239 ]	state=[0.03006085 0.03826565 1.02391432]+[-0.42235902 -0.43028921  0.48358732]	compute_time=27.532683s	n_f_eval=3904	saved figure 73.png in 57.192406s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 75/400	actuation=[-0.69398034 -2.84654541 -0.48789909]+[-4.24639248 -1.02341857 -0.06108252]	state=[0.03172383 0.03953649 1.01990119]+[-0.41840131 -0.42546095  0.47743601]	compute_time=29.319927s	n_f_eval=3843	saved figure 74.png in 53.601418s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 76/400	actuation=[-0.47296063 -2.9941897   0.2622482 ]+[-4.7306691  -1.40914039  1.04404065]	state=[0.03333044 0.04064288 1.01575844]+[-0.41468407 -0.42082019  0.47112321]	compute_time=28.336074s	n_f_eval=3904	saved figure 75.png in 52.499107s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 77/400	actuation=[-0.24209848 -3.09768005  0.98011974]+[-5.14820032 -1.74015413  2.13771153]	state=[0.03487217 0.04157693 1.01152553]+[-0.41121912 -0.4163956   0.46470124]	compute_time=23.758474s	n_f_eval=3843	saved figure 76.png in 55.008000s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 78/400	actuation=[-0.0100776  -3.15967831  1.66328819]+[-5.49923709 -2.01846984  3.21177001]	state=[0.03633963 0.04233356 1.00724015]+[-0.40801643 -0.41221351  0.45822085]	compute_time=29.831101s	n_f_eval=3904	saved figure 77.png in 56.255341s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 79/400	actuation=[ 0.21639349 -3.18313045  2.30971263]+[-5.7839683  -2.24605689  4.25860342]	state=[0.03772305 0.04290983 1.00293807]+[-0.4050843  -0.40829769  0.45173098]	compute_time=28.901338s	n_f_eval=3904	saved figure 78.png in 51.061788s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 80/400	actuation=[ 0.43162883 -3.17152577  2.91754613]+[-6.002956   -2.4249946   5.27107802]	state=[0.03901211 0.04330534 0.99865307]+[-0.40242942 -0.40466932  0.44527858]	compute_time=29.050884s	n_f_eval=3904	saved figure 79.png in 56.170912s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 81/400	actuation=[ 0.62946762 -3.13063933  3.4851506 ]+[-6.15727046 -2.55809122  6.2426682 ]	state=[0.04019616 0.0435223  0.99441686]+[-0.40005702 -0.40134676  0.4389084 ]	compute_time=24.980520s	n_f_eval=3904	saved figure 80.png in 59.538743s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 82/400	actuation=[ 0.80776041 -3.0627149   4.01121415]+[-6.24811573 -2.6467345   7.16736232]	state=[0.04126426 0.04356556 0.99025895]+[-0.39797092 -0.39834555  0.43266286]	compute_time=24.393854s	n_f_eval=3904	saved figure 81.png in 54.285961s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 83/400	actuation=[ 0.96408929 -2.97122675  4.49476168]+[-6.27721071 -2.69289919  8.03982122]	state=[0.04220578 0.04344262 0.98620666]+[-0.39617368 -0.39567826  0.42658187]	compute_time=24.766976s	n_f_eval=3843	saved figure 82.png in 55.748907s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 84/400	actuation=[ 1.12398459 -2.82776161  4.93493156]+[-6.24288992 -2.68250444  8.85477488]	state=[0.04301079 0.04316323 0.982285  ]+[-0.39466656 -0.39335443  0.42070273]	compute_time=28.140076s	n_f_eval=3843	saved figure 83.png in 52.877407s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 85/400	actuation=[ 1.26322739 -2.65622754  5.33136048]+[-6.14988293 -2.63035175  9.60852003]	state=[0.04367246 0.04273796 0.97851668]+[-0.39344958 -0.3913796   0.41506002]	compute_time=25.838342s	n_f_eval=3904	saved figure 84.png in 56.617650s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 86/400	actuation=[ 1.37739905 -2.46271987  5.68392966]+[-6.00145972 -2.54051383 10.29761099]	state=[0.0441857  0.0421783  0.97492208]+[-0.39252149 -0.389756    0.40968551]	compute_time=28.946352s	n_f_eval=3782	saved figure 85.png in 56.884010s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 87/400	actuation=[ 1.4635736 -2.252946   5.9926484]+[-5.80119647 -2.41672233 10.91916628]	state=[0.0445471  0.04149656 0.97151928]+[-0.39187988 -0.38848272  0.40460808]	compute_time=29.153450s	n_f_eval=3721	saved figure 86.png in 50.228779s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 88/400	actuation=[ 1.5200937  -2.03224307  6.2578708 ]+[-5.55289337 -2.26244877 11.47103161]	state=[0.04475488 0.04070562 0.96832399]+[-0.3915212  -0.38755578  0.39985369]	compute_time=28.972613s	n_f_eval=3782	saved figure 87.png in 51.501783s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 89/400	actuation=[ 1.54627362 -1.80570513  6.48010014]+[-5.26050679 -2.08102224 11.95163709]	state=[0.04480886 0.03981881 0.96534966]+[-0.39144073 -0.38696829  0.39544525]	compute_time=24.259103s	n_f_eval=3843	saved figure 88.png in 54.139485s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 90/400	actuation=[ 1.54235413 -1.57808668  6.6600941 ]+[-4.92809659 -1.8756348  12.35999615]	state=[0.04471035 0.03884968 0.96260745]+[-0.39163264 -0.38671066  0.39140266]	compute_time=24.408131s	n_f_eval=3843	saved figure 89.png in 53.844134s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 91/400	actuation=[ 1.50926515 -1.35369755  6.79883328]+[-4.55981299 -1.64928975 12.69575108]	state=[0.04446212 0.03781185 0.96010629]+[-0.39208994 -0.38677071  0.38774278]	compute_time=28.844393s	n_f_eval=3843	saved figure 90.png in 51.921350s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 92/400	actuation=[ 1.44858092 -1.13652383  6.89743481]+[-4.15988276 -1.40493931 12.95906746]	state=[0.04406823 0.03671892 0.95785296]+[-0.39280451 -0.38713398  0.38447939]	compute_time=26.563668s	n_f_eval=3843	saved figure 91.png in 60.395847s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 93/400	actuation=[ 1.36237635 -0.92992406  6.95722891]+[-3.73250706 -1.14536665 13.15072852]	state=[0.04353401 0.03558428 0.95585209]+[-0.39376705 -0.38778386  0.3816232 ]	compute_time=26.693134s	n_f_eval=3843	saved figure 92.png in 55.026547s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 94/400	actuation=[ 1.25314522 -0.73674639  6.97973372]+[-3.28185658 -0.87319754 13.2720178 ]	state=[0.0428659  0.03442107 0.95410631]+[-0.39496709 -0.38870192  0.37918192]	compute_time=23.951366s	n_f_eval=3843	saved figure 93.png in 55.662256s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 95/400	actuation=[ 1.12369655 -0.55953919  6.96672875]+[-2.8122032  -0.59098612 13.32440847]	state=[0.04207139 0.03324201 0.95261628]+[-0.39639296 -0.38986812  0.37716024]	compute_time=24.026434s	n_f_eval=3782	saved figure 94.png in 50.629637s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 96/400	actuation=[ 0.97691798 -0.39946531  6.91970146]+[-2.32741775 -0.30097045 13.3106753 ]	state=[0.0411589  0.03205933 0.95138081]+[-0.39803179 -0.39126109  0.37555992]	compute_time=23.450147s	n_f_eval=3782	saved figure 95.png in 56.883551s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 97/400	actuation=[ 0.81595326 -0.25796606  6.84078463]+[-1.83164214e+00 -5.49524034e-03  1.32331077e+01]	state=[0.04013771 0.03088467 0.95039692]+[-0.39986954 -0.39285844  0.37437983]	compute_time=32.043817s	n_f_eval=3782	saved figure 96.png in 54.785004s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 98/400	actuation=[ 0.64381416 -0.13570159  6.73208476]+[-1.3287787   0.29331652 13.09474888]	state=[0.03901791 0.02972895 0.94965999]+[-0.40189097 -0.39463699  0.37361607]	compute_time=23.841411s	n_f_eval=3782	saved figure 97.png in 54.987980s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 99/400	actuation=[ 0.46351115 -0.03282803  6.5956862 ]+[-0.82277249  0.59334296 12.89895417]	state=[0.03781023 0.02860227 0.94916383]+[-0.40407972 -0.39657311  0.373262  ]	compute_time=22.965210s	n_f_eval=3660	saved figure 98.png in 52.991672s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 100/400	actuation=[0.27797272 0.05094611 6.43386147]+[-0.31732672  0.89271296 12.64951893]	state=[0.03652599 0.02751383 0.94890083]+[-0.40641835 -0.39864295  0.37330843]	compute_time=23.439497s	n_f_eval=3721	saved figure 99.png in 50.216041s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 101/400	actuation=[0.0898421  0.11637702 6.24881714]+[ 0.1840004   1.18962277 12.3502852 ]	state=[0.03517704 0.02647184 0.94886207]+[-0.40888842 -0.40082278  0.37374367]	compute_time=24.248785s	n_f_eval=3843	saved figure 100.png in 52.583457s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 102/400	actuation=[-0.09844365  0.16450492  6.04294133]+[ 0.67794798  1.48244765 12.00532794]	state=[0.03377559 0.02548338 0.94903741]+[-0.41147059 -0.40308918  0.3745537 ]	compute_time=23.986850s	n_f_eval=3843	saved figure 101.png in 49.253481s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 103/400	actuation=[-0.28457855  0.19667973  5.81855724]+[ 1.16129672  1.76965622 11.61903206]	state=[0.03233412 0.02455441 0.94941568]+[-0.41414476 -0.4054193   0.37572232]	compute_time=24.740792s	n_f_eval=3843	saved figure 102.png in 58.483115s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 104/400	actuation=[-0.46656396  0.21369092  5.57799589]+[ 1.63103026  2.04944337 11.19585138]	state=[0.0308653  0.02368964 0.94998473]+[-0.41689014 -0.40779112  0.37723128]	compute_time=23.661647s	n_f_eval=3782	saved figure 103.png in 54.993820s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 105/400	actuation=[0.14990005 0.91193817 5.32658215]+[ 1.94101949  2.16433969 10.74019803]	state=[0.0293818  0.02289257 0.9507316 ]+[-0.4196855  -0.41018358  0.37906049]	compute_time=28.646381s	n_f_eval=3843	saved figure 104.png in 53.839332s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 106/400	actuation=[1.03906789 1.84077679 5.06639958]+[ 2.10252451  2.13076298 10.2571791 ]	state=[0.02787897 0.02211081 0.95164282]+[-0.42251679 -0.41258554  0.38118765]	compute_time=26.470936s	n_f_eval=3782	saved figure 105.png in 55.999065s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 107/400	actuation=[2.07571213 2.8929804  4.79902367]+[2.11423483 1.95156551 9.75201537]	state=[0.02633804 0.02127477 0.95270444]+[-0.42537685 -0.41499475  0.38358855]	compute_time=23.977774s	n_f_eval=3782	saved figure 106.png in 55.044475s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 108/400	actuation=[3.16514934 3.98779904 4.52551141]+[1.98423217 1.6392223  9.23026789]	state=[0.02472708 0.02030783 0.95390209]+[-0.42826564 -0.41741771  0.38623736]	compute_time=29.383106s	n_f_eval=3721	saved figure 107.png in 54.065939s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 109/400	actuation=[4.23674392 5.06477959 4.24675633]+[1.72714211 1.21227459 8.69768752]	state=[0.02300334 0.01913369 0.95522106]+[-0.43119013 -0.41986891  0.38910697]	compute_time=23.656518s	n_f_eval=3721	saved figure 108.png in 55.886835s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 110/400	actuation=[5.23912071 6.07952794 3.9639038 ]+[1.36198507 0.69301831 8.15975166]	state=[0.02111632 0.0176815  0.95664628]+[-0.43416369 -0.42236973  0.39216938]	compute_time=31.465647s	n_f_eval=3721	saved figure 109.png in 60.388336s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 111/400	actuation=[6.13606261 7.00016525 3.67838844]+[0.9106317  0.10566018 7.62164434]	state=[0.01901111 0.01588919 0.9581624 ]+[-0.4372053  -0.4249472   0.39539608]	compute_time=28.238551s	n_f_eval=3782	saved figure 110.png in 74.513150s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 112/400	actuation=[6.9031     7.80446256 3.39197008]+[ 0.39598184 -0.52524414  7.08793225]	state=[0.01663172 0.0137053  0.95975385]+[-0.44033854 -0.42763257  0.39875843]	compute_time=26.018629s	n_f_eval=3721	saved figure 111.png in 60.101935s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 113/400	actuation=[7.52517247 8.47775106 3.10680909]+[-0.15868169 -1.17546171  6.56262049]	state=[0.01392398 0.01108968 0.96140497]+[-0.44359043 -0.43045997  0.40222798]	compute_time=24.094386s	n_f_eval=3782	saved figure 112.png in 51.898789s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 114/400	actuation=[7.99472317 9.01151814 2.8250634 ]+[-0.73071487 -1.82206586  6.04897516]	state=[0.01083817 0.00801351 0.9631001 ]+[-0.44699025 -0.43346504  0.40577672]	compute_time=26.758077s	n_f_eval=3843	saved figure 113.png in 69.491240s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 115/400	actuation=[8.30965878 9.40181711 2.54902472]+[-1.29857946 -2.44365793  5.54995253]	state=[0.007331   0.00445869 0.96482381]+[-0.45056835 -0.43668364  0.40937727]	compute_time=19.818984s	n_f_eval=3721	saved figure 114.png in 45.280873s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 116/400	actuation=[8.47236486 9.64848391 2.28098175]+[-1.84267673 -3.02113033  5.06773806]	state=[3.36720974e-03 4.16868390e-04 9.66561014e-01]+[-0.45435495 -0.44015071  0.41300308]	compute_time=18.307621s	n_f_eval=3660	saved figure 115.png in 50.891554s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 117/400	actuation=[8.48858054 9.75407885 2.02291903]+[-2.3457515  -3.53787197  4.60400974]	state=[-0.00107941 -0.00411157  0.96829712]+[-0.45837902 -0.44389921  0.41662851]	compute_time=33.170753s	n_f_eval=3721	saved figure 116.png in 58.452656s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 118/400	actuation=[8.36655994 9.72385665 1.77691866]+[-2.79228751 -3.97918879  4.16040213]	state=[-0.00602542 -0.0091187   0.97001823]+[-0.46266734 -0.44795926  0.42022891]	compute_time=31.777528s	n_f_eval=3782	saved figure 117.png in 64.543907s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 119/400	actuation=[8.11676923 9.56494331 1.544879  ]+[-3.16908677 -4.33288005  3.73827686]	state=[-0.01147751 -0.01459014  0.97171123]+[-0.46724352 -0.45235729  0.4237807 ]	compute_time=29.461030s	n_f_eval=3782	saved figure 118.png in 92.395472s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 120/400	actuation=[7.75043381 9.28549842 1.32805929]+[-3.46589092 -4.58960334  3.33883137]	state=[-0.01743266 -0.02050615  0.97336394]+[-0.47212726 -0.45711543  0.42726138]	compute_time=27.728912s	n_f_eval=3782	saved figure 119.png in 70.108430s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 121/400	actuation=[7.28031917 8.89538477 1.12787607]+[-3.67427841 -4.74216478  2.96331348]	state=[-0.02387853 -0.02684248  0.97496519]+[-0.47733376 -0.46225097  0.43064967]	compute_time=32.310809s	n_f_eval=3782	saved figure 120.png in 92.328659s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 122/400	actuation=[6.71950281 8.40519772 0.94512704]+[-3.78880577 -4.78611074  2.6127285 ]	state=[-0.0307941  -0.03357122  0.97650487]+[-0.48287318 -0.467776    0.4339255 ]	compute_time=22.514112s	n_f_eval=3721	saved figure 121.png in 122.085504s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 123/400	actuation=[6.08117313 7.82619357 0.78048118]+[-3.8059961  -4.71905432  2.28810943]	state=[-0.03815049 -0.04066146  0.977974  ]+[-0.48875038 -0.4736971   0.43707013]	compute_time=49.000391s	n_f_eval=3721	saved figure 122.png in 55.187212s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 124/400	actuation=[5.34918681 7.13969235 0.63426467]+[-3.72101176 -4.53723013  1.99037972]	state=[-0.04591186 -0.04807989  0.97936471]+[-0.49496469 -0.48001523  0.44006622]	compute_time=26.874273s	n_f_eval=3782	saved figure 123.png in 56.422917s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 125/400	actuation=[4.55587602 6.37686924 0.50676263]+[-3.53376019 -4.24155886  1.72050925]	state=[-0.05403484 -0.05578956  0.98067024]+[-0.50150969 -0.48672542  0.44289792]	compute_time=19.286761s	n_f_eval=3782	saved figure 124.png in 65.812210s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 126/400	actuation=[5.11390119 6.95629785 0.40663231]+[-3.52731672 -4.11684718  1.4879026 ]	state=[-0.06247053 -0.06375139  0.98188492]+[-0.50837325 -0.49381684  0.44555096]	compute_time=32.310450s	n_f_eval=3904	saved figure 125.png in 104.845405s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 127/400	actuation=[6.11900658 7.97612332 0.32850661]+[-3.67694046 -4.14174246  1.29441064]	state=[-0.07124221 -0.07200042  0.98300413]+[-0.51555335 -0.50128778  0.44801278]	compute_time=30.388112s	n_f_eval=3843	saved figure 126.png in 88.909863s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 128/400	actuation=[7.36613924 9.23303301 0.26966752]+[-3.98415613 -4.31967448  1.14056822]	state=[-0.08039805 -0.08059488  0.98402405]+[-0.52305682 -0.50914443  0.4502727 ]	compute_time=37.942420s	n_f_eval=3843	saved figure 127.png in 83.901884s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 129/400	actuation=[ 8.70291227 10.57434988  0.22744828]+[-4.43464867 -4.63785754  1.02575981]	state=[-0.09000016 -0.08960493  0.98494164]+[-0.53089949 -0.51740106  0.45232196]	compute_time=43.584811s	n_f_eval=3843	saved figure 128.png in 72.592931s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 130/400	actuation=[10.01746542 11.88679282  0.19974747]+[-5.00368283 -5.07270087  0.94838941]	state=[-0.10011604 -0.09910453  0.98575465]+[-0.53910541 -0.5260793   0.45415375]	compute_time=38.833224s	n_f_eval=3843	saved figure 129.png in 103.595558s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 131/400	actuation=[11.22914946 13.08836182  0.18515957]+[-5.66009542 -5.59368483  0.90601983]	state=[-0.11081207 -0.10916559  0.98646152]+[-0.54770547 -0.53520696  0.45576321]	compute_time=62.431455s	n_f_eval=3843	saved figure 130.png in 83.716857s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 132/400	actuation=[12.28178589 14.1213686   0.18299663]+[-6.36946808 -6.16655137  0.89592238]	state=[-0.12214871 -0.11985396  0.98706145]+[-0.55673565 -0.54481644  0.45714735]	compute_time=52.942818s	n_f_eval=4270	saved figure 131.png in 77.826384s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 133/400	actuation=[13.1375416  14.94692349  0.19246323]+[-7.09649146 -6.75595592  0.91511715]	state=[-0.13417707 -0.13122664  0.9875544 ]+[-0.56623507 -0.55494297  0.45830499]	compute_time=32.586081s	n_f_eval=4026	saved figure 132.png in 92.639091s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 134/400	actuation=[13.77326829 15.54119241  0.21344644]+[-7.80660524 -7.32701435  0.96064222]	state=[-0.14693654 -0.14332988  0.98794105]+[-0.57624404 -0.56562275  0.45923674]	compute_time=49.845607s	n_f_eval=4087	saved figure 133.png in 67.215535s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 135/400	actuation=[14.17682919 15.89190212  0.24553869]+[-8.46722524 -7.84670653  1.02983825]	state=[-0.1604534  -0.15619808  0.98822288]+[-0.58680209 -0.57689121  0.45994485]	compute_time=28.234720s	n_f_eval=4026	saved figure 134.png in 49.664811s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 136/400	actuation=[14.3448814  15.99587911  0.28845175]+[-9.04870646 -8.28504566  1.12014415]	state=[-0.17474012 -0.16985305  0.98840218]+[-0.59794618 -0.58878119  0.46043318]	compute_time=20.121659s	n_f_eval=4026	saved figure 135.png in 51.265530s
+saving logs ...	saved at ./plots/two_robots_chain_1721292583/logs.txt
+frame 137/400	actuation=[14.28061871 15.85690595  0.34195877]+[-9.52479965 -8.61545318  1.22930744]	state=[-0.18979527 -0.18430386  0.98848198]+[-0.60970908 -0.60132141  0.46070715]	compute_time=19.989330s	n_f_eval=3965	saved figure 136.png in 63.133620s
+saving logs ...	
