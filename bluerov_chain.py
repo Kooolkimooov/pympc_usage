@@ -4,193 +4,36 @@ from os import mkdir, path, remove
 from time import perf_counter, time
 
 from cycler import cycler
-from numpy import array, concatenate, cos, cross, diag, eye, meshgrid, multiply, ones, sin, tan
+from numpy import array, concatenate, cos, cross, diag, eye, meshgrid, ones, sin, tan
 from numpy.linalg import inv
-from PIL import Image
+from PIL.Image import Image
 from scipy.spatial.transform import Rotation
 
 from calc_catenary_from_ext_points import get_catenary_param, get_coor_marker_points_ideal_catenary
 from mpc import *
 
 
-def three_robots_chain(
-		x: ndarray, u: ndarray, robot_configuration
-		) -> ndarray:
-	"""
-	:param x: state of the chain such that x = [pose_robot_0_wf, pose_robot_1_wf, vel_robot_0_rf,
-	vel_robot_1_rf]
-	:param u: actuation of the chain such that u = [actuation_robot_0, actuation_robot_1]
-	:param robot_configuration: configuration of the robots considered identical
-	:return: xdot: derivative of the state of the chain
-	"""
-
-	x0 = x[ :6 ]
-	x0d = x[ 18:24 ]
-	u0 = u[ :6 ]
-
-	x1 = x[ 6:12 ]
-	x1d = x[ 24:30 ]
-	u1 = u[ 6:12 ]
-
-	x2 = x[ 12:18 ]
-	x2d = x[ 30:36 ]
-	u2 = u[ 12:18 ]
-
-	Phi0, Theta0, Psi0 = x0[ 3 ], x0[ 4 ], x0[ 5 ]
-	cPhi0, sPhi0 = cos( Phi0 ), sin( Phi0 )
-	cTheta0, sTheta0, tTheta0 = cos( Theta0 ), sin( Theta0 ), tan( Theta0 )
-	cPsi0, sPsi0 = cos( Psi0 ), sin( Psi0 )
-
-	Phi1, Theta1, Psi1 = x1[ 3 ], x1[ 4 ], x1[ 5 ]
-	cTheta1, sTheta1, tTheta1 = cos( Theta1 ), sin( Theta1 ), tan( Theta1 )
-	cPhi1, sPhi1 = cos( Phi1 ), sin( Phi1 )
-	cPsi1, sPsi1 = cos( Psi1 ), sin( Psi1 )
-
-	Phi2, Theta2, Psi2 = x2[ 3 ], x2[ 4 ], x2[ 5 ]
-	cPhi2, sPhi2 = cos( Phi2 ), sin( Phi2 )
-	cTheta2, sTheta2, tTheta2 = cos( Theta2 ), sin( Theta2 ), tan( Theta2 )
-	cPsi2, sPsi2 = cos( Psi2 ), sin( Psi2 )
-
-	J0 = zeros( (6, 6) )
-	J0[ 0, :3 ] = array(
-			[ cPsi0 * cTheta0, -sPsi0 * cPhi0 + cPsi0 * sTheta0 * sPhi0,
-				sPsi0 * sPhi0 + cPsi0 * sTheta0 * cPhi0 ]
+def compute_rotation_matrix( phi: float, theta: float, psi: float ) -> ndarray:
+	cPhi, sPhi = cos( phi ), sin( phi )
+	cTheta, sTheta, tTheta = cos( theta ), sin( theta ), tan( theta )
+	cPsi, sPsi = cos( psi ), sin( psi )
+	matrix = zeros( (6, 6) )
+	matrix[ 0, :3 ] = array(
+			[ cPsi * cTheta, -sPsi * cPhi + cPsi * sTheta * sPhi, sPsi * sPhi + cPsi * sTheta * cPhi ]
 			)
-	J0[ 1, :3 ] = array(
-			[ sPsi0 * cTheta0, cPsi0 * cPhi0 + sPsi0 * sTheta0 * sPhi0,
-				-cPsi0 * sPhi0 + sPsi0 * sTheta0 * cPhi0 ]
+	matrix[ 1, :3 ] = array(
+			[ sPsi * cTheta, cPsi * cPhi + sPsi * sTheta * sPhi, -cPsi * sPhi + sPsi * sTheta * cPhi ]
 			)
-	J0[ 2, :3 ] = array( [ -sTheta0, cTheta0 * sPhi0, cTheta0 * cPhi0 ] )
-	J0[ 3, 3: ] = array( [ 1, sPhi0 * tTheta0, cPhi0 * tTheta0 ] )
-	J0[ 4, 3: ] = array( [ 0, cPhi0, -sPhi0 ] )
-	J0[ 5, 3: ] = array( [ 0, sPhi0 / cTheta0, cPhi0 / cTheta0 ] )
-
-	J1 = zeros( (6, 6) )
-	J1[ 0, :3 ] = array(
-			[ cPsi1 * cTheta1, -sPsi1 * cPhi1 + cPsi1 * sTheta1 * sPhi1,
-				sPsi1 * sPhi1 + cPsi1 * sTheta1 * cPhi1 ]
-			)
-	J1[ 1, :3 ] = array(
-			[ sPsi1 * cTheta1, cPsi1 * cPhi1 + sPsi1 * sTheta1 * sPhi1,
-				-cPsi1 * sPhi1 + sPsi1 * sTheta1 * cPhi1 ]
-			)
-	J1[ 2, :3 ] = array( [ -sTheta1, cTheta1 * sPhi1, cTheta1 * cPhi1 ] )
-	J1[ 3, 3: ] = array( [ 1, sPhi1 * tTheta1, cPhi1 * tTheta1 ] )
-	J1[ 4, 3: ] = array( [ 1, cPhi1, -sPhi1 ] )
-	J1[ 5, 3: ] = array( [ 1, sPhi1 / cTheta1, cPhi1 / cTheta1 ] )
-
-	J2 = zeros( (6, 6) )
-	J2[ 0, :3 ] = array(
-			[ cPsi2 * cTheta2, -sPsi2 * cPhi2 + cPsi2 * sTheta2 * sPhi2,
-				sPsi2 * sPhi2 + cPsi2 * sTheta2 * cPhi2 ]
-			)
-	J2[ 1, :3 ] = array(
-			[ sPsi2 * cTheta2, cPsi2 * cPhi2 + sPsi2 * sTheta2 * sPhi2,
-				-cPsi2 * sPhi2 + sPsi2 * sTheta2 * cPhi2 ]
-			)
-	J2[ 2, :3 ] = array( [ -sTheta2, cTheta2 * sPhi2, cTheta2 * cPhi2 ] )
-	J2[ 3, 3: ] = array( [ 1, sPhi2 * tTheta2, cPhi2 * tTheta2 ] )
-	J2[ 4, 3: ] = array( [ 1, cPhi2, -sPhi2 ] )
-	J2[ 5, 3: ] = array( [ 1, sPhi2 / cTheta2, cPhi2 / cTheta2 ] )
-
-	hydrodynamic_coefficients = robot_configuration[ "hydrodynamic_coefficients" ]
-
-	D0 = diag( hydrodynamic_coefficients[ :6 ] ) + diag(
-			multiply( hydrodynamic_coefficients[ 6: ], abs( x0d ) )
-			)
-	D1 = diag( hydrodynamic_coefficients[ :6 ] ) + diag(
-			multiply( hydrodynamic_coefficients[ 6: ], abs( x1d ) )
-			)
-	D2 = diag( hydrodynamic_coefficients[ :6 ] ) + diag(
-			multiply( hydrodynamic_coefficients[ 6: ], abs( x2d ) )
-			)
-
-	buoyancy = robot_configuration[ "buoyancy" ]
-	center_of_volume = robot_configuration[ "center_of_volume" ]
-	Fw = mass * array( [ 0, 0, 9.80665 ] )
-	Fb = buoyancy * array( [ 0, 0, -1 ] )
-	s0 = zeros( 6 )
-	s0[ :3 ] = J0[ :3, :3 ].T @ (Fw + Fb)
-	s0[ 3: ] = cross( center_of_mass, J0[ :3, :3 ].T @ Fw ) + cross(
-			center_of_volume, J0[ :3, :3 ].T @ Fb
-			)
-
-	s1 = zeros( 6 )
-	s1[ :3 ] = J1[ :3, :3 ].T @ (Fw + Fb)
-	s1[ 3: ] = cross( center_of_mass, J1[ :3, :3 ].T @ Fw ) + cross(
-			center_of_volume, J1[ :3, :3 ].T @ Fb
-			)
-
-	s2 = zeros( 6 )
-	s2[ :3 ] = J2[ :3, :3 ].T @ (Fw + Fb)
-	s2[ 3: ] = cross( center_of_mass, J2[ :3, :3 ].T @ Fw ) + cross(
-			center_of_volume, J2[ :3, :3 ].T @ Fb
-			)
-
-	I_inv = robot_configuration[ 'inertial_matrix_inv' ]
-
-	xdot = zeros( x.shape )
-	xdot[ :6 ] = J0 @ x0d
-	xdot[ 6:12 ] = J1 @ x1d
-	xdot[ 12:18 ] = J2 @ x2d
-	xdot[ 18:24 ] = I_inv @ (D0 @ x0d + s0 + u0)
-	xdot[ 24:30 ] = I_inv @ (D1 @ x1d + s1 + u1)
-	xdot[ 30:36 ] = I_inv @ (D2 @ x2d + s2 + u2)
-
-	return xdot
+	matrix[ 2, :3 ] = array( [ -sTheta, cTheta * sPhi, cTheta * cPhi ] )
+	matrix[ 3, 3: ] = array( [ 1, sPhi * tTheta, cPhi * tTheta ] )
+	matrix[ 4, 3: ] = array( [ 0, cPhi, -sPhi ] )
+	matrix[ 5, 3: ] = array( [ 0, sPhi / cTheta, cPhi / cTheta ] )
+	return matrix
 
 
-def three_robot_chain_objective(
-		x: ndarray, u: ndarray, robot_configuration
-		) -> ndarray:
-	"""
-	:param x: state of the chain such that
-	x = [pose_robot_0_wf, pose_robot_1_wf, pose_robot2_wf, vel_robot_0_rf, vel_robot_1_rf,
-	vel_robot_2_rf]
-	:param u: actuation of the chain such that u = [actuation_robot_0, actuation_robot_1]
-	:param robot_configuration: configuration of the robots considered identical
-	:return: objective to minimize
-	"""
-	# # 													ideal distance is .5m horizontally
-	# dist01 = x[ :3 ] - x[ 6:9 ] - .5 * array( [ 1., 1., 0. ] )
-	# dist12 = x[ 6:9 ] - x[ 12:15 ] - .5 * array( [ 1., 1., 0. ] )
-	# return dist01 @ eye( 3 ) @ dist01.T + dist12 @ eye( 3 ) @ dist12.T
-
-	floor_depth = 1.5
-
-	dp01 = norm( x[ 6:8 ] - x[ 0:2 ] )
-	dz01 = x[ 8 ] - x[ 2 ]
-	_, _, H01 = get_catenary_param( dz01, dp01, 3 )
-
-	dp12 = norm( x[ 12:14 ] - x[ 6:8 ] )
-	dz12 = x[ 14 ] - x[ 8 ]
-	_, _, H12 = get_catenary_param( dz12, dp12, 3 )
-
-	dist01 = max( x[ 2 ], x[ 8 ] ) + H01 - floor_depth - .1
-	dist12 = max( x[ 14 ], x[ 8 ] ) + H12 - floor_depth - .1
-
-	if .3 < dp01 < 2.7:
-		dp01 = 0.
-	else:
-		dp01 -= 1.5
-
-	if .3 < dp12 < 2.7:
-		dp12 = 0.
-	else:
-		dp12 -= 1.5
-
-	if dist01 < 0.:
-		dist01 = 0.
-	if dist12 < 0.:
-		dist12 = 0.
-
-	objective = 2 * (pow( dist01, 2 ) + pow( dist12, 2 ))
-	objective += pow( dp01, 2 ) + pow( dp12, 2 )
-
-	return objective
-
-
-def build_inertial_matrix( mass: float, inertial_coefficients: list[ float ] ):
+def build_inertial_matrix(
+		mass: float, center_of_mass: ndarray, inertial_coefficients: list[ float ]
+		):
 	inertial_matrix = eye( 6 )
 	for i in range( 3 ):
 		inertial_matrix[ i, i ] = mass
@@ -215,6 +58,134 @@ def build_inertial_matrix( mass: float, inertial_coefficients: list[ float ] ):
 	inertial_matrix[ 5, 4 ] = - inertial_coefficients[ 5 ]
 
 	return inertial_matrix
+
+
+def compute_hydrostatic_force(
+		weight: ndarray,
+		buoyancy: ndarray,
+		center_of_mass: ndarray,
+		center_of_volume: ndarray,
+		rotation_matrix
+		) -> ndarray:
+	force = zeros( 6 )
+	force[ :3 ] = rotation_matrix.T @ (weight + buoyancy)
+	force[ 3: ] = cross( center_of_mass, rotation_matrix.T @ weight ) + cross(
+			center_of_volume, rotation_matrix.T @ buoyancy
+			)
+
+	return force
+
+
+def three_robots_chain(
+		x: ndarray,
+		u: ndarray,
+		weight: ndarray,
+		buoyancy: ndarray,
+		center_of_mass: ndarray,
+		center_of_volume: ndarray,
+		inverted_inertial_matrix: ndarray,
+		hydrodynamic_matrix: ndarray
+		) -> ndarray:
+	"""
+	:param x: state of the chain such that x = [pose_robot_0_wf, pose_robot_1_wf, vel_robot_0_rf,
+	vel_robot_1_rf]
+	:param u: actuation of the chain such that u = [actuation_robot_0, actuation_robot_1]
+	:param hydrodynamic_matrix:
+	:param inverted_inertial_matrix:
+	:param center_of_volume:
+	:param center_of_mass:
+	:param buoyancy:
+	:param weight:
+	:return: xdot: derivative of the state of the chain
+	"""
+
+	x0 = x[ :6 ]
+	x0d = x[ 18:24 ]
+	u0 = u[ :6 ]
+
+	x1 = x[ 6:12 ]
+	x1d = x[ 24:30 ]
+	u1 = u[ 6:12 ]
+
+	x2 = x[ 12:18 ]
+	x2d = x[ 30:36 ]
+	u2 = u[ 12:18 ]
+
+	R0 = compute_rotation_matrix( *x0[ 3: ] )
+	R1 = compute_rotation_matrix( *x1[ 3: ] )
+	R2 = compute_rotation_matrix( *x2[ 3: ] )
+
+	s0 = compute_hydrostatic_force(
+			weight, buoyancy, center_of_mass, center_of_volume, R0[ :3, :3 ]
+			)
+	s1 = compute_hydrostatic_force(
+			weight, buoyancy, center_of_mass, center_of_volume, R1[ :3, :3 ]
+			)
+	s2 = compute_hydrostatic_force(
+			weight, buoyancy, center_of_mass, center_of_volume, R2[ :3, :3 ]
+			)
+
+	xdot = zeros( x.shape )
+
+	xdot[ :6 ] = R0 @ x0d
+	xdot[ 18:24 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x0d + s0 + u0)
+
+	xdot[ 6:12 ] = R1 @ x1d
+	xdot[ 24:30 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x1d + s1 + u1)
+
+	xdot[ 12:18 ] = R2 @ x2d
+	xdot[ 30:36 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x2d + s2 + u2)
+
+	return xdot
+
+
+def three_robot_chain_objective(
+		x: ndarray,
+		u: ndarray,
+		weight: ndarray,
+		buoyancy: ndarray,
+		center_of_mass: ndarray,
+		center_of_volume: ndarray,
+		inverted_inertial_matrix: ndarray,
+		hydrodynamic_matrix: ndarray
+		) -> ndarray:
+	"""
+	:param x: state of the chain such that
+	x = [pose_robot_0_wf, pose_robot_1_wf, pose_robot2_wf, vel_robot_0_rf, vel_robot_1_rf,
+	vel_robot_2_rf]
+	:param u: actuation of the chain such that u = [actuation_robot_0, actuation_robot_1]
+	:param hydrodynamic_matrix:
+	:param inverted_inertial_matrix:
+	:param center_of_volume:
+	:param center_of_mass:
+	:param buoyancy:
+	:param weight:
+	:return: objective to minimize
+	"""
+	# # 													ideal distance is .5m horizontally
+	# dist01 = x[ :3 ] - x[ 6:9 ] - .5 * array( [ 1., 1., 0. ] )
+	# dist12 = x[ 6:9 ] - x[ 12:15 ] - .5 * array( [ 1., 1., 0. ] )
+	# return dist01 @ eye( 3 ) @ dist01.T + dist12 @ eye( 3 ) @ dist12.T
+
+	floor_depth = 1.5
+
+	dp01 = norm( x[ 6:8 ] - x[ 0:2 ] )
+	d01 = norm( x[ 6:9 ] - x[ 0:3 ])
+	dz01 = x[ 8 ] - x[ 2 ]
+	dp12 = norm( x[ 12:14 ] - x[ 6:8 ] )
+	d12 = norm( x[ 12:15 ] - x[ 6:9 ] )
+	dz12 = x[ 14 ] - x[ 8 ]
+
+	_, _, H01 = get_catenary_param( dz01, dp01, 3 )
+	_, _, H12 = get_catenary_param( dz12, dp12, 3 )
+
+	objective01 = 1. / abs(H01 + x[ 8 ] - floor_depth)
+	objective12 = 1. / abs(H12 + x[ 14 ] - floor_depth)
+
+	objective1 = 1 / abs(d01) + 1 / abs(d01 - 3.)
+	objective2 = 1 / abs(d12) + 1 / abs(d12 - 3.)
+
+	return objective01 + objective12 + objective1 + objective2
 
 
 if __name__ == "__main__":
@@ -251,25 +222,16 @@ if __name__ == "__main__":
 
 	trajectory = generate_trajectory( key_frames, n_frames )
 
-	mass = 11.5
-	inertial_coefficients = [ .16, .16, .16, 0.0, 0.0, 0.0 ]
-	center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
-	inertial_matrix = build_inertial_matrix( mass, inertial_coefficients )
-
-	bluerov_configuration = {
-			"mass"                     : mass,
-			"center_of_mass"           : center_of_mass,
-			"buoyancy"                 : 120.0,
-			"center_of_volume"         : array( [ 0.0, 0.0, - 0.02 ] ),
-			"inertial_matrix_inv"      : inv( inertial_matrix ),
-			"hydrodynamic_coefficients": array(
-					[ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ]
+	model_kwargs = {
+			"weight"                  : 11.5 * array( [ 0., 0., - 9.81 ] ),
+			"buoyancy"                : 120. * array( [ 0., 0., 1. ] ),
+			"center_of_mass"          : array( [ 0., 0., 0. ] ),
+			"center_of_volume"        : array( [ 0., 0., - 0.02 ] ),
+			"inverted_inertial_matrix": inv(
+					build_inertial_matrix( 11.5, array( [ 0., 0., 0. ] ), [ .16, .16, .16, 0.0, 0.0, 0.0 ] )
 					),
-			"robot_max_actuation"      : array( [ 40, 40, 40, 40, 40, 40 ] ),
-			"robot_max_actuation_ramp" : array( [ 80, 80, 80, 80, 80, 80 ] )
+			"hydrodynamic_matrix"     : diag( array( [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ] ) )
 			}
-
-	model_kwargs = { 'robot_configuration': bluerov_configuration }
 
 	pose_weight_matrix = eye( actuation.shape[ 0 ] )
 	pose_weight_matrix[ :3, :3 ] *= 2.
