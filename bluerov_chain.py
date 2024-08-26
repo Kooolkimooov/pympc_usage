@@ -3,8 +3,9 @@ from json import dump
 from os import mkdir, path, remove
 from time import perf_counter, time
 
+import numpy as np
 from cycler import cycler
-from numpy import array, concatenate, cos, cross, diag, eye, meshgrid, ones, sin, tan
+from numpy import array, concatenate, cos, cross, diag, exp, eye, meshgrid, ones, sin, tan
 from numpy.linalg import inv
 from PIL.Image import Image
 from scipy.spatial.transform import Rotation
@@ -139,6 +140,69 @@ def three_robots_chain(
 	return xdot
 
 
+def three_robots_chain_linear(
+		x: ndarray,
+		u: ndarray,
+		weight: ndarray,
+		buoyancy: ndarray,
+		center_of_mass: ndarray,
+		center_of_volume: ndarray,
+		inverted_inertial_matrix: ndarray,
+		hydrodynamic_matrix: ndarray
+		) -> ndarray:
+	"""
+	:param x: state of the chain such that x = [pose_robot_0_wf, pose_robot_1_wf, vel_robot_0_rf,
+	vel_robot_1_rf]
+	:param u: actuation of the chain such that u = [actuation_robot_0, actuation_robot_1]
+	:param hydrodynamic_matrix:
+	:param inverted_inertial_matrix:
+	:param center_of_volume:
+	:param center_of_mass:
+	:param buoyancy:
+	:param weight:
+	:return: xdot: derivative of the state of the chain
+	"""
+
+	x0 = x[ :6 ]
+	x0d = x[ 18:24 ]
+	u0 = u[ :6 ]
+
+	x1 = x[ 6:12 ]
+	x1d = x[ 24:30 ]
+	u1 = u[ 6:12 ]
+
+	x2 = x[ 12:18 ]
+	x2d = x[ 30:36 ]
+	u2 = u[ 12:18 ]
+
+	R0 = eye( 6 )
+	R1 = eye( 6 )
+	R2 = eye( 6 )
+
+	s0 = compute_hydrostatic_force(
+			weight, buoyancy, center_of_mass, center_of_volume, R0[ :3, :3 ]
+			)
+	s1 = compute_hydrostatic_force(
+			weight, buoyancy, center_of_mass, center_of_volume, R1[ :3, :3 ]
+			)
+	s2 = compute_hydrostatic_force(
+			weight, buoyancy, center_of_mass, center_of_volume, R2[ :3, :3 ]
+			)
+
+	xdot = zeros( x.shape )
+
+	xdot[ :6 ] = R0 @ x0d
+	xdot[ 18:24 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x0d + s0 + u0)
+
+	xdot[ 6:12 ] = R1 @ x1d
+	xdot[ 24:30 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x1d + s1 + u1)
+
+	xdot[ 12:18 ] = R2 @ x2d
+	xdot[ 30:36 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x2d + s2 + u2)
+
+	return xdot
+
+
 def three_robot_chain_objective(
 		x: ndarray,
 		u: ndarray,
@@ -162,11 +226,8 @@ def three_robot_chain_objective(
 	:param weight:
 	:return: objective to minimize
 	"""
-	# # 													ideal distance is .5m horizontally
-	# dist01 = x[ :3 ] - x[ 6:9 ] - .5 * array( [ 1., 1., 0. ] )
-	# dist12 = x[ 6:9 ] - x[ 12:15 ] - .5 * array( [ 1., 1., 0. ] )
-	# return dist01 @ eye( 3 ) @ dist01.T + dist12 @ eye( 3 ) @ dist12.T
 
+	surface = 0.
 	floor_depth = 1.5
 
 	dp01 = norm( x[ 6:8 ] - x[ 0:2 ] )
@@ -176,14 +237,18 @@ def three_robot_chain_objective(
 	d12 = norm( x[ 12:15 ] - x[ 6:9 ] )
 	dz12 = x[ 14 ] - x[ 8 ]
 
-	_, _, H01 = get_catenary_param( dz01, dp01, 3 )
-	_, _, H12 = get_catenary_param( dz12, dp12, 3 )
+	try:
+		_, _, H01 = get_catenary_param( dz01, dp01, 3 )
+		_, _, H12 = get_catenary_param( dz12, dp12, 3 )
+	except:
+		H01 = 1.5
+		H12 = 1.5
 
-	objective01 = 1. / abs(H01 + x[ 8 ] - floor_depth)
-	objective12 = 1. / abs(H12 + x[ 14 ] - floor_depth)
+	objective01 = exp( 10 * (-H01 - max( state[ 2 ], state[ 8 ] ) + floor_depth) )
+	objective12 = exp( 10 * (-H12 - max( state[ 14 ], state[ 8 ] ) + floor_depth) )
 
-	objective1 = 1 / abs(d01) + 1 / abs(d01 - 3.)
-	objective2 = 1 / abs(d12) + 1 / abs(d12 - 3.)
+	objective1 = exp( -d01 ) + exp( d01 - 3. )
+	objective2 = exp( -d12 ) + exp( d12 - 3. )
 
 	return objective01 + objective12 + objective1 + objective2
 
@@ -558,12 +623,18 @@ if __name__ == "__main__":
 
 		view.plot( trajectory_pos[ :, 0 ], trajectory_pos[ :, 1 ], trajectory_pos[ :, 2 ], ':' )
 
-		cat01, _, _, H01 = get_coor_marker_points_ideal_catenary(
-				state[ 0 ], -state[ 1 ], -state[ 2 ], state[ 6 ], -state[ 7 ], -state[ 8 ], 3., .2
-				)
-		cat12, _, _, H12 = get_coor_marker_points_ideal_catenary(
-				state[ 6 ], -state[ 7 ], -state[ 8 ], state[ 12 ], -state[ 13 ], -state[ 14 ], 3., .2
-				)
+		try:
+			cat01, _, _, H01 = get_coor_marker_points_ideal_catenary(
+					state[ 0 ], -state[ 1 ], -state[ 2 ], state[ 6 ], -state[ 7 ], -state[ 8 ], 3., .2
+					)
+			cat12, _, _, H12 = get_coor_marker_points_ideal_catenary(
+					state[ 6 ], -state[ 7 ], -state[ 8 ], state[ 12 ], -state[ 13 ], -state[ 14 ], 3., .2
+					)
+		except:
+			cat01 = array( [ state[ :3 ], state[ 6:9 ] ] )
+			cat12 = array( [ state[ 6:9 ], state[ 12:15 ] ] )
+			H01 = np.nan
+			H12 = np.nan
 		previous_H01_record.append( H01 + max( state[ 2 ], state[ 8 ] ) )
 		previous_H12_record.append( H12 + max( state[ 8 ], state[ 14 ] ) )
 
