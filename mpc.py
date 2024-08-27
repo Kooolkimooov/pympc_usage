@@ -1,160 +1,165 @@
+from time import perf_counter
 from copy import deepcopy
 from inspect import signature
 
 import matplotlib.pyplot as plt
-from numpy import ndarray, pi, zeros
+from numpy import eye, ndarray, pi, zeros
 from numpy.linalg import norm
-from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint
+from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint, OptimizeResult
 
 
-def model_predictive_control_cost_function(
-		candidate_actuations_derivative: ndarray,
-		candidate_shape: tuple,
-		model: callable,
-		initial_state: ndarray,
-		initial_actuation: ndarray,
-		model_kwargs: dict,
-		target_trajectory: list[ tuple[ float, list ] ],
-		objective_function: callable,
-		optimization_horizon: int,
-		prediction_horizon: int,
-		time_step: float,
-		time_steps_per_actuation: int,
-		pose_weight_matrix: ndarray,
-		actuation_weight_matrix: ndarray,
-		final_cost_weight_matrix: ndarray,
-		objective_weight: float,
-		state_record: list,
-		actuation_record: list,
-		objective_record: list,
-		verbose: bool
-		) -> float:
+class Model:
+	def __init__(
+			self,
+			dynamics: callable,
+			time_step: float,
+			initial_state: ndarray,
+			initial_actuation: ndarray,
+			record: bool = False
+			):
 
-	if norm( pose_weight_matrix ) == 0 and norm(
-			final_cost_weight_matrix
-			) == 0 and objective_function is None:
-		raise ValueError( "Cannot compute cost" )
+		assert list( signature( dynamics ).parameters ) == [ 'state', 'actuation' ]
 
-	candidate_actuations_derivative = candidate_actuations_derivative.reshape( candidate_shape )
-	actuation = deepcopy( initial_actuation )
-	state = deepcopy( initial_state )
-	horizon = optimization_horizon + prediction_horizon
-	cost = 0.
-	trajectory_index = 0
+		self.model_dynamics = dynamics
+		self.time_step = time_step
 
-	if state_record is not None:
-		states = zeros( (horizon, initial_state.shape[ 0 ]) )
-	if actuation_record is not None:
-		actuations = zeros( (horizon, initial_actuation.shape[ 0 ]) )
-	if objective_function is not None:
-		objectives = zeros( (horizon, 1) )
+		self.state = deepcopy( initial_state )
+		self.actuation = deepcopy( initial_actuation )
 
-	for i in range( optimization_horizon ):
+		self.record = record
+		if self.record:
+			self.previous_states = [ deepcopy( self.state ) ]
+			self.previous_actuations = [ deepcopy( self.actuation ) ]
 
-		if i % time_steps_per_actuation == 0:
-			actuation_derivative = candidate_actuations_derivative[ i // time_steps_per_actuation ]
-			cost += actuation_derivative @ actuation_weight_matrix @ actuation_derivative.T
-			actuation += actuation_derivative
+	def dynamics( self, state: ndarray, actuation: ndarray ) -> ndarray:
+		return self.model_dynamics( state, actuation )
 
-		if i * time_step > target_trajectory[ trajectory_index ][ 0 ]:
-			trajectory_index += 1
+	def step( self ):
+		# euler for now
+		self.state += self.dynamics( self.state, self.actuation ) * self.time_step
 
-		target_pose = target_trajectory[ trajectory_index ][ 1 ]
+		if self.record:
+			self.previous_states.append( deepcopy( self.state ) )
+			self.previous_actuations.append( deepcopy( self.actuation ) )
 
-		state += model( state, actuation, **model_kwargs ) * time_step
 
-		error = state[ :len( state ) // 2 ] - target_pose
-		cost += error @ pose_weight_matrix @ error.T
+class MPC:
+	def __init__(
+			self,
+			model: Model,
+			horizon: int,
+			target_trajectory: ndarray,
+			time_steps_per_actuation: int = 1,
+			guess_from_last_solution: bool = True,
+			tolerance: float = 1e-6,
+			max_iter: int = 1000,
+			bounds: tuple[ Bounds ] = None,
+			constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None,
+			state_weight_matrix: ndarray = None,
+			actuation_derivative_weight_matrix: ndarray = None,
+			final_weight: float = 0.,
+			record: bool = False
+			):
 
-		if state_record is not None:
-			states[ i ] = state
+		self.model = model
+		self.horizon = horizon
+		self.target_trajectory = target_trajectory
+		self.time_steps_per_actuation = time_steps_per_actuation
+		self.guess_from_last_solution = guess_from_last_solution
+		self.tolerance = tolerance
+		self.max_iter = max_iter
+		self.bounds = bounds
+		self.constraints = constraints
 
-		if actuation_record is not None:
-			actuations[ i ] = actuation
+		self.result_shape = (self.horizon // self.time_steps_per_actuation + (
+				1 if self.horizon % self.time_steps_per_actuation != 0 else 0),
+												 self.model.actuation.shape[ 0 ])
 
-		if objective_function is not None:
-			objective = objective_function( state, actuation, **model_kwargs )
-			cost += objective_weight * objective
-			if objective_record is not None:
-				objectives[ i ] = objective
+		self.raw_result = None
+		self.result = zeros( self.result_shape )
 
-	for i in range( prediction_horizon ):
-
-		if (i + optimization_horizon) * time_step > target_trajectory[ trajectory_index ][ 0 ]:
-			trajectory_index += 1
-
-		target_pose = target_trajectory[ trajectory_index ][ 1 ]
-
-		state += model( state, actuation, **model_kwargs ) * time_step
-
-		error = state[ :len( state ) // 2 ] - target_pose
-		cost += error @ pose_weight_matrix @ error.T
-
-		if state_record is not None:
-			states[ optimization_horizon + i ] = state
-
-		if actuation_record is not None:
-			actuations[ optimization_horizon + i ] = actuation
-
-		if objective_function is not None:
-			objective = objective_function( state, actuation, **model_kwargs )
-			cost += objective_weight * objective
-			if objective_record is not None:
-				objectives[ optimization_horizon + i ] = objective
-
-	cost += error @ final_cost_weight_matrix @ error.T
-	if objective_function is not None:
-		cost += objective_weight * objective_function(
-				state, actuation, **model_kwargs
+		self.state_weight_matrix: ndarray = zeros(
+				(self.horizon, self.model.state.shape[ 0 ] // 2, self.model.state.shape[ 0 ] // 2)
+				)
+		self.actuation_derivative_weight_matrix: ndarray = zeros(
+				(self.result_shape[ 0 ], self.result_shape[ 1 ], self.result_shape[ 1 ])
 				)
 
-	cost /= horizon
+		if state_weight_matrix is None:
+			self.state_weight_matrix[ : ] = eye( self.model.state.shape[ 0 ] // 2 )
+		else:
+			self.state_weight_matrix[ : ] = state_weight_matrix
 
-	if state_record is not None:
-		state_record.append( states )
-	if actuation_record is not None:
-		actuation_record.append( actuations )
-	if objective_record is not None:
-		objective_record.append( objectives )
+		if actuation_derivative_weight_matrix is None:
+			self.actuation_derivative_weight_matrix[ : ] = eye( self.result_shape[ 1 ] )
+		else:
+			self.actuation_derivative_weight_matrix[ : ] = actuation_derivative_weight_matrix
 
-	if verbose:
-		print( f'{cost=};' )
+		self.final_weight = final_weight
 
-	return cost
+		self.record = record
+		if self.record:
+			self.predicted_trajectories = [ ]
+			self.candidate_actuations = [ ]
+			self.times = [ ]
 
+	def predict( self, actuation: ndarray ) -> ndarray:
+		p_state = deepcopy( self.model.state )
+		predicted_trajectory = zeros( (self.horizon, self.model.state.shape[ 0 ] / 2) )
 
-def optimize(
-		cost_function: callable,
-		cost_kwargs: dict,
-		initial_guess: ndarray,
-		tolerance: float = 1e-6,
-		max_iter: int = 100,
-		bounds: Bounds = None,
-		constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None,
-		verbose: bool = False
-		) -> ndarray:
+		for i in range( self.horizon ):
+			p_state += self.model.dynamics(
+					p_state, actuation[ i // self.time_steps_per_actuation ]
+					) * self.model.time_step
+			predicted_trajectory[ i ] = p_state[ :len( p_state ) / 2 ]
 
-	cost_args = ()
-	for parameter in signature( cost_function ).parameters:
-		if parameter != 'candidate_actuations_derivative':
-			cost_args += (cost_kwargs[ parameter ],)
+		return predicted_trajectory
 
-	result = minimize(
-			fun = cost_function,
-			x0 = initial_guess.flatten(),
-			args = cost_args,
-			tol = tolerance,
-			bounds = bounds,
-			constraints = constraints,
-			options = {
-					'maxiter': max_iter, 'disp': verbose
-					}
-			)
+	def optimize( self ):
 
-	if verbose:
-		print( result )
+		if self.record:
+			self.predicted_trajectories.clear()
+			self.candidate_actuations.clear()
+			ti = perf_counter()
 
-	return result.x.reshape( cost_kwargs[ 'candidate_shape' ] )
+		self.raw_result = minimize(
+				fun = self.cost,
+				x0 = self.result.flatten(),
+				tol = self.tolerance,
+				bounds = self.bounds,
+				constraints = self.constraints,
+				options = {
+						'maxiter': self.max_iter
+						}
+				)
+
+		if self.record:
+			self.times.append( perf_counter() - ti )
+
+		self.result = self.raw_result.x.reshape( self.result_shape )
+
+	def cost( self, actuations_derivative: ndarray ) -> float:
+		actuations_derivative = actuations_derivative.reshape( self.result_shape )
+		actuations = actuations_derivative.cumsum( axis = 0 ) + self.model.actuation
+
+		cost = 0.
+
+		predicted_trajectory = self.predict( actuations )
+		error = predicted_trajectory - self.target_trajectory
+		cost += sum( error @ self.state_weight_matrix @ error.T )
+		cost += sum(
+				actuations_derivative @ self.actuation_derivative_weight_matrix @ actuations_derivative.T
+				)
+
+		cost /= self.horizon
+
+		cost += self.final_weight * (error[ -1 ] @ self.state_weight_matrix[ -1 ] @ error[ -1 ].T)
+
+		if self.record:
+			self.predicted_trajectories.append( predicted_trajectory )
+			self.candidate_actuations.append( actuations )
+
+		return cost
 
 
 def generate_trajectory(
@@ -165,7 +170,7 @@ def generate_trajectory(
 	n_dim = len( key_frames[ 0 ][ 1 ] )
 	timespan = key_frames[ -1 ][ 0 ]
 	dt = timespan / n_points
-	trajectory = [ (i * dt, [ 0. ] * n_dim) for i in range( n_points ) ]
+	trajectory = [ [ 0. ] * n_dim for i in range( n_points ) ]
 	start_point = 0
 
 	for frame_index in range( len( key_frames ) - 1 ):
@@ -180,11 +185,11 @@ def generate_trajectory(
 
 		for point in range( sub_n_points ):
 			for dim in range( n_dim ):
-				trajectory[ start_point + point ][ 1 ][ dim ] = funcs[ dim ]( point / sub_n_points )
+				trajectory[ start_point + point ][ dim ] = funcs[ dim ]( point / sub_n_points )
 
 		start_point += sub_n_points
 	for dim in range( n_dim ):
-		trajectory[ -1 ][ 1 ][ dim ] = key_frames[ -1 ][ 1 ][ dim ]
+		trajectory[ -1 ][ dim ] = key_frames[ -1 ][ 1 ][ dim ]
 	return trajectory
 
 
@@ -253,21 +258,15 @@ if __name__ == "__main__":
 	n_frames = 400
 	time_step = 0.025
 
-	trajectory = [ (time_step * .0 * n_frames, [ 0., 0., 0., 0., 0., 0. ]),
-								 (time_step * .25 * n_frames, [ 0., 0., 1., 0., 0., pi ]),
-								 (time_step * .50 * n_frames, [ 1., 1., 1., 0., 0., -pi ]),
-								 (time_step * .75 * n_frames, [ -1., -1., 1., 0., 0., pi ]),
-								 (time_step * 1. * n_frames, [ 0., 0., 1., 0., 0., 0. ]) ]
+	trajectory = [ (.0, [ 0., 0., 0., 0., 0., 0. ]), (.25, [ 0., 0., 1., 0., 0., pi ]),
+								 (.50, [ 1., 1., 1., 0., 0., -pi ]), (.75, [ -1., -1., 1., 0., 0., pi ]),
+								 (1., [ 0., 0., 1., 0., 0., 0. ]) ]
 
 	dim = 1
 
-	X0 = [ point[ 0 ] for point in trajectory ]
-	Y0 = [ point[ 1 ][ dim ] for point in trajectory ]
-
 	trajectory = generate_trajectory( trajectory, n_frames )
 
-	X1 = [ point[ 0 ] for point in trajectory ]
-	Y1 = [ point[ 1 ][ dim ] for point in trajectory ]
+	Y1 = [ point[ dim ] for point in trajectory ]
 
-	plt.plot( X0, Y0, X1, Y1 )
+	plt.plot( Y1 )
 	plt.show()

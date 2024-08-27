@@ -3,6 +3,7 @@ from json import dump
 from os import mkdir, path, remove
 from time import perf_counter, time
 
+import numpy as np
 from cycler import cycler
 from matplotlib import pyplot as plt
 from numpy import array, concatenate, cos, cumsum, eye, pi, sin
@@ -13,92 +14,37 @@ from mpc import *
 
 # pendulum with cart
 def turtle(
-		x: ndarray, u: ndarray
+		state: ndarray, actuation: ndarray
 		) -> ndarray:
 
-	xdot = zeros( x.shape )
-	_, _, theta, _, _, _ = x
-	v, w = u
-	xdot[ 0 ] = v * cos( theta )
-	xdot[ 1 ] = v * sin( theta )
-	xdot[ 2 ] = w
+	state_derivative = zeros( state.shape )
+	_, _, theta, _, _, _ = state
+	v, w = actuation
+	state_derivative[ 0 ] = v * cos( theta )
+	state_derivative[ 1 ] = v * sin( theta )
+	state_derivative[ 2 ] = w
 
-	return xdot
+	return state_derivative
 
 
 if __name__ == "__main__":
 
 	n_frames = 200
-	max_iter = 1000
-	tolerance = 1e-6
 	time_step = 0.025
 
-	state = array( [ 0., 0., 0., 0., 0., 0. ] )
-	trajectory = [ (time_step * .2 * n_frames, [ 1., 1., pi ]),
-								 (time_step * .4 * n_frames, [ -1., -1., -pi ]),
-								 (time_step * .6 * n_frames, [ 1., 0, 0 ]),
-								 (time_step * .8 * n_frames, [ 0, 0, pi ]),
-								 (time_step * 1. * n_frames, [ 0, 1., 0 ]) ]
-	actuation = array( [ 0., 0. ] )
+	initial_state = array( [ 0., 0., 0., 0., 0., 0. ] )
+	initial_actuation = array( [ 0., 0. ] )
 
-	model_kwargs = { }
+	keyframes = [ (0., [ 0., 0., 0 ]), (.2, [ 1., 1., pi ]), (.4, [ -1., -1., -pi ]),
+								(.6, [ 1., 0, 0 ]), (.8, [ 0, 0, pi ]), (1., [ 0, 1., 0 ]) ]
+	trajectory = generate_trajectory( keyframes, n_frames )
 
-	sequence_time = n_frames * time_step
+	logger = Logger()
 
-	base_optimization_horizon = 25
-	optimization_horizon = base_optimization_horizon
-	time_steps_per_actuation = 5
-	result_shape = (optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ])
+	turtle_model = Model( turtle, time_step, initial_state, initial_actuation, record = True )
+	mpc = MPC( turtle_model, 25, trajectory, record = True )
 
-	result = zeros( result_shape )
-
-	optimization_horizon_lower_bound = 50
-
-	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
-	pose_weight_matrix[ 2, 2 ] = .1
-	actuation_weight_matrix = .5 * eye( actuation.shape[ 0 ] )
-
-	command_upper_bound = 10
-	command_lower_bound = -10
-
-	mpc_config = {
-			'candidate_shape'         : result_shape,
-			'model'                   : turtle,
-			'initial_actuation'       : actuation,
-			'initial_state'           : state,
-			'model_kwargs'            : model_kwargs,
-			'target_pose'             : trajectory[ 0 ][ 1 ],
-			'optimization_horizon'    : optimization_horizon,
-			'prediction_horizon'      : 0,
-			'time_step'               : time_step,
-			'time_steps_per_actuation': time_steps_per_actuation,
-			'objective_function'      : None,
-			'pose_weight_matrix'      : pose_weight_matrix,
-			'actuation_weight_matrix' : actuation_weight_matrix,
-			'objective_weight'        : 0.,
-			'final_cost_weight'       : 1.,
-			'state_record'            : [ ],
-			'actuation_record'        : [ ],
-			'objective_record'        : None,
-			'verbose'                 : False
-			}
-
-	other_config = {
-			'max_iter'                        : max_iter,
-			'tolerance'                       : tolerance,
-			'n_frames'                        : n_frames,
-			'trajectory'                      : trajectory,
-			'optimization_horizon_lower_bound': optimization_horizon_lower_bound,
-			'command_upper_bound'             : command_upper_bound,
-			'command_lower_bound'             : command_lower_bound,
-			}
-
-	previous_states_record = [ deepcopy( state ) ]
-	previous_actuation_record = [ deepcopy( actuation ) ]
-	previous_target_record = [ ]
-
-	folder = (f'./plots/{turtle.__name__}_'
-						f'{int( time() )}')
+	folder = (f'./plots/{turtle.__name__}_{int( time() )}')
 
 	if path.exists( folder ):
 		files_in_dir = glob( f'{folder}/*' )
@@ -112,75 +58,27 @@ if __name__ == "__main__":
 		mkdir( folder )
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( mpc_config | other_config, f, default = serialize_others )
-
-	logger = Logger()
+		dump( mpc.__dict__ | turtle_model.__dict__, f, default = serialize_others )
 
 	for frame in range( n_frames ):
 
-		if optimization_horizon > optimization_horizon_lower_bound:
-			optimization_horizon -= 1
-
-		for index in range( len( previous_target_record ) + 1, len( trajectory ) ):
-			if trajectory[ index - 1 ][ 0 ] < frame * time_step:
-				previous_target_record.append( trajectory[ index - 1 ] )
-				mpc_config[ 'target_pose' ] = trajectory[ index ][ 1 ]
-				optimization_horizon = base_optimization_horizon
-				break
-
-		mpc_config[ 'optimization_horizon' ] = optimization_horizon
-		mpc_config[ 'candidate_shape' ] = (
-				optimization_horizon // time_steps_per_actuation + 1, actuation.shape[ 0 ])
-
-		mpc_config[ 'state_record' ] = [ ]
-		mpc_config[ 'actuation_record' ] = [ ]
-
 		logger.log( f"frame {frame + 1}/{n_frames}" )
 
-		result = result[ 1:mpc_config[ 'candidate_shape' ][ 0 ] ]
-		difference = result.shape[ 0 ] - mpc_config[ 'candidate_shape' ][ 0 ]
-		if difference < 0:
-			result = concatenate( (result, array( [ [ 0., 0. ] ] * abs( difference ) )) )
+		mpc.target_trajectory = np.array( trajectory[ frame + 1:frame + mpc.horizon + 1 ] )
 
-		ti = perf_counter()
+		mpc.optimize()
+		turtle_model.actuation += mpc.result[ 0 ]
+		turtle_model.step()
 
-		result = optimize(
-				cost_function = model_predictive_control_cost_function,
-				cost_kwargs = mpc_config,
-				initial_guess = result,
-				tolerance = tolerance,
-				max_iter = max_iter,
-				constraints = NonlinearConstraint(
-						lambda x: (actuation + cumsum(
-								x.reshape( mpc_config[ 'candidate_shape' ] ), axis = 0
-								)).flatten(), command_lower_bound, command_upper_bound
-						)
-				)
+		logger.log( f"{turtle_model.actuation=}" )
+		logger.log( f"{turtle_model.state=}" )
+		logger.log( f"{mpc.times[-1]=}" )
 
-		actuation += result[ 0 ]
-		state += turtle( state, actuation, **model_kwargs ) * time_step
-
-		tf = perf_counter()
-		compute_time = tf - ti
-
-		mpc_config[ 'initial_state' ] = state
-		mpc_config[ 'initial_actuation' ] = actuation
-
-		previous_states_record.append( deepcopy( state ) )
-		previous_actuation_record.append( deepcopy( actuation ) )
-
-		n_f_eval = len( mpc_config[ 'state_record' ] )
-
-		logger.log( f"{actuation=}" )
-		logger.log( f"state={state[ : state.shape[ 0 ] // 2 ]}" )
-		logger.log( f"{compute_time=:.6f}s - {n_f_eval=}" )
-
-		ti = perf_counter()
-
-		time_previous = [ i * time_step - (frame + 1) * time_step for i in range( frame + 2 ) ]
-		time_prediction = [ i * time_step for i in range(
-				mpc_config[ 'optimization_horizon' ] + mpc_config[ 'prediction_horizon' ]
-				) ]
+		# we record the initial value + the new value after the integration in `step()`
+		time_previous = [ i * time_step - frame * time_step for i in
+											range( len( turtle_model.previous_states ) ) ]
+		time_prediction = [ i * time_step - time_step for i in
+												range( len( mpc.predicted_trajectories ) ) ]
 
 		fig = plt.figure()
 		view = plt.subplot2grid( (3, 5), (0, 0), 4, 3, fig )
@@ -213,22 +111,27 @@ if __name__ == "__main__":
 		ax_act.yaxis.set_label_position( "right" )
 		ax_act.yaxis.tick_right()
 		ax_act.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
-		ax_act.set_ylim( command_lower_bound, command_upper_bound )
 		ax_act.set_prop_cycle( cycler( 'color', [ 'blue', 'red' ] ) )
 
 		plt.subplots_adjust( hspace = 0., wspace = 0. )
-		fig.suptitle( f"{frame + 1}/{n_frames} - {compute_time=:.6f}s - {n_f_eval=}" )
+		fig.suptitle(
+				f"{frame + 1}/{n_frames} - {mpc.times[ -1 ]:.6f}s - {len( mpc.candidate_actuations )}"
+				)
 
-		view.scatter( state[ 0 ], state[ 1 ], c = 'r', s = 100 )
+		view.scatter( initial_state[ 0 ], initial_state[ 1 ], c = 'r', s = 100 )
 		view.quiver(
-				state[ 0 ], state[ 1 ], .1 * cos( state[ 2 ] ), .1 * sin( state[ 2 ] ), color = 'b'
+				initial_state[ 0 ],
+				initial_state[ 1 ],
+				.1 * cos( initial_state[ 2 ] ),
+				.1 * sin( initial_state[ 2 ] ),
+				color = 'b'
 				)
 
 		view.quiver(
-				mpc_config[ 'target_pose' ][ 0 ],
-				mpc_config[ 'target_pose' ][ 1 ],
-				.1 * cos( mpc_config[ 'target_pose' ][ 2 ] ),
-				.1 * sin( mpc_config[ 'target_pose' ][ 2 ] ),
+				mpc.target_trajectory[ 0 ][ 0 ],
+				mpc.target_trajectory[ 0 ][ 1 ],
+				.1 * cos( mpc.target_trajectory[ 0 ][ 2 ] ),
+				.1 * sin( mpc.target_trajectory[ 0 ][ 2 ] ),
 				color = 'b'
 				)
 
