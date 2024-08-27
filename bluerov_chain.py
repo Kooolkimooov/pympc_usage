@@ -231,7 +231,7 @@ def three_robot_chain_objective(
 	floor_depth = 1.5
 
 	dp01 = norm( x[ 6:8 ] - x[ 0:2 ] )
-	d01 = norm( x[ 6:9 ] - x[ 0:3 ])
+	d01 = norm( x[ 6:9 ] - x[ 0:3 ] )
 	dz01 = x[ 8 ] - x[ 2 ]
 	dp12 = norm( x[ 12:14 ] - x[ 6:8 ] )
 	d12 = norm( x[ 12:15 ] - x[ 6:9 ] )
@@ -265,6 +265,30 @@ if __name__ == "__main__":
 	state[ 6 ] = 1
 	state[ 12 ] = 2
 	actuation = zeros( (6 * n_robots,) )
+
+	robot_pose_lb = [ -5., -5., -0.01 ]
+	robot_pose_ub = [ 5., 5., 1.5 ]
+
+
+	def catenary_constraint( u: ndarray ) -> ndarray:
+		global state
+		dp01 = norm( state[ 6:8 ] - state[ 0:2 ] )
+		dz01 = state[ 8 ] - state[ 2 ]
+		dp12 = norm( state[ 12:14 ] - state[ 6:8 ] )
+		dz12 = state[ 14 ] - state[ 8 ]
+
+		try:
+			_, _, H01 = get_catenary_param( dz01, dp01, 3 )
+			_, _, H12 = get_catenary_param( dz12, dp12, 3 )
+		except:
+			H01 = 1.5
+			H12 = 1.5
+
+		c1 = max( state[ 2 ], state[ 8 ] ) + H01
+		c2 = max( state[ 8 ], state[ 14 ] ) + H12
+
+		return array( [ c1, c2 ] )
+
 
 	base_optimization_horizon = 25
 	optimization_horizon = base_optimization_horizon
@@ -322,14 +346,14 @@ if __name__ == "__main__":
 			'prediction_horizon'      : 0,
 			'time_step'               : time_step,
 			'time_steps_per_actuation': time_steps_per_actuation,
-			'objective_function'      : three_robot_chain_objective,
+			'objective_function'      : None,
 			'pose_weight_matrix'      : pose_weight_matrix,
 			'actuation_weight_matrix' : actuation_weight_matrix,
 			'final_cost_weight_matrix': final_cost_weight_matrix,
 			'objective_weight'        : 1.,
 			'state_record'            : [ ],
 			'actuation_record'        : [ ],
-			'objective_record'        : [ ],
+			'objective_record'        : None,
 			'verbose'                 : False
 			}
 
@@ -343,7 +367,7 @@ if __name__ == "__main__":
 
 	previous_states_record = [ deepcopy( state ) ]
 	previous_actuation_record = [ deepcopy( actuation ) ]
-	previous_objective_record = [ three_robot_chain_objective( state, actuation, **model_kwargs ) ]
+	# previous_objective_record = [ three_robot_chain_objective( state, actuation, **model_kwargs ) ]
 	previous_compute_time_record = [ 0. ]
 	previous_nfeval_record = [ 0. ]
 	previous_H01_record = [ 0. ]
@@ -375,7 +399,7 @@ if __name__ == "__main__":
 
 		mpc_config[ 'state_record' ] = [ ]
 		mpc_config[ 'actuation_record' ] = [ ]
-		mpc_config[ 'objective_record' ] = [ ]
+		# mpc_config[ 'objective_record' ] = [ ]
 
 		logger.log( f"frame {frame + 1}/{n_frames}" )
 
@@ -390,7 +414,15 @@ if __name__ == "__main__":
 				tolerance = tolerance,
 				max_iter = max_iter,
 				bounds = None,
-				constraints = None,
+				constraints = (NonlinearConstraint(
+						lambda x: three_robots_chain( state, x, **model_kwargs ) * time_step + state,
+						robot_pose_lb + 3 * [ -np.inf ] + robot_pose_lb + 3 * [ -np.inf ] + robot_pose_lb + (
+								3 + 18) * [ -np.inf ],
+						robot_pose_ub + 3 * [ np.inf ] + robot_pose_ub + 3 * [ np.inf ] + robot_pose_ub + (
+								3 + 18) * [ np.inf ]
+						), NonlinearConstraint(
+						lambda x: catenary_constraint( x ), [ -np.inf, -np.inf ], [ 1.5, 1.5 ]
+						),),
 				verbose = False
 				)
 
@@ -400,9 +432,9 @@ if __name__ == "__main__":
 		tf = perf_counter()
 		compute_time = tf - ti
 		previous_compute_time_record += [ compute_time ]
-		previous_objective_record += [ three_robot_chain_objective(
-				state, actuation, **model_kwargs
-				) ]
+		# previous_objective_record += [ three_robot_chain_objective(
+		# 		state, actuation, **model_kwargs
+		# 		) ]
 
 		mpc_config[ 'initial_state' ] = state
 		mpc_config[ 'initial_actuation' ] = actuation
@@ -672,7 +704,7 @@ if __name__ == "__main__":
 		ax_ang2.plot( time_previous, previous_ang_record_array2 )
 		ax_act_pos2.plot( time_previous, previous_act_pos_record_array2 )
 		ax_act_ang2.plot( time_previous, previous_act_ang_record_array2 )
-		ax_obj.plot( time_previous, previous_objective_record )
+		# ax_obj.plot( time_previous, previous_objective_record )
 
 		for f_eval in range( n_f_eval ):
 			pos_record_array0 = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, :3 ]
@@ -730,7 +762,7 @@ if __name__ == "__main__":
 					time_prediction, mpc_config[ 'actuation_record' ][ f_eval ][ :, 15:18 ], linewidth = .1
 					)
 
-			ax_obj.plot( time_prediction, mpc_config[ 'objective_record' ][ f_eval ], linewidth = .1 )
+		# ax_obj.plot( time_prediction, mpc_config[ 'objective_record' ][ f_eval ], linewidth = .1 )
 
 		# plot vertical line from y min to y max
 		ax_pos0.axvline( color = 'g' )
