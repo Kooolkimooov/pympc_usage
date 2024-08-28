@@ -1,12 +1,11 @@
 from glob import glob
 from json import dump
 from os import mkdir, path, remove
-from time import perf_counter, time
+from time import time
 
-import numpy as np
 from cycler import cycler
 from matplotlib import pyplot as plt
-from numpy import array, concatenate, cos, cumsum, eye, pi, sin
+from numpy import array, cos, linspace, pi, sin
 from PIL import Image
 
 from mpc import *
@@ -27,22 +26,144 @@ def turtle(
 	return state_derivative
 
 
+def plot( mpc, full_trajectory ):
+
+	# we record the initial value + the new value after the integration in `step()`
+	time_previous = [ i * time_step - (frame + 1) * time_step for i in
+										range( len( mpc.model.previous_states ) ) ]
+	time_prediction = [ i * time_step for i in
+											range( mpc.predicted_trajectories[ 0 ].shape[ 0 ] - 1 ) ]
+
+	fig = plt.figure()
+	view = plt.subplot2grid( (3, 5), (0, 0), 4, 3, fig )
+	view.grid( True )
+	view.set_xlabel( "x" )
+	view.set_ylabel( "y" )
+	how = 11. / 8.9
+	view.set_xlim( -2, 2 )
+	view.set_ylim( -2 * how, 2 * how )
+
+	ax_pos = plt.subplot2grid( (3, 5), (0, 3), 1, 2, fig )
+	ax_pos.set_ylabel( 'position' )
+	ax_pos.yaxis.set_label_position( "right" )
+	ax_pos.yaxis.tick_right()
+	ax_pos.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+	ax_pos.set_ylim( -3, 3 )
+	ax_pos.set_prop_cycle( cycler( 'color', [ 'blue', 'red' ] ) )
+
+	ax_ang = plt.subplot2grid( (3, 5), (1, 3), 1, 2, fig )
+	ax_ang.set_ylabel( 'angle' )
+	ax_ang.yaxis.set_label_position( "right" )
+	ax_ang.yaxis.tick_right()
+	ax_ang.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+	ax_ang.set_ylim( - pi, 2 * pi )
+	ax_ang.set_prop_cycle( cycler( 'color', [ 'blue' ] ) )
+
+	ax_act = plt.subplot2grid( (3, 5), (2, 3), 1, 2, fig )
+	ax_act.set_ylabel( 'actuation' )
+	ax_act.set_xlabel( 'time' )
+	ax_act.yaxis.set_label_position( "right" )
+	ax_act.yaxis.tick_right()
+	ax_act.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
+	ax_act.set_prop_cycle( cycler( 'color', [ 'blue', 'red' ] ) )
+
+	plt.subplots_adjust( hspace = 0., wspace = 0. )
+	fig.suptitle(
+			f"{frame + 1}/{n_frames} - {mpc.times[ -1 ]:.6f}s - {len( mpc.candidate_actuations )}"
+			)
+
+	view.scatter( mpc.model.state[ 0 ], mpc.model.state[ 1 ], c = 'r', s = 100 )
+	view.quiver(
+			mpc.model.state[ 0 ],
+			mpc.model.state[ 1 ],
+			.1 * cos( mpc.model.state[ 2 ] ),
+			.1 * sin( mpc.model.state[ 2 ] ),
+			color = 'r'
+			)
+
+	view.quiver(
+			mpc.target_trajectory[ 0, 0, 0 ],
+			mpc.target_trajectory[ 0, 0, 1 ],
+			.1 * cos( mpc.target_trajectory[ 0, 0, 2 ] ),
+			.1 * sin( mpc.target_trajectory[ 0, 0, 2 ] ),
+			color = 'b'
+			)
+	view.plot( full_trajectory[ :, 0, 0 ], full_trajectory[ :, 0, 1 ], ':b' )
+
+	previous_pos_record_array = array( mpc.model.previous_states )[ :, :2 ]
+	previous_ang_record_array = array( mpc.model.previous_states )[ :, 2 ]
+
+	view.plot( previous_pos_record_array[ :, 0 ], previous_pos_record_array[ :, 1 ], 'r' )
+	ax_pos.plot( time_previous, previous_pos_record_array )
+	ax_ang.plot( time_previous, previous_ang_record_array )
+	ax_act.plot( time_previous, mpc.model.previous_actuations )
+
+	ax_pos.plot(
+			time_previous + time_prediction[ 1: ],
+			full_trajectory[ :len( time_previous ) + len( time_prediction ) - 1, 0, 0 ],
+			':b'
+			)
+	ax_pos.plot(
+			time_previous + time_prediction[ 1: ],
+			full_trajectory[ :len( time_previous ) + len( time_prediction ) - 1, 0, 1 ],
+			':b'
+			)
+	ax_ang.plot(
+			time_previous + time_prediction[ 1: ],
+			full_trajectory[ :len( time_previous ) + len( time_prediction ) - 1, 0, 2 ],
+			':b'
+			)
+
+	step = 1
+	if len( mpc.predicted_trajectories ) > 1000:
+		step = len( mpc.predicted_trajectories ) // 1000
+
+	for f_eval in range( 0, len( mpc.predicted_trajectories ), step ):
+		pos_record_array = mpc.predicted_trajectories[ f_eval ][ 1:, 0, :2 ]
+		ang_record_array = mpc.predicted_trajectories[ f_eval ][ 1:, 0, 2 ]
+
+		view.plot( pos_record_array[ :, 0 ], pos_record_array[ :, 1 ], 'r', linewidth = .1 )
+
+		ax_pos.plot( time_prediction, pos_record_array, linewidth = .1 )
+		ax_ang.plot( time_prediction, ang_record_array, linewidth = .1 )
+		ax_act.plot( time_prediction, mpc.candidate_actuations[ f_eval ][ 1:, 0, : ], linewidth = .1 )
+
+	# plot vertical line from y min to y max
+	ax_pos.axvline( color = 'k' )
+	ax_ang.axvline( color = 'k' )
+	ax_act.axvline( color = 'k' )
+
+	return fig
+
+
 if __name__ == "__main__":
 
 	n_frames = 200
-	time_step = 0.025
+	time_step = 0.05
 
 	initial_state = array( [ 0., 0., 0., 0., 0., 0. ] )
 	initial_actuation = array( [ 0., 0. ] )
 
-	keyframes = [ (0., [ 0., 0., 0 ]), (.2, [ 1., 1., pi ]), (.4, [ -1., -1., -pi ]),
-								(.6, [ 1., 0, 0 ]), (.8, [ 0, 0, pi ]), (1., [ 0, 1., 0 ]) ]
-	trajectory = generate_trajectory( keyframes, n_frames )
+	actuation_weight_matrix = .001 * eye( 2 )
 
-	logger = Logger()
+	angle = linspace( 0, 4 * pi, 2 * n_frames )
+	trajectory = array( [ cos( angle ), sin( angle ), angle + pi / 2 ] ).T.reshape(
+			2 * n_frames, 1, 3
+			)
 
 	turtle_model = Model( turtle, time_step, initial_state, initial_actuation, record = True )
-	mpc = MPC( turtle_model, 25, trajectory, record = True )
+	mpc = MPC(
+			turtle_model,
+			30,
+			trajectory[ 1:31 ],
+			time_steps_per_actuation = 5,
+			actuation_derivative_weight_matrix = actuation_weight_matrix,
+			final_weight = 2,
+			tolerance = 1e-3,
+			record = True
+			)
+
+	logger = Logger()
 
 	folder = (f'./plots/{turtle.__name__}_{int( time() )}')
 
@@ -64,129 +185,24 @@ if __name__ == "__main__":
 
 		logger.log( f"frame {frame + 1}/{n_frames}" )
 
-		mpc.target_trajectory = np.array( trajectory[ frame + 1:frame + mpc.horizon + 1 ] )
+		mpc.target_trajectory = array( trajectory[ frame + 1:frame + mpc.horizon + 1 ] )
 
 		mpc.optimize()
-		turtle_model.actuation += mpc.result[ 0 ]
+		mpc.apply_result()
 		turtle_model.step()
 
 		logger.log( f"{turtle_model.actuation=}" )
-		logger.log( f"{turtle_model.state=}" )
+		logger.log( f"{turtle_model.state[:3]=}" )
 		logger.log( f"{mpc.times[-1]=}" )
 
-		# we record the initial value + the new value after the integration in `step()`
-		time_previous = [ i * time_step - frame * time_step for i in
-											range( len( turtle_model.previous_states ) ) ]
-		time_prediction = [ i * time_step - time_step for i in
-												range( len( mpc.predicted_trajectories ) ) ]
-
-		fig = plt.figure()
-		view = plt.subplot2grid( (3, 5), (0, 0), 4, 3, fig )
-		view.grid( True )
-		view.set_xlabel( "x" )
-		view.set_ylabel( "y" )
-		how = 11. / 8.9
-		view.set_xlim( -2, 2 )
-		view.set_ylim( -2 * how, 2 * how )
-
-		ax_pos = plt.subplot2grid( (3, 5), (0, 3), 1, 2, fig )
-		ax_pos.set_ylabel( 'position' )
-		ax_pos.yaxis.set_label_position( "right" )
-		ax_pos.yaxis.tick_right()
-		ax_pos.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
-		ax_pos.set_ylim( -3, 3 )
-		ax_pos.set_prop_cycle( cycler( 'color', [ 'blue', 'red' ] ) )
-
-		ax_ang = plt.subplot2grid( (3, 5), (1, 3), 1, 2, fig )
-		ax_ang.set_ylabel( 'angle' )
-		ax_ang.yaxis.set_label_position( "right" )
-		ax_ang.yaxis.tick_right()
-		ax_ang.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
-		ax_ang.set_ylim( - pi, 2 * pi )
-		ax_ang.set_prop_cycle( cycler( 'color', [ 'blue' ] ) )
-
-		ax_act = plt.subplot2grid( (3, 5), (2, 3), 1, 2, fig )
-		ax_act.set_ylabel( 'actuation' )
-		ax_act.set_xlabel( 'time' )
-		ax_act.yaxis.set_label_position( "right" )
-		ax_act.yaxis.tick_right()
-		ax_act.set_xlim( time_previous[ 0 ], time_prediction[ -1 ] )
-		ax_act.set_prop_cycle( cycler( 'color', [ 'blue', 'red' ] ) )
-
-		plt.subplots_adjust( hspace = 0., wspace = 0. )
-		fig.suptitle(
-				f"{frame + 1}/{n_frames} - {mpc.times[ -1 ]:.6f}s - {len( mpc.candidate_actuations )}"
-				)
-
-		view.scatter( initial_state[ 0 ], initial_state[ 1 ], c = 'r', s = 100 )
-		view.quiver(
-				initial_state[ 0 ],
-				initial_state[ 1 ],
-				.1 * cos( initial_state[ 2 ] ),
-				.1 * sin( initial_state[ 2 ] ),
-				color = 'b'
-				)
-
-		view.quiver(
-				mpc.target_trajectory[ 0 ][ 0 ],
-				mpc.target_trajectory[ 0 ][ 1 ],
-				.1 * cos( mpc.target_trajectory[ 0 ][ 2 ] ),
-				.1 * sin( mpc.target_trajectory[ 0 ][ 2 ] ),
-				color = 'b'
-				)
-
-		t1 = 0.
-		timespan = time_prediction[ -1 ] - time_previous[ 0 ]
-		for index in range( len( previous_target_record ) ):
-			t2 = (previous_target_record[ index ][ 0 ] - 2 * time_step) / timespan
-			ax_pos.axhline(
-					previous_target_record[ index ][ 1 ][ 0 ], t1, t2, color = 'b', linestyle = ':'
-					)
-			ax_pos.axhline(
-					previous_target_record[ index ][ 1 ][ 1 ], t1, t2, color = 'r', linestyle = ':'
-					)
-			ax_ang.axhline(
-					previous_target_record[ index ][ 1 ][ 2 ], t1, t2, color = 'b', linestyle = ':'
-					)
-			t1 = t2 + time_step
-
-		ax_pos.axhline( mpc_config[ 'target_pose' ][ 0 ], t1, 1, color = 'b', linestyle = ':' )
-		ax_pos.axhline( mpc_config[ 'target_pose' ][ 1 ], t1, 1, color = 'r', linestyle = ':' )
-		ax_ang.axhline( mpc_config[ 'target_pose' ][ 2 ], t1, 1, color = 'b', linestyle = ':' )
-
-		previous_pos_record_array = array( previous_states_record )[ :, :2 ]
-		previous_ang_record_array = array( previous_states_record )[ :, 2 ]
-
-		view.plot( previous_pos_record_array[ :, 0 ], previous_pos_record_array[ :, 1 ], 'b' )
-		ax_pos.plot( time_previous, previous_pos_record_array )
-		ax_ang.plot( time_previous, previous_ang_record_array )
-		ax_act.plot( time_previous, previous_actuation_record )
-
-		for f_eval in range( n_f_eval ):
-			pos_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, :2 ]
-			ang_record_array = array( mpc_config[ 'state_record' ][ f_eval ] )[ :, 2 ]
-
-			view.plot( pos_record_array[ :, 0 ], pos_record_array[ :, 1 ], 'b', linewidth = .1 )
-
-			ax_pos.plot( time_prediction, pos_record_array, linewidth = .1 )
-			ax_ang.plot( time_prediction, ang_record_array, linewidth = .1 )
-			ax_act.plot( time_prediction, mpc_config[ 'actuation_record' ][ f_eval ], linewidth = .1 )
-
-		# plot vertical line from y min to y max
-		ax_pos.axvline( color = 'k' )
-		ax_ang.axvline( color = 'k' )
-		ax_act.axvline( color = 'k' )
+		fig = plot( mpc, trajectory )
 
 		plt.savefig( f'{folder}/{frame}.png' )
 		plt.close( 'all' )
 		del fig
 
-		tf = perf_counter()
-		save_time = tf - ti
-
-		logger.lognl( f'saved figure {frame}.png in {save_time:.6f}s' )
-
-	logger.save_at( folder )
+		logger.lognl( f'saved figure {frame}.png' )
+		logger.save_at( folder )
 
 	# create gif from frames
 	logger.log( 'creating gif ...' )

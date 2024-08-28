@@ -1,11 +1,9 @@
-from time import perf_counter
 from copy import deepcopy
 from inspect import signature
+from time import perf_counter
 
-import matplotlib.pyplot as plt
-from numpy import eye, ndarray, pi, zeros
-from numpy.linalg import norm
-from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint, OptimizeResult
+from numpy import eye, ndarray, zeros
+from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint
 
 
 class Model:
@@ -15,13 +13,19 @@ class Model:
 			time_step: float,
 			initial_state: ndarray,
 			initial_actuation: ndarray,
+			kwargs = None,
 			record: bool = False
 			):
 
-		assert list( signature( dynamics ).parameters ) == [ 'state', 'actuation' ]
+		if kwargs is None:
+			kwargs = { }
+
+		assert list( signature( dynamics ).parameters )[ :2 ] == [ 'state', 'actuation' ]
 
 		self.model_dynamics = dynamics
 		self.time_step = time_step
+
+		self.kwargs = kwargs
 
 		self.state = deepcopy( initial_state )
 		self.actuation = deepcopy( initial_actuation )
@@ -32,7 +36,7 @@ class Model:
 			self.previous_actuations = [ deepcopy( self.actuation ) ]
 
 	def dynamics( self, state: ndarray, actuation: ndarray ) -> ndarray:
-		return self.model_dynamics( state, actuation )
+		return self.model_dynamics( state, actuation, **self.kwargs )
 
 	def step( self ):
 		# euler for now
@@ -55,7 +59,7 @@ class MPC:
 			max_iter: int = 1000,
 			bounds: tuple[ Bounds ] = None,
 			constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None,
-			state_weight_matrix: ndarray = None,
+			pose_weight_matrix: ndarray = None,
 			actuation_derivative_weight_matrix: ndarray = None,
 			final_weight: float = 0.,
 			record: bool = False
@@ -72,26 +76,26 @@ class MPC:
 		self.constraints = constraints
 
 		self.result_shape = (self.horizon // self.time_steps_per_actuation + (
-				1 if self.horizon % self.time_steps_per_actuation != 0 else 0),
+				1 if self.horizon % self.time_steps_per_actuation != 0 else 0), 1,
 												 self.model.actuation.shape[ 0 ])
 
 		self.raw_result = None
 		self.result = zeros( self.result_shape )
 
-		self.state_weight_matrix: ndarray = zeros(
+		self.pose_weight_matrix: ndarray = zeros(
 				(self.horizon, self.model.state.shape[ 0 ] // 2, self.model.state.shape[ 0 ] // 2)
 				)
 		self.actuation_derivative_weight_matrix: ndarray = zeros(
-				(self.result_shape[ 0 ], self.result_shape[ 1 ], self.result_shape[ 1 ])
+				(self.result_shape[ 0 ], self.result_shape[ 2 ], self.result_shape[ 2 ])
 				)
 
-		if state_weight_matrix is None:
-			self.state_weight_matrix[ : ] = eye( self.model.state.shape[ 0 ] // 2 )
+		if pose_weight_matrix is None:
+			self.pose_weight_matrix[ : ] = eye( self.model.state.shape[ 0 ] // 2 )
 		else:
-			self.state_weight_matrix[ : ] = state_weight_matrix
+			self.pose_weight_matrix[ : ] = pose_weight_matrix
 
 		if actuation_derivative_weight_matrix is None:
-			self.actuation_derivative_weight_matrix[ : ] = eye( self.result_shape[ 1 ] )
+			self.actuation_derivative_weight_matrix[ : ] = eye( self.result_shape[ 2 ] )
 		else:
 			self.actuation_derivative_weight_matrix[ : ] = actuation_derivative_weight_matrix
 
@@ -105,15 +109,18 @@ class MPC:
 
 	def predict( self, actuation: ndarray ) -> ndarray:
 		p_state = deepcopy( self.model.state )
-		predicted_trajectory = zeros( (self.horizon, self.model.state.shape[ 0 ] / 2) )
+		predicted_trajectory = zeros( (self.horizon, 1, self.model.state.shape[ 0 ] // 2) )
 
 		for i in range( self.horizon ):
 			p_state += self.model.dynamics(
-					p_state, actuation[ i // self.time_steps_per_actuation ]
+					p_state, actuation[ i // self.time_steps_per_actuation, 0 ]
 					) * self.model.time_step
-			predicted_trajectory[ i ] = p_state[ :len( p_state ) / 2 ]
+			predicted_trajectory[ i ] = p_state[ :len( p_state ) // 2 ]
 
 		return predicted_trajectory
+
+	def apply_result( self ):
+		self.model.actuation += self.result[ 0, 0 ]
 
 	def optimize( self ):
 
@@ -141,75 +148,29 @@ class MPC:
 	def cost( self, actuations_derivative: ndarray ) -> float:
 		actuations_derivative = actuations_derivative.reshape( self.result_shape )
 		actuations = actuations_derivative.cumsum( axis = 0 ) + self.model.actuation
-
+		if self.time_steps_per_actuation > 1:
+			actuations = actuations.repeat( self.time_steps_per_actuation, axis = 0 )
+			actuations = actuations[ :self.horizon ]
 		cost = 0.
 
 		predicted_trajectory = self.predict( actuations )
 		error = predicted_trajectory - self.target_trajectory
-		cost += sum( error @ self.state_weight_matrix @ error.T )
-		cost += sum(
-				actuations_derivative @ self.actuation_derivative_weight_matrix @ actuations_derivative.T
-				)
+		cost += (error @ self.pose_weight_matrix @ error.transpose( (0, 2, 1) )).sum()
+		cost += (
+				actuations_derivative @ self.actuation_derivative_weight_matrix @
+				actuations_derivative.transpose(
+				(0, 2, 1)
+				)).sum()
 
 		cost /= self.horizon
 
-		cost += self.final_weight * (error[ -1 ] @ self.state_weight_matrix[ -1 ] @ error[ -1 ].T)
+		cost += self.final_weight * (error[ -1 ] @ self.pose_weight_matrix[ -1 ] @ error[ -1 ].T)
 
 		if self.record:
 			self.predicted_trajectories.append( predicted_trajectory )
 			self.candidate_actuations.append( actuations )
 
 		return cost
-
-
-def generate_trajectory(
-		key_frames: list[ tuple[ float, list ] ], n_points: int
-		):
-	assert key_frames[ 0 ][ 0 ] == 0., "trajectory doesn't start at t = 0."
-
-	n_dim = len( key_frames[ 0 ][ 1 ] )
-	timespan = key_frames[ -1 ][ 0 ]
-	dt = timespan / n_points
-	trajectory = [ [ 0. ] * n_dim for i in range( n_points ) ]
-	start_point = 0
-
-	for frame_index in range( len( key_frames ) - 1 ):
-		frame_0 = key_frames[ frame_index ]
-		frame_1 = key_frames[ frame_index + 1 ]
-		sub_timespan = frame_1[ 0 ] - frame_0[ 0 ]
-		sub_n_points = int( n_points * sub_timespan / timespan )
-
-		funcs = [ ]
-		for dim in range( n_dim ):
-			funcs += [ cubic_interpolation_function( frame_0[ 1 ][ dim ], frame_1[ 1 ][ dim ], 0., 0. ) ]
-
-		for point in range( sub_n_points ):
-			for dim in range( n_dim ):
-				trajectory[ start_point + point ][ dim ] = funcs[ dim ]( point / sub_n_points )
-
-		start_point += sub_n_points
-	for dim in range( n_dim ):
-		trajectory[ -1 ][ dim ] = key_frames[ -1 ][ 1 ][ dim ]
-	return trajectory
-
-
-def cubic_interpolation_function( f_0: float, f_1: float, f_0p: float, f_1p: float ):
-	a = 2 * f_0 - 2 * f_1 + f_0p + f_1p
-	b = -3 * f_0 + 3 * f_1 - 2 * f_0p - f_1p
-	c = f_0p
-	d = f_0
-
-	def function( x: float ) -> float:
-		return a * pow( x, 3 ) + b * pow( x, 2 ) + c * x + d
-
-	return function
-
-
-def serialize_others( obj: any ) -> str:
-	if callable( obj ):
-		return obj.__name__
-	if isinstance( obj, ndarray ):
-		return obj.tolist()
 
 
 class Logger:
@@ -253,20 +214,50 @@ class Logger:
 			f.write( self.logs )
 
 
-if __name__ == "__main__":
+def generate_trajectory(
+		key_frames: list[ tuple[ float, list ] ], n_points: int
+		):
+	assert key_frames[ 0 ][ 0 ] == 0., "trajectory doesn't start at t = 0."
 
-	n_frames = 400
-	time_step = 0.025
+	n_dim = len( key_frames[ 0 ][ 1 ] )
+	timespan = key_frames[ -1 ][ 0 ]
+	trajectory = zeros( (n_points, 1, n_dim) )
+	start_point = 0
 
-	trajectory = [ (.0, [ 0., 0., 0., 0., 0., 0. ]), (.25, [ 0., 0., 1., 0., 0., pi ]),
-								 (.50, [ 1., 1., 1., 0., 0., -pi ]), (.75, [ -1., -1., 1., 0., 0., pi ]),
-								 (1., [ 0., 0., 1., 0., 0., 0. ]) ]
+	for frame_index in range( len( key_frames ) - 1 ):
+		frame_0 = key_frames[ frame_index ]
+		frame_1 = key_frames[ frame_index + 1 ]
+		sub_timespan = frame_1[ 0 ] - frame_0[ 0 ]
+		sub_n_points = int( n_points * sub_timespan / timespan )
 
-	dim = 1
+		funcs = [ ]
+		for dim in range( n_dim ):
+			funcs += [ cubic_interpolation_function( frame_0[ 1 ][ dim ], frame_1[ 1 ][ dim ], 0., 0. ) ]
 
-	trajectory = generate_trajectory( trajectory, n_frames )
+		for point in range( sub_n_points ):
+			for dim in range( n_dim ):
+				trajectory[ start_point + point, :, dim ] = funcs[ dim ]( point / sub_n_points )
 
-	Y1 = [ point[ dim ] for point in trajectory ]
+		start_point += sub_n_points
+	for dim in range( n_dim ):
+		trajectory[ -1, :, dim ] = key_frames[ -1 ][ 1 ][ dim ]
+	return trajectory
 
-	plt.plot( Y1 )
-	plt.show()
+
+def cubic_interpolation_function( f_0: float, f_1: float, f_0p: float, f_1p: float ):
+	a = 2 * f_0 - 2 * f_1 + f_0p + f_1p
+	b = -3 * f_0 + 3 * f_1 - 2 * f_0p - f_1p
+	c = f_0p
+	d = f_0
+
+	def function( x: float ) -> float:
+		return a * pow( x, 3 ) + b * pow( x, 2 ) + c * x + d
+
+	return function
+
+
+def serialize_others( obj: any ) -> str:
+	if callable( obj ):
+		return obj.__name__
+	if isinstance( obj, ndarray ):
+		return obj.tolist()

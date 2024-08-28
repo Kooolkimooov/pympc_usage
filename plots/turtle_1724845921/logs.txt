@@ -1,0 +1,200 @@
+frame 1/200	turtle_model.actuation=array([5.23014596, 8.60795598])	turtle_model.state[:3]=array([0.05230146, 0.        , 0.08607956])	mpc.times[-1]=0.05942510000022594	saved figure 0.png
+frame 2/200	turtle_model.actuation=array([5.13482669, 8.66720343])	turtle_model.state[:3]=array([0.10345961, 0.00441458, 0.17275159])	mpc.times[-1]=0.1084339000080945	saved figure 1.png
+frame 3/200	turtle_model.actuation=array([5.00851888, 8.4900875 ])	turtle_model.state[:3]=array([0.1527993 , 0.0130239 , 0.25765247])	mpc.times[-1]=0.03497240001161117	saved figure 2.png
+frame 4/200	turtle_model.actuation=array([4.88221108, 8.31297156])	turtle_model.state[:3]=array([0.20000984, 0.02546433, 0.34078218])	mpc.times[-1]=0.009462100002565421	saved figure 3.png
+frame 5/200	turtle_model.actuation=array([4.75590327, 8.13585562])	turtle_model.state[:3]=array([0.24483392, 0.04135972, 0.42214074])	mpc.times[-1]=0.008543499992811121	saved figure 4.png
+frame 6/200	turtle_model.actuation=array([4.33967735, 8.43244667])	turtle_model.state[:3]=array([0.28442106, 0.05913999, 0.50646521])	mpc.times[-1]=0.06643420000909828	saved figure 5.png
+frame 7/200	turtle_model.actuation=array([4.14737322, 8.23986814])	turtle_model.state[:3]=array([0.32068837, 0.07925845, 0.58886389])	mpc.times[-1]=0.034224300005007535	saved figure 6.png
+frame 8/200	turtle_model.actuation=array([4.14195035, 8.12446215])	turtle_model.state[:3]=array([0.35513168, 0.10226353, 0.67010851])	mpc.times[-1]=0.04099730000598356	saved figure 7.png
+frame 9/200	turtle_model.actuation=array([4.08234778, 7.9422665 ])	turtle_model.state[:3]=array([0.38712726, 0.12761781, 0.74953118])	mpc.times[-1]=0.061086499990778975	saved figure 8.png
+frame 10/200	turtle_model.actuation=array([4.02274521, 7.76007086])	turtle_model.state[:3]=array([0.41657409, 0.1550246 , 0.82713188])	mpc.times[-1]=0.031036699991091155	saved figure 9.png
+frame 11/200	turtle_model.actuation=array([3.93353053, 7.66060957])	turtle_model.state[:3]=array([0.44320367, 0.1839751 , 0.90373798])	mpc.times[-1]=0.016180299993720837	saved figure 10.png
+frame 12/200	turtle_model.actuation=array([3.84431584, 7.56114828])	turtle_model.state[:3]=array([0.46698759, 0.21417777, 0.97934946])	mpc.times[-1]=0.0082237000024179	saved figure 11.png
+frame 13/200	turtle_model.actuation=array([3.80295574, 7.35902911])	turtle_model.state[:3]=array([0.48819146, 0.24574743, 1.05293975])	mpc.times[-1]=0.016906799995922484	saved figure 12.png
+frame 14/200	turtle_model.actuation=array([3.76138093, 7.24718642])	turtle_model.state[:3]=array([0.506811  , 0.2784294 , 1.12541162])	mpc.times[-1]=0.018047999998088926	saved figure 13.png
+frame 15/200	turtle_model.actuation=array([3.71980612, 7.13534373])	turtle_model.state[:3]=array([0.52283612, 0.31199861, 1.19676506])	mpc.times[-1]=0.0071450999967055395	saved figure 14.png
+frame 16/200	turtle_model.actuation=array([3.67823131, 7.02350104])	turtle_model.state[:3]=array([0.53627531, 0.34623786, 1.26700007])	mpc.times[-1]=0.02207530000305269	saved figure 15.png
+frame 17/200	turtle_model.actuation=array([3.657858 , 6.8276425])	turtle_model.state[:3]=array([0.5472176 , 0.38114143, 1.33527649])	mpc.times[-1]=0.048577199995634146	saved figure 16.png
+frame 18/200	turtle_model.actuation=array([3.62083354, 6.75110564])	turtle_model.state[:3]=array([0.55566676, 0.41635017, 1.40278755])	mpc.times[-1]=0.06643239999539219	saved figure 17.png
+frame 19/200	turtle_model.actuation=array([3.60100555, 6.57442252])	turtle_model.state[:3]=array([0.56168834, 0.45185319, 1.46853177])	mpc.times[-1]=0.06143839999276679	saved figure 18.png
+frame 20/200	turtle_model.actuation=array([3.55949326, 6.53292938])	turtle_model.state[:3]=array([0.5653221 , 0.48726216, 1.53386107])	mpc.times[-1]=0.06363449999480508	saved figure 19.png
+frame 21/200	turtle_model.actuation=array([3.54577952, 6.3858168 ])	turtle_model.state[:3]=array([0.56663144, 0.52269577, 1.59771923])	mpc.times[-1]=0.0500424999918323	saved figure 20.png
+frame 22/200	turtle_model.actuation=array([3.07299885, 6.49844411])	turtle_model.state[:3]=array([0.5658042 , 0.55341462, 1.66270367])	mpc.times[-1]=0.1980170999886468	saved figure 21.png
+frame 23/200	turtle_model.actuation=array([2.98551231, 6.32114711])	turtle_model.state[:3]=array([0.56306416, 0.58314374, 1.72591515])	mpc.times[-1]=0.0458206000039354	saved figure 22.png
+frame 24/200	turtle_model.actuation=array([3.01633654, 6.26616185])	turtle_model.state[:3]=array([0.558404  , 0.61294494, 1.78857676])	mpc.times[-1]=0.03472680000413675	saved figure 23.png
+frame 25/200	turtle_model.actuation=array([3.04716077, 6.21117659])	turtle_model.state[:3]=array([0.55182021, 0.64269679, 1.85068853])	mpc.times[-1]=0.011532799995620735	saved figure 24.png
+frame 26/200	turtle_model.actuation=array([3.06093844, 6.05017259])	turtle_model.state[:3]=array([0.5433643 , 0.67211502, 1.91119026])	mpc.times[-1]=0.005627999998978339	saved figure 25.png
+frame 27/200	turtle_model.actuation=array([3.06686539, 5.9202344 ])	turtle_model.state[:3]=array([0.53312531, 0.701024  , 1.9703926 ])	mpc.times[-1]=0.044414600008167326	saved figure 26.png
+frame 28/200	turtle_model.actuation=array([3.06877859, 5.82310619])	turtle_model.state[:3]=array([0.52118634, 0.72929415, 2.02862366])	mpc.times[-1]=0.007584899998619221	saved figure 27.png
+frame 29/200	turtle_model.actuation=array([3.07069179, 5.72597798])	turtle_model.state[:3]=array([0.50761387, 0.75683871, 2.08588344])	mpc.times[-1]=0.01591040000494104	saved figure 28.png
+frame 30/200	turtle_model.actuation=array([3.07260499, 5.62884977])	turtle_model.state[:3]=array([0.49247789, 0.78357805, 2.14217194])	mpc.times[-1]=0.011785599999711849	saved figure 29.png
+frame 31/200	turtle_model.actuation=array([3.07451819, 5.53172157])	turtle_model.state[:3]=array([0.47585122, 0.8094396 , 2.19748916])	mpc.times[-1]=0.020570200009387918	saved figure 30.png
+frame 32/200	turtle_model.actuation=array([3.10788753, 5.51244145])	turtle_model.state[:3]=array([0.45762441, 0.83461261, 2.25261357])	mpc.times[-1]=0.04071279999334365	saved figure 31.png
+frame 33/200	turtle_model.actuation=array([3.13944079, 5.46132677])	turtle_model.state[:3]=array([0.4378395 , 0.85898813, 2.30722684])	mpc.times[-1]=0.026199400002951734	saved figure 32.png
+frame 34/200	turtle_model.actuation=array([3.17099405, 5.41021208])	turtle_model.state[:3]=array([0.41654159, 0.88248109, 2.36132896])	mpc.times[-1]=0.02355620000162162	saved figure 33.png
+frame 35/200	turtle_model.actuation=array([3.16406065, 5.26678987])	turtle_model.state[:3]=array([0.39405372, 0.90473921, 2.41399686])	mpc.times[-1]=0.022630000006756745	saved figure 34.png
+frame 36/200	turtle_model.actuation=array([3.15662796, 5.158157  ])	turtle_model.state[:3]=array([0.3704808 , 0.92573319, 2.46557843])	mpc.times[-1]=0.04008760000579059	saved figure 35.png
+frame 37/200	turtle_model.actuation=array([3.15585496, 5.08459012])	turtle_model.state[:3]=array([0.34586283, 0.94547902, 2.51642433])	mpc.times[-1]=0.04543579999881331	saved figure 36.png
+frame 38/200	turtle_model.actuation=array([3.15508197, 5.01102324])	turtle_model.state[:3]=array([0.32027939, 0.96394363, 2.56653456])	mpc.times[-1]=0.012499900010880083	saved figure 37.png
+frame 39/200	turtle_model.actuation=array([3.15430897, 4.93745636])	turtle_model.state[:3]=array([0.29380967, 0.98109939, 2.61590912])	mpc.times[-1]=0.01140550000127405	saved figure 38.png
+frame 40/200	turtle_model.actuation=array([3.17334246, 4.89044361])	turtle_model.state[:3]=array([0.26636086, 0.99702337, 2.66481356])	mpc.times[-1]=0.0250823000096716	saved figure 39.png
+frame 41/200	turtle_model.actuation=array([3.19237595, 4.84343087])	turtle_model.state[:3]=array([0.23799731, 1.01167381, 2.71324787])	mpc.times[-1]=0.007796399993821979	saved figure 40.png
+frame 42/200	turtle_model.actuation=array([3.21140944, 4.79641812])	turtle_model.state[:3]=array([0.20878458, 1.02501291, 2.76121205])	mpc.times[-1]=0.009420500005944632	saved figure 41.png
+frame 43/200	turtle_model.actuation=array([3.23044293, 4.74940538])	turtle_model.state[:3]=array([0.17878916, 1.0370067 , 2.8087061 ])	mpc.times[-1]=0.006085700006224215	saved figure 42.png
+frame 44/200	turtle_model.actuation=array([3.24947642, 4.70239263])	turtle_model.state[:3]=array([0.14807826, 1.04762509, 2.85573003])	mpc.times[-1]=0.009508099989034235	saved figure 43.png
+frame 45/200	turtle_model.actuation=array([3.2685099 , 4.65537989])	turtle_model.state[:3]=array([0.11671956, 1.0568418 , 2.90228383])	mpc.times[-1]=0.02400639999541454	saved figure 44.png
+frame 46/200	turtle_model.actuation=array([3.28754339, 4.60836714])	turtle_model.state[:3]=array([0.08478101, 1.06463431, 2.9483675 ])	mpc.times[-1]=0.02731629999470897	saved figure 45.png
+frame 47/200	turtle_model.actuation=array([3.30657688, 4.5613544 ])	turtle_model.state[:3]=array([0.05233059, 1.07098376, 2.99398104])	mpc.times[-1]=0.023283100003027357	saved figure 46.png
+frame 48/200	turtle_model.actuation=array([3.31319906, 4.48496401])	turtle_model.state[:3]=array([0.01955891, 1.07585669, 3.03883068])	mpc.times[-1]=0.010893999991822056	saved figure 47.png
+frame 49/200	turtle_model.actuation=array([3.31982124, 4.40857362])	turtle_model.state[:3]=array([-0.01346417,  1.0792622 ,  3.08291642])	mpc.times[-1]=0.009207099996274337	saved figure 48.png
+frame 50/200	turtle_model.actuation=array([3.32644342, 4.33218323])	turtle_model.state[:3]=array([-0.04667136,  1.08121291,  3.12623825])	mpc.times[-1]=0.00789999999688007	saved figure 49.png
+frame 51/200	turtle_model.actuation=array([3.31926195, 4.2823209 ])	turtle_model.state[:3]=array([-0.07986007,  1.08172255,  3.16906146])	mpc.times[-1]=0.011443299998063594	saved figure 50.png
+frame 52/200	turtle_model.actuation=array([3.31208048, 4.23245858])	turtle_model.state[:3]=array([-0.11296838,  1.08081287,  3.21138605])	mpc.times[-1]=0.010404400003608316	saved figure 51.png
+frame 53/200	turtle_model.actuation=array([3.30489901, 4.18259626])	turtle_model.state[:3]=array([-0.14593691,  1.07850814,  3.25321201])	mpc.times[-1]=0.02410059999965597	saved figure 52.png
+frame 54/200	turtle_model.actuation=array([3.29771754, 4.13273394])	turtle_model.state[:3]=array([-0.17870887,  1.07483489,  3.29453935])	mpc.times[-1]=0.021894000004976988	saved figure 53.png
+frame 55/200	turtle_model.actuation=array([3.29053608, 4.08287161])	turtle_model.state[:3]=array([-0.2112301 ,  1.06982172,  3.33536807])	mpc.times[-1]=0.011448699995526113	saved figure 54.png
+frame 56/200	turtle_model.actuation=array([3.29500169, 4.06435009])	turtle_model.state[:3]=array([-0.24356343,  1.0634767 ,  3.37601157])	mpc.times[-1]=0.006522199997561984	saved figure 55.png
+frame 57/200	turtle_model.actuation=array([3.2994673 , 4.04582858])	turtle_model.state[:3]=array([-0.27565569,  1.05581277,  3.41646985])	mpc.times[-1]=0.0033345999981975183	saved figure 56.png
+frame 58/200	turtle_model.actuation=array([3.30393291, 4.02730706])	turtle_model.state[:3]=array([-0.30745467,  1.04684495,  3.45674292])	mpc.times[-1]=0.003020100004505366	saved figure 57.png
+frame 59/200	turtle_model.actuation=array([3.30839852, 4.00878554])	turtle_model.state[:3]=array([-0.33890926,  1.03659026,  3.49683078])	mpc.times[-1]=0.00423890000092797	saved figure 58.png
+frame 60/200	turtle_model.actuation=array([3.31286414, 3.99026402])	turtle_model.state[:3]=array([-0.36996947,  1.02506766,  3.53673342])	mpc.times[-1]=0.0032389999978477135	saved figure 59.png
+frame 61/200	turtle_model.actuation=array([3.32031691, 3.94053028])	turtle_model.state[:3]=array([-0.40061409,  1.0122865 ,  3.57613872])	mpc.times[-1]=0.0036644000065280125	saved figure 60.png
+frame 62/200	turtle_model.actuation=array([3.32776968, 3.89079653])	turtle_model.state[:3]=array([-0.430799  ,  0.99827663,  3.61504669])	mpc.times[-1]=0.009597199998097494	saved figure 61.png
+frame 63/200	turtle_model.actuation=array([3.33522244, 3.84106278])	turtle_model.state[:3]=array([-0.46048243,  0.98306925,  3.65345731])	mpc.times[-1]=0.011503800007631071	saved figure 62.png
+frame 64/200	turtle_model.actuation=array([3.34267521, 3.79132904])	turtle_model.state[:3]=array([-0.48962497,  0.9666967 ,  3.69137061])	mpc.times[-1]=0.008806300000287592	saved figure 63.png
+frame 65/200	turtle_model.actuation=array([3.35012798, 3.74159529])	turtle_model.state[:3]=array([-0.51818952,  0.94919235,  3.72878656])	mpc.times[-1]=0.007184000001871027	saved figure 64.png
+frame 66/200	turtle_model.actuation=array([3.30592462, 3.76114859])	turtle_model.state[:3]=array([-0.54571129,  0.93087663,  3.76639804])	mpc.times[-1]=0.05365529999835417	saved figure 65.png
+frame 67/200	turtle_model.actuation=array([3.30605244, 3.70600161])	turtle_model.state[:3]=array([-0.57252592,  0.91153823,  3.80345806])	mpc.times[-1]=0.010856699998839758	saved figure 66.png
+frame 68/200	turtle_model.actuation=array([3.30618027, 3.65085464])	turtle_model.state[:3]=array([-0.59860663,  0.89121879,  3.83996661])	mpc.times[-1]=0.008911800003261305	saved figure 67.png
+frame 69/200	turtle_model.actuation=array([3.29384749, 3.67202748])	turtle_model.state[:3]=array([-0.62383384,  0.87004024,  3.87668688])	mpc.times[-1]=0.009594299990567379	saved figure 68.png
+frame 70/200	turtle_model.actuation=array([3.28607704, 3.66235569])	turtle_model.state[:3]=array([-0.64820889,  0.84800193,  3.91331044])	mpc.times[-1]=0.00851919999695383	saved figure 69.png
+frame 71/200	turtle_model.actuation=array([3.27830659, 3.65268391])	turtle_model.state[:3]=array([-0.67170497,  0.82514009,  3.94983728])	mpc.times[-1]=0.0035785000072792172	saved figure 70.png
+frame 72/200	turtle_model.actuation=array([3.2747961 , 3.61184788])	turtle_model.state[:3]=array([-0.69432624,  0.80146083,  3.98595576])	mpc.times[-1]=0.005905899990466423	saved figure 71.png
+frame 73/200	turtle_model.actuation=array([3.27128562, 3.57101184])	turtle_model.state[:3]=array([-0.71605436,  0.77700639,  4.02166587])	mpc.times[-1]=0.005130699995788746	saved figure 72.png
+frame 74/200	turtle_model.actuation=array([3.26777513, 3.53017581])	turtle_model.state[:3]=array([-0.73687318,  0.75181885,  4.05696763])	mpc.times[-1]=0.007156399995437823	saved figure 73.png
+frame 75/200	turtle_model.actuation=array([3.26426464, 3.48933978])	turtle_model.state[:3]=array([-0.75676866,  0.72594005,  4.09186103])	mpc.times[-1]=0.006423799990443513	saved figure 74.png
+frame 76/200	turtle_model.actuation=array([3.25672911, 3.47232199])	turtle_model.state[:3]=array([-0.77570539,  0.69944423,  4.12658425])	mpc.times[-1]=0.008499400006257929	saved figure 75.png
+frame 77/200	turtle_model.actuation=array([3.24919358, 3.4553042 ])	turtle_model.state[:3]=array([-0.79366921,  0.67236976,  4.16113729])	mpc.times[-1]=0.004606499991496094	saved figure 76.png
+frame 78/200	turtle_model.actuation=array([3.24165806, 3.43828642])	turtle_model.state[:3]=array([-0.81064752,  0.64475506,  4.19552016])	mpc.times[-1]=0.01918979999027215	saved figure 77.png
+frame 79/200	turtle_model.actuation=array([3.23412253, 3.42126863])	turtle_model.state[:3]=array([-0.82662928,  0.61663854,  4.22973284])	mpc.times[-1]=0.009136799999396317	saved figure 78.png
+frame 80/200	turtle_model.actuation=array([3.226587  , 3.40425084])	turtle_model.state[:3]=array([-0.84160495,  0.58805856,  4.26377535])	mpc.times[-1]=0.010729999994509853	saved figure 79.png
+frame 81/200	turtle_model.actuation=array([3.21905147, 3.38723305])	turtle_model.state[:3]=array([-0.85556651,  0.55905332,  4.29764768])	mpc.times[-1]=0.006175000002258457	saved figure 80.png
+frame 82/200	turtle_model.actuation=array([3.21151595, 3.37021527])	turtle_model.state[:3]=array([-0.86850742,  0.52966086,  4.33134983])	mpc.times[-1]=0.01494049999746494	saved figure 81.png
+frame 83/200	turtle_model.actuation=array([3.20398042, 3.35319748])	turtle_model.state[:3]=array([-0.88042255,  0.49991899,  4.36488181])	mpc.times[-1]=0.005246200002147816	saved figure 82.png
+frame 84/200	turtle_model.actuation=array([3.19644489, 3.33617969])	turtle_model.state[:3]=array([-0.89130821,  0.46986523,  4.39824361])	mpc.times[-1]=0.053143699988140725	saved figure 83.png
+frame 85/200	turtle_model.actuation=array([3.1808798 , 3.33901883])	turtle_model.state[:3]=array([-0.90113725,  0.43961313,  4.43163379])	mpc.times[-1]=0.014245800004573539	saved figure 84.png
+frame 86/200	turtle_model.actuation=array([3.16531472, 3.34185796])	turtle_model.state[:3]=array([-0.90990774,  0.40919932,  4.46505237])	mpc.times[-1]=0.006388800000422634	saved figure 85.png
+frame 87/200	turtle_model.actuation=array([3.14974963, 3.3446971 ])	turtle_model.state[:3]=array([-0.91761904,  0.37866035,  4.49849935])	mpc.times[-1]=0.01734269999724347	saved figure 86.png
+frame 88/200	turtle_model.actuation=array([3.13418454, 3.34753623])	turtle_model.state[:3]=array([-0.92427174,  0.34803271,  4.53197471])	mpc.times[-1]=0.019627800007583573	saved figure 87.png
+frame 89/200	turtle_model.actuation=array([3.11861945, 3.35037537])	turtle_model.state[:3]=array([-0.9298677 ,  0.31735268,  4.56547846])	mpc.times[-1]=0.009260399994673207	saved figure 88.png
+frame 90/200	turtle_model.actuation=array([3.63713705, 2.19800011])	turtle_model.state[:3]=array([-0.93519183,  0.2813731 ,  4.58745846])	mpc.times[-1]=0.06870099999650847	saved figure 89.png
+frame 91/200	turtle_model.actuation=array([3.63837262, 2.22190794])	turtle_model.state[:3]=array([-0.93972546,  0.24527294,  4.60967754])	mpc.times[-1]=0.009383500000694767	saved figure 90.png
+frame 92/200	turtle_model.actuation=array([3.63960819, 2.24581578])	turtle_model.state[:3]=array([-0.94345718,  0.20906867,  4.6321357 ])	mpc.times[-1]=0.0036644000065280125	saved figure 91.png
+frame 93/200	turtle_model.actuation=array([3.5564084 , 2.30331016])	turtle_model.state[:3]=array([-0.94630825,  0.17361905,  4.6551688 ])	mpc.times[-1]=0.04568559999461286	saved figure 92.png
+frame 94/200	turtle_model.actuation=array([3.47320861, 2.36080454])	turtle_model.state[:3]=array([-0.94829455,  0.13894381,  4.67877685])	mpc.times[-1]=0.006106100001488812	saved figure 93.png
+frame 95/200	turtle_model.actuation=array([3.51179522, 2.35946659])	turtle_model.state[:3]=array([-0.94947471,  0.10384569,  4.70237151])	mpc.times[-1]=0.01356639999721665	saved figure 94.png
+frame 96/200	turtle_model.actuation=array([3.55038183, 2.35812865])	turtle_model.state[:3]=array([-0.94983036,  0.06834366,  4.7259528 ])	mpc.times[-1]=0.011979799994151108	saved figure 95.png
+frame 97/200	turtle_model.actuation=array([3.4743273 , 2.43071558])	turtle_model.state[:3]=array([-0.94935913,  0.03360358,  4.75025995])	mpc.times[-1]=0.01478339999448508	saved figure 96.png
+frame 98/200	turtle_model.actuation=array([3.42033226, 2.48036229])	turtle_model.state[:3]=array([-9.48064124e-01, -5.75219762e-04,  4.77506358e+00])	mpc.times[-1]=0.008568499993998557	saved figure 97.png
+frame 99/200	turtle_model.actuation=array([3.43337304, 2.47863245])	turtle_model.state[:3]=array([-0.94591368, -0.03484154,  4.7998499 ])	mpc.times[-1]=0.005335900001227856	saved figure 98.png
+frame 100/200	turtle_model.actuation=array([3.44641383, 2.4769026 ])	turtle_model.state[:3]=array([-0.94290326, -0.06917395,  4.82461893])	mpc.times[-1]=0.0033263000077567995	saved figure 99.png
+frame 101/200	turtle_model.actuation=array([3.39928706, 2.54239975])	turtle_model.state[:3]=array([-0.93909624, -0.10295296,  4.85004293])	mpc.times[-1]=0.007111300001270138	saved figure 100.png
+frame 102/200	turtle_model.actuation=array([3.35216028, 2.60789689])	turtle_model.state[:3]=array([-0.93449642, -0.13615747,  4.87612189])	mpc.times[-1]=0.004949299996951595	saved figure 101.png
+frame 103/200	turtle_model.actuation=array([3.36660849, 2.58313266])	turtle_model.state[:3]=array([-0.92900877, -0.1693733 ,  4.90195322])	mpc.times[-1]=0.007133899998734705	saved figure 102.png
+frame 104/200	turtle_model.actuation=array([3.3810567 , 2.55836842])	turtle_model.state[:3]=array([-0.92263781, -0.2025782 ,  4.92753691])	mpc.times[-1]=0.014362499990966171	saved figure 103.png
+frame 105/200	turtle_model.actuation=array([3.34111594, 2.64075464])	turtle_model.state[:3]=array([-0.9155048 , -0.23521905,  4.95394445])	mpc.times[-1]=0.016922100010560825	saved figure 104.png
+frame 106/200	turtle_model.actuation=array([3.31199196, 2.69335819])	turtle_model.state[:3]=array([-0.90758208, -0.26737741,  4.98087803])	mpc.times[-1]=0.03056529999594204	saved figure 105.png
+frame 107/200	turtle_model.actuation=array([3.31499146, 2.67550729])	turtle_model.state[:3]=array([-0.89878823, -0.29933965,  5.00763311])	mpc.times[-1]=0.009122800009208731	saved figure 106.png
+frame 108/200	turtle_model.actuation=array([3.31799095, 2.65765638])	turtle_model.state[:3]=array([-0.88913376, -0.3310839 ,  5.03420967])	mpc.times[-1]=0.0057564000017009676	saved figure 107.png
+frame 109/200	turtle_model.actuation=array([3.29040562, 2.73163665])	turtle_model.state[:3]=array([-0.8787264 , -0.3622987 ,  5.06152604])	mpc.times[-1]=0.036126799997873604	saved figure 108.png
+frame 110/200	turtle_model.actuation=array([3.2708688 , 2.77752222])	turtle_model.state[:3]=array([-0.86753718, -0.39303402,  5.08930126])	mpc.times[-1]=0.015007299996796064	saved figure 109.png
+frame 111/200	turtle_model.actuation=array([3.26083018, 2.79554259])	turtle_model.state[:3]=array([-0.85553565, -0.4233534 ,  5.11725668])	mpc.times[-1]=0.005940299990470521	saved figure 110.png
+frame 112/200	turtle_model.actuation=array([3.25079156, 2.81356297])	turtle_model.state[:3]=array([-0.84273088, -0.4532332 ,  5.14539231])	mpc.times[-1]=0.008538000009139068	saved figure 111.png
+frame 113/200	turtle_model.actuation=array([3.24075294, 2.83158334])	turtle_model.state[:3]=array([-0.82913271, -0.48264982,  5.17370815])	mpc.times[-1]=0.0029821999924024567	saved figure 112.png
+frame 114/200	turtle_model.actuation=array([3.23071432, 2.84960372])	turtle_model.state[:3]=array([-0.81475184, -0.51157977,  5.20220418])	mpc.times[-1]=0.008538299996871501	saved figure 113.png
+frame 115/200	turtle_model.actuation=array([3.2206757 , 2.86762409])	turtle_model.state[:3]=array([-0.79959976, -0.53999965,  5.23088043])	mpc.times[-1]=0.022371999992174096	saved figure 114.png
+frame 116/200	turtle_model.actuation=array([3.22763491, 2.8648914 ])	turtle_model.state[:3]=array([-0.78360456, -0.56803385,  5.25952934])	mpc.times[-1]=0.0427744999906281	saved figure 115.png
+frame 117/200	turtle_model.actuation=array([3.23459413, 2.8621587 ])	turtle_model.state[:3]=array([-0.76677667, -0.59565779,  5.28815093])	mpc.times[-1]=0.015367500003776513	saved figure 116.png
+frame 118/200	turtle_model.actuation=array([3.24155334, 2.85942601])	turtle_model.state[:3]=array([-0.74912726, -0.62284722,  5.31674519])	mpc.times[-1]=0.00889850000385195	saved figure 117.png
+frame 119/200	turtle_model.actuation=array([3.24851255, 2.85669331])	turtle_model.state[:3]=array([-0.73066815, -0.64957819,  5.34531212])	mpc.times[-1]=0.016371299992897548	saved figure 118.png
+frame 120/200	turtle_model.actuation=array([3.25547177, 2.85396062])	turtle_model.state[:3]=array([-0.7114119 , -0.67582712,  5.37385173])	mpc.times[-1]=0.0029298000008566305	saved figure 119.png
+frame 121/200	turtle_model.actuation=array([3.23343584, 2.93764849])	turtle_model.state[:3]=array([-0.69154982, -0.70134199,  5.40322821])	mpc.times[-1]=0.02563620000728406	saved figure 120.png
+frame 122/200	turtle_model.actuation=array([3.23596825, 2.92294312])	turtle_model.state[:3]=array([-0.67093074, -0.72628197,  5.43245764])	mpc.times[-1]=0.015351399997598492	saved figure 121.png
+frame 123/200	turtle_model.actuation=array([3.23850065, 2.90823774])	turtle_model.state[:3]=array([-0.64957489, -0.75062774,  5.46154002])	mpc.times[-1]=0.015310300004784949	saved figure 122.png
+frame 124/200	turtle_model.actuation=array([3.22086802, 2.98685095])	turtle_model.state[:3]=array([-0.62764022, -0.7742131 ,  5.49140853])	mpc.times[-1]=0.03859780001221225	saved figure 123.png
+frame 125/200	turtle_model.actuation=array([3.22490134, 2.96659662])	turtle_model.state[:3]=array([-0.60498264, -0.79716159,  5.5210745 ])	mpc.times[-1]=0.016094600010546856	saved figure 124.png
+frame 126/200	turtle_model.actuation=array([3.22893465, 2.9463423 ])	turtle_model.state[:3]=array([-0.58162517, -0.81945576,  5.55053792])	mpc.times[-1]=0.03019740000308957	saved figure 125.png
+frame 127/200	turtle_model.actuation=array([3.21263213, 3.02908297])	turtle_model.state[:3]=array([-0.55774226, -0.84094313,  5.58082875])	mpc.times[-1]=0.02559409999230411	saved figure 126.png
+frame 128/200	turtle_model.actuation=array([3.21913722, 3.00765833])	turtle_model.state[:3]=array([-0.53316988, -0.86173935,  5.61090533])	mpc.times[-1]=0.016044599993620068	saved figure 127.png
+frame 129/200	turtle_model.actuation=array([3.22564231, 2.9862337 ])	turtle_model.state[:3]=array([-0.50793233, -0.88182773,  5.64076767])	mpc.times[-1]=0.009976000001188368	saved figure 128.png
+frame 130/200	turtle_model.actuation=array([3.20871952, 3.07006026])	turtle_model.state[:3]=array([-0.48224173, -0.90105222,  5.67146827])	mpc.times[-1]=0.015067299988004379	saved figure 129.png
+frame 131/200	turtle_model.actuation=array([3.21804521, 3.04533564])	turtle_model.state[:3]=array([-0.45589678, -0.91953262,  5.70192163])	mpc.times[-1]=0.011266700006672181	saved figure 130.png
+frame 132/200	turtle_model.actuation=array([3.21966448, 3.04558964])	turtle_model.state[:3]=array([-0.42898781, -0.93721117,  5.73237752])	mpc.times[-1]=0.013818200008245185	saved figure 131.png
+frame 133/200	turtle_model.actuation=array([3.22128375, 3.04584364])	turtle_model.state[:3]=array([-0.40153918, -0.95407058,  5.76283596])	mpc.times[-1]=0.009640799995395355	saved figure 132.png
+frame 134/200	turtle_model.actuation=array([3.22290301, 3.04609764])	turtle_model.state[:3]=array([-0.37357581, -0.97009432,  5.79329694])	mpc.times[-1]=0.005271000001812354	saved figure 133.png
+frame 135/200	turtle_model.actuation=array([3.22562723, 3.070953  ])	turtle_model.state[:3]=array([-0.34511334, -0.98527178,  5.82400647])	mpc.times[-1]=0.006131800008006394	saved figure 134.png
+frame 136/200	turtle_model.actuation=array([3.22835145, 3.09580835])	turtle_model.state[:3]=array([-0.31617386, -0.99958023,  5.85496455])	mpc.times[-1]=0.005769800001871772	saved figure 135.png
+frame 137/200	turtle_model.actuation=array([3.23107567, 3.12066371])	turtle_model.state[:3]=array([-0.28678057, -1.01299736,  5.88617119])	mpc.times[-1]=0.014956099999835715	saved figure 136.png
+frame 138/200	turtle_model.actuation=array([3.23379989, 3.14551906])	turtle_model.state[:3]=array([-0.25695783, -1.02550138,  5.91762638])	mpc.times[-1]=0.01230099999520462	saved figure 137.png
+frame 139/200	turtle_model.actuation=array([2.45429466, 3.58717074])	turtle_model.state[:3]=array([-0.23403658, -1.03427478,  5.95349809])	mpc.times[-1]=0.07772129999648314	saved figure 138.png
+frame 140/200	turtle_model.actuation=array([2.41828625, 3.53059166])	turtle_model.state[:3]=array([-0.21115612, -1.04210391,  5.988804  ])	mpc.times[-1]=0.024936000001616776	saved figure 139.png
+frame 141/200	turtle_model.actuation=array([2.47744258, 3.55123241])	turtle_model.state[:3]=array([-0.18744745, -1.04929216,  6.02431633])	mpc.times[-1]=0.04115050000837073	saved figure 140.png
+frame 142/200	turtle_model.actuation=array([2.53659891, 3.57187316])	turtle_model.state[:3]=array([-0.16292665, -1.05578553,  6.06003506])	mpc.times[-1]=0.008464799990179017	saved figure 141.png
+frame 143/200	turtle_model.actuation=array([2.5572728 , 3.50985701])	turtle_model.state[:3]=array([-0.13798799, -1.06144485,  6.09513363])	mpc.times[-1]=0.021767999991425313	saved figure 142.png
+frame 144/200	turtle_model.actuation=array([2.57794669, 3.44784085])	turtle_model.state[:3]=array([-0.11266301, -1.0662642 ,  6.12961204])	mpc.times[-1]=0.009315400006016716	saved figure 143.png
+frame 145/200	turtle_model.actuation=array([2.60158119, 3.47933079])	turtle_model.state[:3]=array([-0.08695338, -1.07024384,  6.16440534])	mpc.times[-1]=0.012576100009027869	saved figure 144.png
+frame 146/200	turtle_model.actuation=array([2.62521569, 3.51082072])	turtle_model.state[:3]=array([-0.0608862 , -1.07335475,  6.19951355])	mpc.times[-1]=0.020222699997248128	saved figure 145.png
+frame 147/200	turtle_model.actuation=array([2.66519573, 3.44715867])	turtle_model.state[:3]=array([-0.03432748, -1.07558216,  6.23398514])	mpc.times[-1]=0.02266609999060165	saved figure 146.png
+frame 148/200	turtle_model.actuation=array([2.70517578, 3.38349662])	turtle_model.state[:3]=array([-0.00730846, -1.07691258,  6.2678201 ])	mpc.times[-1]=0.00915619998704642	saved figure 147.png
+frame 149/200	turtle_model.actuation=array([2.71288476, 3.41816218])	turtle_model.state[:3]=array([ 0.01981718, -1.0773294 ,  6.30200173])	mpc.times[-1]=0.018093899998348206	saved figure 148.png
+frame 150/200	turtle_model.actuation=array([2.72059374, 3.45282774])	turtle_model.state[:3]=array([ 0.04701831, -1.07681751,  6.33653   ])	mpc.times[-1]=0.007990199999767356	saved figure 149.png
+frame 151/200	turtle_model.actuation=array([2.75758043, 3.38626376])	turtle_model.state[:3]=array([ 0.07455488, -1.07534719,  6.37039264])	mpc.times[-1]=0.02713950000179466	saved figure 150.png
+frame 152/200	turtle_model.actuation=array([2.79456712, 3.31969979])	turtle_model.state[:3]=array([ 0.10239436, -1.07291321,  6.40358964])	mpc.times[-1]=0.0072586000023875386	saved figure 151.png
+frame 153/200	turtle_model.actuation=array([2.79865088, 3.36125346])	turtle_model.state[:3]=array([ 0.13017825, -1.06955165,  6.43720217])	mpc.times[-1]=0.006456199989770539	saved figure 152.png
+frame 154/200	turtle_model.actuation=array([2.81067163, 3.37234042])	turtle_model.state[:3]=array([ 0.15795226, -1.06523983,  6.47092558])	mpc.times[-1]=0.005159200009074993	saved figure 153.png
+frame 155/200	turtle_model.actuation=array([2.82269237, 3.38342739])	turtle_model.state[:3]=array([ 0.18568319, -1.05997158,  6.50475985])	mpc.times[-1]=0.005894300004001707	saved figure 154.png
+frame 156/200	turtle_model.actuation=array([2.84396816, 3.35350202])	turtle_model.state[:3]=array([ 0.2134276 , -1.0537215 ,  6.53829487])	mpc.times[-1]=0.006221000003279187	saved figure 155.png
+frame 157/200	turtle_model.actuation=array([2.86524395, 3.32357666])	turtle_model.state[:3]=array([ 0.24115272, -1.04649102,  6.57153064])	mpc.times[-1]=0.023551200007204898	saved figure 156.png
+frame 158/200	turtle_model.actuation=array([2.88651973, 3.29365129])	turtle_model.state[:3]=array([ 0.26882624, -1.03828273,  6.60446715])	mpc.times[-1]=0.027892700003576465	saved figure 157.png
+frame 159/200	turtle_model.actuation=array([2.90779552, 3.26372592])	turtle_model.state[:3]=array([ 0.29641632, -1.02910041,  6.63710441])	mpc.times[-1]=0.003644600001280196	saved figure 158.png
+frame 160/200	turtle_model.actuation=array([2.92907131, 3.23380056])	turtle_model.state[:3]=array([ 0.32389164, -1.01894893,  6.66944242])	mpc.times[-1]=0.003337200003443286	saved figure 159.png
+frame 161/200	turtle_model.actuation=array([2.93433802, 3.23687923])	turtle_model.state[:3]=array([ 0.35107316, -1.00789457,  6.70181121])	mpc.times[-1]=0.006497700000181794	saved figure 160.png
+frame 162/200	turtle_model.actuation=array([2.93960473, 3.23995791])	turtle_model.state[:3]=array([ 0.37793082, -0.99594492,  6.73421079])	mpc.times[-1]=0.018142600005376153	saved figure 161.png
+frame 163/200	turtle_model.actuation=array([2.94487143, 3.24303659])	turtle_model.state[:3]=array([ 0.40443468, -0.98310856,  6.76664115])	mpc.times[-1]=0.0045218999875942245	saved figure 162.png
+frame 164/200	turtle_model.actuation=array([2.95013814, 3.24611527])	turtle_model.state[:3]=array([ 0.43055502, -0.96939509,  6.79910231])	mpc.times[-1]=0.003145900001982227	saved figure 163.png
+frame 165/200	turtle_model.actuation=array([2.95540485, 3.24919395])	turtle_model.state[:3]=array([ 0.45626233, -0.95481511,  6.83159425])	mpc.times[-1]=0.010266400000546128	saved figure 164.png
+frame 166/200	turtle_model.actuation=array([2.96067156, 3.25227262])	turtle_model.state[:3]=array([ 0.48152737, -0.93938024,  6.86411697])	mpc.times[-1]=0.007578899996588007	saved figure 165.png
+frame 167/200	turtle_model.actuation=array([2.96593827, 3.2553513 ])	turtle_model.state[:3]=array([ 0.50632118, -0.92310308,  6.89667048])	mpc.times[-1]=0.014512600013404153	saved figure 166.png
+frame 168/200	turtle_model.actuation=array([2.97275022, 3.2239909 ])	turtle_model.state[:3]=array([ 0.53062777, -0.90598834,  6.92891039])	mpc.times[-1]=0.014312800005427562	saved figure 167.png
+frame 169/200	turtle_model.actuation=array([2.97956217, 3.19263051])	turtle_model.state[:3]=array([ 0.55442445, -0.888058  ,  6.9608367 ])	mpc.times[-1]=0.0060363000084180385	saved figure 168.png
+frame 170/200	turtle_model.actuation=array([2.98637412, 3.16127011])	turtle_model.state[:3]=array([ 0.57768972, -0.86933448,  6.9924494 ])	mpc.times[-1]=0.008489200001349673	saved figure 169.png
+frame 171/200	turtle_model.actuation=array([2.99318607, 3.12990971])	turtle_model.state[:3]=array([ 0.60040325, -0.84984059,  7.0237485 ])	mpc.times[-1]=0.011294800002360716	saved figure 170.png
+frame 172/200	turtle_model.actuation=array([2.98755507, 3.17182164])	turtle_model.state[:3]=array([ 0.62245406, -0.82968345,  7.05546671])	mpc.times[-1]=0.016579799994360656	saved figure 171.png
+frame 173/200	turtle_model.actuation=array([2.98871559, 3.18082145])	turtle_model.state[:3]=array([ 0.64386285, -0.80882905,  7.08727493])	mpc.times[-1]=0.004279300002963282	saved figure 172.png
+frame 174/200	turtle_model.actuation=array([2.98987612, 3.18982126])	turtle_model.state[:3]=array([ 0.66460562, -0.78729598,  7.11917314])	mpc.times[-1]=0.0032196999964071438	saved figure 173.png
+frame 175/200	turtle_model.actuation=array([3.00397197, 3.1224495 ])	turtle_model.state[:3]=array([ 0.68474561, -0.76500773,  7.15039764])	mpc.times[-1]=0.020319100003689528	saved figure 174.png
+frame 176/200	turtle_model.actuation=array([3.006218  , 3.13667882])	turtle_model.state[:3]=array([ 0.70419448, -0.74208447,  7.18176442])	mpc.times[-1]=0.018630300008226186	saved figure 175.png
+frame 177/200	turtle_model.actuation=array([3.00846402, 3.15090815])	turtle_model.state[:3]=array([ 0.72292885, -0.71854496,  7.2132735 ])	mpc.times[-1]=0.02028309999150224	saved figure 176.png
+frame 178/200	turtle_model.actuation=array([3.01208771, 3.136815  ])	turtle_model.state[:3]=array([ 0.74093401, -0.69439787,  7.24464165])	mpc.times[-1]=0.03809479999472387	saved figure 177.png
+frame 179/200	turtle_model.actuation=array([3.0157114 , 3.12272185])	turtle_model.state[:3]=array([ 0.75819372, -0.66966826,  7.27586887])	mpc.times[-1]=0.01222849999612663	saved figure 178.png
+frame 180/200	turtle_model.actuation=array([3.01933509, 3.10862871])	turtle_model.state[:3]=array([ 0.77469271, -0.64438146,  7.30695516])	mpc.times[-1]=0.00995199999306351	saved figure 179.png
+frame 181/200	turtle_model.actuation=array([3.02295878, 3.09453556])	turtle_model.state[:3]=array([ 0.79041662, -0.61856313,  7.33790052])	mpc.times[-1]=0.013398499999311753	saved figure 180.png
+frame 182/200	turtle_model.actuation=array([3.02658247, 3.08044241])	turtle_model.state[:3]=array([ 0.80535207, -0.59223913,  7.36870494])	mpc.times[-1]=0.008235300003434531	saved figure 181.png
+frame 183/200	turtle_model.actuation=array([3.03020616, 3.06634926])	turtle_model.state[:3]=array([ 0.81948656, -0.56543557,  7.39936843])	mpc.times[-1]=0.0102201999980025	saved figure 182.png
+frame 184/200	turtle_model.actuation=array([3.019664  , 3.07213996])	turtle_model.state[:3]=array([ 0.83274635, -0.53830597,  7.43008983])	mpc.times[-1]=0.013971699998364784	saved figure 183.png
+frame 185/200	turtle_model.actuation=array([3.00912184, 3.07793066])	turtle_model.state[:3]=array([ 0.8451232 , -0.51087797,  7.46086914])	mpc.times[-1]=0.00319290001061745	saved figure 184.png
+frame 186/200	turtle_model.actuation=array([2.99857968, 3.08372136])	turtle_model.state[:3]=array([ 0.85660972, -0.48317946,  7.49170635])	mpc.times[-1]=0.0036407000006875023	saved figure 185.png
+frame 187/200	turtle_model.actuation=array([2.98803753, 3.08951206])	turtle_model.state[:3]=array([ 0.8671994 , -0.45523853,  7.52260147])	mpc.times[-1]=0.017439399991417304	saved figure 186.png
+frame 188/200	turtle_model.actuation=array([2.97749537, 3.09530276])	turtle_model.state[:3]=array([ 0.87688664, -0.42708351,  7.5535545 ])	mpc.times[-1]=0.053742100004456006	saved figure 187.png
+frame 189/200	turtle_model.actuation=array([2.96695321, 3.10109346])	turtle_model.state[:3]=array([ 0.88566669, -0.39874287,  7.58456544])	mpc.times[-1]=0.02450249998946674	saved figure 188.png
+frame 190/200	turtle_model.actuation=array([2.95641105, 3.10688417])	turtle_model.state[:3]=array([ 0.89353573, -0.37024524,  7.61563428])	mpc.times[-1]=0.020367199991596863	saved figure 189.png
+frame 191/200	turtle_model.actuation=array([2.95815766, 3.08730208])	turtle_model.state[:3]=array([ 0.90051985, -0.34149995,  7.6465073 ])	mpc.times[-1]=0.018322399992030114	saved figure 190.png
+frame 192/200	turtle_model.actuation=array([2.95990428, 3.06771999])	turtle_model.state[:3]=array([ 0.90661693, -0.31253568,  7.6771845 ])	mpc.times[-1]=0.005492400014190935	saved figure 191.png
+frame 193/200	turtle_model.actuation=array([2.96165089, 3.04813791])	turtle_model.state[:3]=array([ 0.91182581, -0.28338083,  7.70766588])	mpc.times[-1]=0.0033873000065796077	saved figure 192.png
+frame 194/200	turtle_model.actuation=array([2.96339751, 3.02855582])	turtle_model.state[:3]=array([ 0.91614627, -0.2540635 ,  7.73795144])	mpc.times[-1]=0.004374099997221492	saved figure 193.png
+frame 195/200	turtle_model.actuation=array([3.64173776, 2.51165072])	turtle_model.state[:3]=array([ 0.92036231, -0.21789099,  7.76306794])	mpc.times[-1]=0.025123300001723692	saved figure 194.png
+frame 196/200	turtle_model.actuation=array([3.68808239, 2.54388814])	turtle_model.state[:3]=array([ 0.92371067, -0.18116247,  7.78850682])	mpc.times[-1]=0.007611299995915033	saved figure 195.png
+frame 197/200	turtle_model.actuation=array([3.61166135, 2.5421725 ])	turtle_model.state[:3]=array([ 0.92607371, -0.14512325,  7.81392855])	mpc.times[-1]=0.016192099996260367	saved figure 196.png
+frame 198/200	turtle_model.actuation=array([3.53524032, 2.54045687])	turtle_model.state[:3]=array([ 0.9274893 , -0.1097992 ,  7.83933312])	mpc.times[-1]=0.02035039999464061	saved figure 197.png
+frame 199/200	turtle_model.actuation=array([3.55829938, 2.59692008])	turtle_model.state[:3]=array([ 0.92801052, -0.07422002,  7.86530232])	mpc.times[-1]=0.0210949000029359	saved figure 198.png
+frame 200/200	turtle_model.actuation=array([3.58135845, 2.65338329])	turtle_model.state[:3]=array([ 0.9276051 , -0.03840873,  7.89183615])	mpc.times[-1]=0.014390999989700504	saved figure 199.png
