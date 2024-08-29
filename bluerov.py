@@ -277,7 +277,7 @@ if __name__ == "__main__":
 
 		logger.log( f"frame {frame + 1}/{n_frames}" )
 
-		mpc.target_trajectory = array( trajectory[ frame + 1:frame + mpc.horizon + 1 ] )
+		mpc.target_trajectory = trajectory[ frame + 1:frame + mpc.horizon + 1 ]
 
 		mpc.optimize()
 		mpc.apply_result()

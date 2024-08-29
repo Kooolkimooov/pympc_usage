@@ -62,7 +62,8 @@ class MPC:
 			pose_weight_matrix: ndarray = None,
 			actuation_derivative_weight_matrix: ndarray = None,
 			final_weight: float = 0.,
-			record: bool = False
+			record: bool = False,
+			verbose: bool = False
 			):
 
 		self.model = model
@@ -107,6 +108,8 @@ class MPC:
 			self.candidate_actuations = [ ]
 			self.times = [ ]
 
+		self.verbose = verbose
+
 	def predict( self, actuation: ndarray ) -> ndarray:
 		p_state = deepcopy( self.model.state )
 		predicted_trajectory = zeros( (self.horizon, 1, self.model.state.shape[ 0 ] // 2) )
@@ -142,6 +145,9 @@ class MPC:
 
 		if self.record:
 			self.times.append( perf_counter() - ti )
+
+		if self.verbose:
+			print(self.raw_result.message )
 
 		self.result = self.raw_result.x.reshape( self.result_shape )
 
