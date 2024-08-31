@@ -4,9 +4,9 @@ from os import mkdir, path, remove
 from time import time
 
 from cycler import cycler
-from numpy import array, concatenate, cos, cross, diag, inf, meshgrid, nan, ones, pi, sin, tan
+from numpy import array, cos, cross, diag, inf, meshgrid, nan, ones, pi, sin, tan
 from numpy.linalg import inv, norm
-from PIL.Image import Image
+from PIL import Image
 from scipy.spatial.transform import Rotation
 
 from calc_catenary_from_ext_points import *
@@ -203,7 +203,16 @@ def three_robots_chain_linear(
 
 
 def plot(
-		mpc, full_trajectory, c_frame, n_frame, max_ux, max_ut, f_eval_record, H01_record, H12_record
+		mpc,
+		full_trajectory,
+		c_frame,
+		n_frame,
+		max_ux,
+		max_ut,
+		floor_z,
+		f_eval_record,
+		H01_record,
+		H12_record
 		):
 	# we record the initial value + the new value after the integration in `step()`
 	time_previous = [ i * mpc.model.time_step - (c_frame + 1) * mpc.model.time_step for i in
@@ -224,9 +233,9 @@ def plot(
 	view.set_xlabel( "x" )
 	view.set_ylabel( "y" )
 	view.set_zlabel( "z" )
-	view.set_xlim( -1.5, 1.5 )
-	view.set_ylim( -1.5, 1.5 )
-	view.set_zlim( 0, 3 )
+	view.set_xlim( -3, 3 )
+	view.set_ylim( -3, 3 )
+	view.set_zlim( 0, 6 )
 	view.invert_yaxis()
 	view.invert_zaxis()
 
@@ -357,10 +366,10 @@ def plot(
 	state_r2 = Rotation.from_euler( 'xyz', mpc.model.state[ 15:18 ] ).as_matrix()
 	target_r0 = Rotation.from_euler( 'xyz', target_pose[ 3:6 ] ).as_matrix()
 
-	surf_x = array( [ -1.5, 1.5 ] )
-	surf_y = array( [ -1.5, 1.5 ] )
+	surf_x = array( [ -3, 3 ] )
+	surf_y = array( [ -3, 3 ] )
 	surf_x, surf_y = meshgrid( surf_x, surf_y )
-	surf_z = ones( surf_x.shape ) * 1.5
+	surf_z = ones( surf_x.shape ) * floor_z
 	view.plot_surface( surf_x, surf_y, surf_z, alpha = 0.1 )
 
 	quiver_scale = .25
@@ -434,14 +443,14 @@ def plot(
 		H12 = nan
 
 	f_eval_record.append( len( mpc.predicted_trajectories ) )
-	H01_record.append( H01 + max( mpc.model.state[ 2 ], mpc.model.state[ 8 ] ) )
-	H12_record.append( H12 + max( mpc.model.state[ 8 ], mpc.model.state[ 14 ] ) )
+	H01_record.append( H01 + mpc.model.state[ 2 ] )
+	H12_record.append( H12 + mpc.model.state[ 8 ] )
 
 	view.plot( cat01[ :, 0 ], -cat01[ :, 1 ], -cat01[ :, 2 ], 'blue' )
 	view.plot( cat12[ :, 0 ], -cat12[ :, 1 ], -cat12[ :, 2 ], 'red' )
 
-	ax_cat_H.plot( time_previous, previous_H01_record )
-	ax_cat_H.plot( time_previous, previous_H12_record )
+	ax_cat_H.plot( time_previous, H01_record )
+	ax_cat_H.plot( time_previous, H12_record )
 
 	ax_pos0.plot(
 			time_previous + time_prediction[ 1: ],
@@ -557,7 +566,7 @@ def plot(
 	ax_ang2.axvline( color = 'g' )
 	ax_act_pos2.axvline( color = 'g' )
 	ax_act_ang2.axvline( color = 'g' )
-	ax_cat_H.axhline( 1.5, color = 'g' )
+	ax_cat_H.axhline( floor_z, color = 'g' )
 
 	ax_comp_time.plot( time_previous, [ 0. ] + mpc.times )
 	ax_nfeval.plot( time_previous, f_eval_record )
@@ -571,27 +580,30 @@ if __name__ == "__main__":
 	time_step = 0.01
 	n_robots = 3
 	state = zeros( (12 * n_robots,) )
-	state[ 6 ] = 1
-	state[ 12 ] = 2
+	state[ 0 ] = 2
+	state[ 6 ] = 2.5
+	state[ 12 ] = 3
 	actuation = zeros( (6 * n_robots,) )
 	max_actuation_x = 150
-	max_actuation_t = 1
+	max_actuation_t = 5
+	floor_depth = 3.
 
 	horizon = 25
 
-	key_frames = [ (0.0, [ 0., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
-								 (.2, [ 0., 0., 1., 0., 0., 0. ] + [ 0. ] * 12),
-								 (.4, [ 0., 0., 1., 0., 0., -pi ] + [ 0. ] * 12),
-								 (.6, [ 1., -1., 1., 0., 0., -pi ] + [ 0. ] * 12),
-								 (.8, [ 1., -1., 0., 0., 0., -pi ] + [ 0. ] * 12),
-								 (1., [ 0., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
-								 (2., [ 0., 0., 0., 0., 0., 0. ] + [ 0. ] * 12) ]
+	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
+								 (1., [ -3., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
+								 (2., [ -3., 0., 0., 0., 0., 0. ] + [ 0. ] * 12) ]
 
-	trajectory = generate_trajectory( key_frames, n_frames )
+	trajectory = generate_trajectory( key_frames, 2 * n_frames )
+	trajectory[ :, 0, 2 ] = 1.3 * cos( 2.5 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.3
+
+	# plt.plot( trajectory[:, 0, 2] )
+	# plt.show()
+	# exit()
 
 	model_kwargs = {
-			"weight"                  : 11.5 * array( [ 0., 0., - 9.81 ] ),
-			"buoyancy"                : 120. * array( [ 0., 0., 1. ] ),
+			"weight"                  : 11.5 * array( [ 0., 0., 9.81 ] ),
+			"buoyancy"                : 120. * array( [ 0., 0., -1. ] ),
 			"center_of_mass"          : array( [ 0., 0., 0. ] ),
 			"center_of_volume"        : array( [ 0., 0., - 0.02 ] ),
 			"inverted_inertial_matrix": inv(
@@ -600,13 +612,22 @@ if __name__ == "__main__":
 			"hydrodynamic_matrix"     : diag( array( [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ] ) )
 			}
 
-	pose_weight_matrix = 2 * eye( actuation.shape[ 0 ] )
-	# ignore error for robot1 and robot2, only consider robot0, the objective will determine robot1
-	pose_weight_matrix[ 6:, 6: ] *= 0
+	pose_weight_matrix = eye( actuation.shape[ 0 ] )
+	pose_weight_matrix[ 0:3, 0:3 ] *= 5.
+	pose_weight_matrix[ 3:6, 3:6 ] *= 5.
+	pose_weight_matrix[ 6:9, 6:9 ] *= 0.
+	pose_weight_matrix[ 9:12, 9:12 ] *= 5.
+	pose_weight_matrix[ 12:15, 12:15 ] *= 0.
+	pose_weight_matrix[ 15:18, 15:18 ] *= 5.
+
 	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
-	actuation_weight_matrix[ :3, :3 ] *= 0.01
-	actuation_weight_matrix[ 6:9, 6:9 ] *= 0.01
-	actuation_weight_matrix[ 12:15, 12:15 ] *= 0.01
+	actuation_weight_matrix[ 0:3, 0:3 ] *= .1
+	actuation_weight_matrix[ 3:6, 3:6 ] *= 1000.
+	actuation_weight_matrix[ 6:9, 6:9 ] *= 1.
+	actuation_weight_matrix[ 9:12, 9:12 ] *= 1000.
+	actuation_weight_matrix[ 12:15, 12:15 ] *= 1.
+	actuation_weight_matrix[ 15:18, 15:18 ] *= 1000.
+
 	final_cost_weight = 10.
 
 	bluerov_chain = Model(
@@ -616,9 +637,9 @@ if __name__ == "__main__":
 	mpc_controller = MPC(
 			bluerov_chain,
 			horizon,
-			trajectory[ 1:horizon + 1 ],
+			trajectory,
 			time_steps_per_actuation = 25,
-			tolerance = 1e-3,
+			# tolerance = 1e-3,
 			pose_weight_matrix = pose_weight_matrix,
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
 			final_weight = final_cost_weight,
@@ -626,58 +647,47 @@ if __name__ == "__main__":
 			)
 
 
-	def chain_constraint_f( candidate_actuation_derivative ):
+	def constraint_f( candidate_actuation_derivative ):
 		global mpc_controller
+
 		candidate_actuation = candidate_actuation_derivative.reshape(
 				mpc_controller.result_shape
 				).cumsum( axis = 0 ) + mpc_controller.model.actuation
+		candidate_actuation = candidate_actuation.repeat(
+				mpc_controller.time_steps_per_actuation, axis = 0
+				)
+
 		predicted_trajectory = mpc_controller.predict( candidate_actuation )
 
-		constraint = zeros( (predicted_trajectory.shape[ 0 ], 2) )
+		constraint = zeros( (mpc_controller.horizon, 4) )
 
 		for i, pose in enumerate( predicted_trajectory[ :, 0 ] ):
-			dp01 = norm( pose[ 6:8 ] - pose[ 0:2 ] )
-			dz01 = -(pose[ 8 ] - pose[ 2 ])
-			dp12 = norm( pose[ 12:14 ] - pose[ 6:8 ] )
-			dz12 = -(pose[ 14 ] - pose[ 8 ])
 
 			try:
+				dp01 = norm( pose[ 6:8 ] - pose[ 0:2 ] )
+				dz01 = -(pose[ 8 ] - pose[ 2 ])
+				dp12 = norm( pose[ 12:14 ] - pose[ 6:8 ] )
+				dz12 = -(pose[ 14 ] - pose[ 8 ])
 				_, _, H01 = get_catenary_param( dz01, dp01, 3 )
 				_, _, H12 = get_catenary_param( dz12, dp12, 3 )
 			except:
 				H01 = 1.5
 				H12 = 1.5
 
-			constraint[ i, 0 ] = max( pose[ 2 ], pose[ 8 ] ) + H01
-			constraint[ i, 1 ] = max( pose[ 8 ], pose[ 14 ] ) + H12
+			constraint[ i, 0 ] = pose[ 2 ] + H01
+			constraint[ i, 1 ] = pose[ 8 ] + H12
+			constraint[ i, 2 ] = norm( pose[ 6:9 ] - pose[ 0:3 ] )
+			constraint[ i, 3 ] = norm( pose[ 12:15 ] - pose[ 6:9 ] )
 
 		return constraint.flatten()
 
 
-	def actuation_constraint_f( candidate_actuation_derivative ):
-		candidate_actuation = candidate_actuation_derivative.reshape(
-				mpc_controller.result_shape
-				).cumsum( axis = 0 ) + mpc_controller.model.actuation
-		return candidate_actuation.flatten()
-
-
-	mpc_controller.constraints = (
-
-			NonlinearConstraint( chain_constraint_f, -inf, 1.5 ),
-
-			NonlinearConstraint(
-					actuation_constraint_f, concatenate(
-							[ -max_actuation_x * ones( (mpc_controller.result_shape[ 0 ], 1, 3) ),
-								-max_actuation_t * ones( (mpc_controller.result_shape[ 0 ], 1, 3) ) ] * n_robots,
-							axis = 2
-							).flatten(), concatenate(
-							[ max_actuation_x * ones( (mpc_controller.result_shape[ 0 ], 1, 3) ),
-								max_actuation_t * ones( (mpc_controller.result_shape[ 0 ], 1, 3) ) ] * n_robots,
-							axis = 2
-							).flatten()
-					)
-
-			)
+	mpc_controller.constraints = (NonlinearConstraint(
+			constraint_f,
+			# 						H01   H12 dr01 dr12
+			array( [ [ -inf, -inf, .4, .4 ] ] ).repeat( horizon, axis = 0 ).flatten(),
+			array( [ [ floor_depth, floor_depth, 2.6, 2.6 ] ] ).repeat( horizon, axis = 0 ).flatten()
+			),)
 
 	previous_nfeval_record = [ 0. ]
 	previous_H01_record = [ 0. ]
@@ -714,7 +724,7 @@ if __name__ == "__main__":
 
 		logger.log( f"{mpc_controller.times[-1]=:.6f}s" )
 		logger.log(
-				f'{chain_constraint_f( mpc_controller.result ).reshape( (horizon, 1, 2) )[ 0 ]}'
+				f'{list( constraint_f( mpc_controller.result ).reshape( (horizon, 4) )[ 0 ] )}'
 				)
 
 		fig = plot(
@@ -724,6 +734,7 @@ if __name__ == "__main__":
 				n_frames,
 				max_actuation_x,
 				max_actuation_t,
+				floor_depth,
 				previous_nfeval_record,
 				previous_H01_record,
 				previous_H12_record

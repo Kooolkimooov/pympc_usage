@@ -115,9 +115,7 @@ class MPC:
 		predicted_trajectory = zeros( (self.horizon, 1, self.model.state.shape[ 0 ] // 2) )
 
 		for i in range( self.horizon ):
-			p_state += self.model.dynamics(
-					p_state, actuation[ i // self.time_steps_per_actuation, 0 ]
-					) * self.model.time_step
+			p_state += self.model.dynamics( p_state, actuation[ i, 0 ] ) * self.model.time_step
 			predicted_trajectory[ i ] = p_state[ :len( p_state ) // 2 ]
 
 		return predicted_trajectory
@@ -147,16 +145,17 @@ class MPC:
 			self.times.append( perf_counter() - ti )
 
 		if self.verbose:
-			print(self.raw_result.message )
+			print( self.raw_result.message )
 
 		self.result = self.raw_result.x.reshape( self.result_shape )
 
 	def cost( self, actuations_derivative: ndarray ) -> float:
 		actuations_derivative = actuations_derivative.reshape( self.result_shape )
 		actuations = actuations_derivative.cumsum( axis = 0 ) + self.model.actuation
-		if self.time_steps_per_actuation > 1:
-			actuations = actuations.repeat( self.time_steps_per_actuation, axis = 0 )
-			actuations = actuations[ :self.horizon ]
+
+		actuations = actuations.repeat( self.time_steps_per_actuation, axis = 0 )
+		actuations = actuations[ :self.horizon ]
+
 		cost = 0.
 
 		predicted_trajectory = self.predict( actuations )
@@ -267,3 +266,5 @@ def serialize_others( obj: any ) -> str:
 		return obj.__name__
 	if isinstance( obj, ndarray ):
 		return obj.tolist()
+	if isinstance( obj, NonlinearConstraint ):
+		return obj.__dict__
