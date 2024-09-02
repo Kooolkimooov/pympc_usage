@@ -1,7 +1,0 @@
-frame 1/400	actuation=[ 4.88471457e-08 -5.31355187e-08  1.48169916e+01 -5.10008310e-07
- -5.18081384e-07 -2.49490509e-10]	state=[0. 0. 0. 0. 0. 0.]	compute_time=0.722988s	n_f_eval=63	saved figure 0.png in 22.698298s
-saving logs ...	saved at ./plots/robot_1720170440/logs.txt
-frame 2/400	actuation=[ 5.66079921e-07 -2.92307502e-07  1.48323532e+01  3.36322454e-07
-  3.71424459e-07 -9.75533767e-09]	state=[ 2.65473618e-12 -2.88779993e-12  4.12688405e-04 -1.99221996e-09
- -2.02375541e-09 -9.74572301e-13]	compute_time=0.433950s	n_f_eval=70	saved figure 1.png in 60.878365s
-saving logs ...	

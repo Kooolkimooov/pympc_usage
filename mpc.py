@@ -110,13 +110,14 @@ class MPC:
 
 		self.verbose = verbose
 
-	def predict( self, actuation: ndarray ) -> ndarray:
+	def predict( self, actuation: ndarray, with_speed = False ) -> ndarray:
 		p_state = deepcopy( self.model.state )
-		predicted_trajectory = zeros( (self.horizon, 1, self.model.state.shape[ 0 ] // 2) )
+		vec_size = (self.model.state.shape[ 0 ]) if with_speed else (self.model.state.shape[ 0 ] // 2)
+		predicted_trajectory = zeros( (self.horizon, 1, vec_size) )
 
 		for i in range( self.horizon ):
 			p_state += self.model.dynamics( p_state, actuation[ i, 0 ] ) * self.model.time_step
-			predicted_trajectory[ i ] = p_state[ :len( p_state ) // 2 ]
+			predicted_trajectory[ i ] = p_state[ :vec_size ]
 
 		return predicted_trajectory
 
