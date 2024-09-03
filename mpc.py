@@ -53,6 +53,7 @@ class MPC:
 			model: Model,
 			horizon: int,
 			target_trajectory: ndarray,
+			objective: callable = None,
 			time_steps_per_actuation: int = 1,
 			guess_from_last_solution: bool = True,
 			tolerance: float = 1e-6,
@@ -61,14 +62,18 @@ class MPC:
 			constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None,
 			pose_weight_matrix: ndarray = None,
 			actuation_derivative_weight_matrix: ndarray = None,
+			objective_weight: float = 0.,
 			final_weight: float = 0.,
 			record: bool = False,
 			verbose: bool = False
 			):
 
+		assert list( signature( objective ).parameters ) == [ 'trajectory', 'actuation' ]
+
 		self.model = model
 		self.horizon = horizon
 		self.target_trajectory = target_trajectory
+		self.objective = objective
 		self.time_steps_per_actuation = time_steps_per_actuation
 		self.guess_from_last_solution = guess_from_last_solution
 		self.tolerance = tolerance
@@ -100,6 +105,7 @@ class MPC:
 		else:
 			self.actuation_derivative_weight_matrix[ : ] = actuation_derivative_weight_matrix
 
+		self.objective_weight = objective_weight
 		self.final_weight = final_weight
 
 		self.record = record
@@ -148,7 +154,10 @@ class MPC:
 		if self.verbose:
 			print( self.raw_result.message )
 
-		self.result = self.raw_result.x.reshape( self.result_shape )
+		if self.raw_result.success:
+			self.result = self.raw_result.x.reshape( self.result_shape )
+		else:
+			self.result.fill( 0. )
 
 	def cost( self, actuations_derivative: ndarray ) -> float:
 		actuations_derivative = actuations_derivative.reshape( self.result_shape )
@@ -167,6 +176,9 @@ class MPC:
 				actuations_derivative.transpose(
 				(0, 2, 1)
 				)).sum()
+		cost += 0. if self.objective is None else self.objective_weight * self.objective(
+				predicted_trajectory, actuations
+				)
 
 		cost /= self.horizon
 
@@ -180,26 +192,29 @@ class MPC:
 
 
 class Logger:
-	def __init__( self ):
+	def __init__( self, print_to_terminal: bool = True ):
 		self.logs: str = ''
+		self.print_to_terminal = print_to_terminal
 
 	def log( self, log: str ):
 		'''
 		:param log: text to be printed and saved. ends with a tabulation
 		:return: None
 		'''
-		print( log, end = '\t' )
 		self.logs += log
 		self.logs += '\t'
+		if self.print_to_terminal:
+			print( log, end = '\t' )
 
 	def lognl( self, log: str ):
 		'''
 		:param log: text to be printed and saved. ends with a new line
 		:return: None
 		'''
-		print( log )
 		self.logs += log
 		self.logs += '\n'
+		if self.print_to_terminal:
+			print( log )
 
 	def logrl( self, log: str ):
 		'''
@@ -207,9 +222,10 @@ class Logger:
 		the saved text goes to a new line
 		:return: None
 		'''
-		print( log, end = '\r' )
 		self.logs += log
 		self.logs += '\n'
+		if self.print_to_terminal:
+			print( log, end = '\r' )
 
 	def save_at( self, path: str, file: str = 'logs' ):
 		"""
