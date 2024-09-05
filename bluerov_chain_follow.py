@@ -155,8 +155,8 @@ def constraint_f( candidate_actuation_derivative ):
 
 	# 2 constraints on cables (lowest points),
 	# 4 on inter robot_distance (2 horizontal, 2 vertical),
-	# 6 on robot speed
-	n_constraints = 2 + 4 + 6
+	# 4 on robot speed
+	n_constraints = 2 + 4 + 4
 	constraint = zeros( (mpc_controller.horizon, n_constraints) )
 
 	for i, state in enumerate( predicted_trajectory[ :, 0 ] ):
@@ -175,16 +175,14 @@ def constraint_f( candidate_actuation_derivative ):
 
 		constraint[ i, 0 ] = state[ 2 ] + H01
 		constraint[ i, 1 ] = state[ 8 ] + H12
-		constraint[ i, 2 ] = dp01
-		constraint[ i, 3 ] = dp12
+		constraint[ i, 2 ] = norm( state[ 6:9 ] - state[ 0:3 ] )
+		constraint[ i, 3 ] = norm( state[ 12:15 ] - state[ 0:3 ] )
 		constraint[ i, 4 ] = abs( dz01 )
 		constraint[ i, 5 ] = abs( dz12 )
-		constraint[ i, 6 ] = norm( state[ 18:21 ] )
-		constraint[ i, 7 ] = norm( state[ 21:24 ] )
-		constraint[ i, 8 ] = norm( state[ 24:27 ] )
-		constraint[ i, 9 ] = norm( state[ 27:30 ] )
-		constraint[ i, 10 ] = norm( state[ 30:33 ] )
-		constraint[ i, 11 ] = norm( state[ 33:36 ] )
+		constraint[ i, 6 ] = norm( state[ 24:27 ] )
+		constraint[ i, 7 ] = norm( state[ 27:30 ] )
+		constraint[ i, 8 ] = norm( state[ 30:33 ] )
+		constraint[ i, 9 ] = norm( state[ 33:36 ] )
 
 	return constraint.flatten()
 
@@ -192,8 +190,8 @@ def constraint_f( candidate_actuation_derivative ):
 def chain_objective( trajectory: ndarray, actuation: ndarray ) -> float:
 	objective = 0.
 
-	objective += norm( trajectory[ :, 0, 0:3 ] - trajectory[ :, 0, 6:9 ] - 1.5 )
-	objective += norm( trajectory[ :, 0, 6:9 ] - trajectory[ :, 0, 12:15 ] - 1.5 )
+	objective += norm( trajectory[ :, 0, 0:3 ] - trajectory[ :, 0, 6:9 ] - 1. ) ** 2
+	objective += norm( trajectory[ :, 0, 6:9 ] - trajectory[ :, 0, 12:15 ] - 1. ) ** 2
 
 	return objective
 
@@ -562,7 +560,7 @@ if __name__ == "__main__":
 	area = array( [ [ -4, 4 ], [ -4, 4 ], [ -2, 6 ] ] )
 	max_actuation_x = 300.
 	max_actuation_t = 1.
-	floor_depth = 4.
+	floor_depth = 3.
 
 	horizon = 25
 	time_steps_per_act = 25
@@ -603,7 +601,7 @@ if __name__ == "__main__":
 	actuation_weight_matrix[ 6:9, 6:9 ] *= .01
 	actuation_weight_matrix[ 9:12, 9:12 ] *= 1.
 
-	objective_weight = 10.
+	objective_weight = 100.
 	final_cost_weight = 10.
 
 	bluerov_chain = Model(
@@ -620,22 +618,21 @@ if __name__ == "__main__":
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
 			objective_weight = objective_weight,
 			final_weight = final_cost_weight,
-			max_iter = 50,
+			max_iter = 100,
 			record = True
 			)
 
 	mpc_controller.constraints = (NonlinearConstraint(
 			constraint_f,
-			# -------------H01---H12--dp01-dp12--dz01--------------dz12-------------vx0-vt0-vx1-vt1-vx2
-			# -vt2
+			# -------H01---H12--dp01-dp12--dz01--------------dz12-------------vx1-vt1-vx2-vt2
 			array(
-					[ [ -inf, -inf, 0.4, 0.4, -2.6 / sqrt( 2 ), -2.6 / sqrt( 2 ), 0., 0., 0., 0., 0., 0. ] ]
+					[ [ -inf, -inf, 0.4, 0.4, -2.6 / sqrt( 2 ), -2.6 / sqrt( 2 ), 0., 0., 0., 0. ] ]
 					).repeat(
 					horizon, axis = 0
 					).flatten(),
 			array(
 					[ [ floor_depth, floor_depth, 2.6 / sqrt( 2 ), 2.6 / sqrt( 2 ), 2.6 / sqrt( 2 ),
-							sqrt( 2 ) * 2.6, 8., .1, 5., .1, 5., .1 ] ]
+							sqrt( 2 ) * 2.6, 5., .1, 5., .1 ] ]
 					).repeat(
 					horizon, axis = 0
 					).flatten()
@@ -671,19 +668,24 @@ if __name__ == "__main__":
 		mpc_controller.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
 
 		bluerov_chain.state[ :6 ] = trajectory[ frame, 0, :6 ]
-		bluerov_chain.state[ 18:24 ] = diff(
-				trajectory[ frame:frame + 2, 0, :6 ], axis = 0
-				) / time_step
+		# bluerov_chain.state[ 18:24 ] = diff(
+		# 		trajectory[ frame:frame + 2, 0, :6 ], axis = 0
+		# 		) / time_step
 
 		mpc_controller.optimize()
 		mpc_controller.apply_result()
 		bluerov_chain.step()
 
+		if not mpc_controller.raw_result.success:
+			mpc_controller.tolerance = 1e-3
+		else:
+			mpc_controller.tolerance = 1e-6
+
 		logger.log( f"{mpc_controller.times[ -1 ]:.3f}s" )
 		logger.log( f"{mpc_controller.raw_result.success}" )
 		logger.log( f"{mpc_controller.raw_result.nit}" )
 		logger.log(
-				f'{[ round( float( v ), 3 ) for v in constraint_f( mpc_controller.result ).reshape( (horizon, 12) )[ 0 ] ]}'
+				f'{[ round( float( v ), 3 ) for v in constraint_f( mpc_controller.result ).reshape( (horizon, 10) )[ 0 ] ]}'
 				)
 
 		fig = plot(

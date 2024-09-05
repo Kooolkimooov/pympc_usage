@@ -6,6 +6,46 @@ from numpy import eye, ndarray, zeros
 from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint
 
 
+def rungeKutta4(
+		function: callable, time_step: float, current_state: ndarray, *args, **kwargs
+		):
+	'''
+	Runge-Kutta 4th order method
+	:param function: function to integrate, must have the following signature: f(x, *args, **kwargs)
+	:param time_step: time step
+	:param current_state: initial position
+	:param args: additional arguments for f
+	:param kwargs: additional keyword arguments for f
+	'''
+
+	# coefficients of the Butcher tableau
+	a21 = .4
+	a31 = .29697761
+	a32 = .15875964
+	a41 = .21810040
+	a42 = -3.05096516
+	a43 = 3.83286476
+	b1 = .17476028
+	b2 = -.55148066
+	b3 = 1.20553560
+	b4 = .17118478
+
+	k1 = function( current_state, *args, **kwargs )
+	k2 = function( current_state + a21 * k1 * time_step, *args, **kwargs )
+	k3 = function( current_state + a31 * k1 * time_step + a32 * k2 * time_step, *args, **kwargs )
+	k4 = function(
+		current_state + a41 * k1 * time_step + a42 * k2 * time_step + a43 * k3 * time_step,
+		*args,
+		**kwargs
+		)
+
+	new_state = (
+			current_state + b1 * k1 * time_step + b2 * k2 * time_step + b3 * k3 * time_step + b4 * k4 *
+			time_step)
+
+	return new_state
+
+
 class Model:
 	def __init__(
 			self,
@@ -40,7 +80,8 @@ class Model:
 
 	def step( self ):
 		# euler for now
-		self.state += self.dynamics( self.state, self.actuation ) * self.time_step
+		# self.state += self.dynamics( self.state, self.actuation ) * self.time_step
+		self.state = rungeKutta4( self.dynamics, self.time_step, self.state, self.actuation )
 
 		if self.record:
 			self.previous_states.append( deepcopy( self.state ) )
@@ -68,7 +109,8 @@ class MPC:
 			verbose: bool = False
 			):
 
-		assert list( signature( objective ).parameters ) == [ 'trajectory', 'actuation' ]
+		assert objective is None or list( signature( objective ).parameters ) == [ 'trajectory',
+																																							 'actuation' ]
 
 		self.model = model
 		self.horizon = horizon
@@ -156,8 +198,6 @@ class MPC:
 
 		if self.raw_result.success:
 			self.result = self.raw_result.x.reshape( self.result_shape )
-		else:
-			self.result.fill( 0. )
 
 	def cost( self, actuations_derivative: ndarray ) -> float:
 		actuations_derivative = actuations_derivative.reshape( self.result_shape )
