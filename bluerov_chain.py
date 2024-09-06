@@ -220,32 +220,51 @@ def constraint_f( candidate_actuation_derivative ):
 	# 2 constraints on cables (lowest points),
 	# 4 on inter robot_distance (2 horizontal, 2 vertical),
 	# 3 on robot speed
-	n_constraints = 2 + 4 + 3
+	# 6 on robot position
+	n_constraints = 2 + 4 + 3 + 6
 	constraint = zeros( (mpc_controller.horizon, n_constraints) )
+
+	# z position of robots 0 and 1; we add H afterward
+	constraint[ :, 0 ] = predicted_trajectory[ :, 0, 2 ]
+	constraint[ :, 1 ] = predicted_trajectory[ :, 0, 8 ]
+
+	# horizontal distance between consecutive robots
+	constraint[ :, 2 ] = norm(
+			predicted_trajectory[ :, 0, 6:8 ] - predicted_trajectory[ :, 0, 0:2 ], axis = 1
+			)
+	constraint[ :, 3 ] = norm(
+			predicted_trajectory[ :, 0, 12:14 ] - predicted_trajectory[ :, 0, 6:8 ], axis = 1
+			)
+
+	# distance between consecutive robots
+	constraint[ :, 4 ] = norm(
+			predicted_trajectory[ :, 0, 6:9 ] - predicted_trajectory[ :, 0, 0:3 ], axis = 1
+			)
+	constraint[ :, 5 ] = norm(
+			predicted_trajectory[ :, 0, 12:15 ] - predicted_trajectory[ :, 0, 6:9 ], axis = 1
+			)
+
+	# speed
+	constraint[ :, 6 ] = norm( predicted_trajectory[ :, 0, 18:21 ], axis = 1 )
+	constraint[ :, 7 ] = norm( predicted_trajectory[ :, 0, 24:27 ], axis = 1 )
+	constraint[ :, 8 ] = norm( predicted_trajectory[ :, 0, 30:33 ], axis = 1 )
+
+	# positions on y and z
+	constraint[ :, 9:11 ] = predicted_trajectory[ :, 0, 1:3 ]
+	constraint[ :, 11:13 ] = predicted_trajectory[ :, 0, 7:9 ]
+	constraint[ :, 13:15 ] = predicted_trajectory[ :, 0, 13:15 ]
 
 	for i, state in enumerate( predicted_trajectory[ :, 0 ] ):
 
-		dp01 = norm( state[ 6:8 ] - state[ 0:2 ] )
-		dz01 = -(state[ 8 ] - state[ 2 ])
-		dp12 = norm( state[ 12:14 ] - state[ 6:8 ] )
-		dz12 = -(state[ 14 ] - state[ 8 ])
-
 		try:
-			_, _, H01 = get_catenary_param( dz01, dp01, 3 )
-			_, _, H12 = get_catenary_param( dz12, dp12, 3 )
+			_, _, H01 = get_catenary_param( state[ 2 ] - state[ 8 ], constraint[ i, 2 ], 3 )
+			_, _, H12 = get_catenary_param( state[ 8 ] - state[ 14 ], constraint[ i, 3 ], 3 )
 		except:
 			H01 = 1.5
 			H12 = 1.5
 
-		constraint[ i, 0 ] = state[ 2 ] + H01
-		constraint[ i, 1 ] = state[ 8 ] + H12
-		constraint[ i, 2 ] = dp01
-		constraint[ i, 3 ] = dp12
-		constraint[ i, 4 ] = norm( state[ 6:9 ] - state[ 0:3 ] )
-		constraint[ i, 5 ] = norm( state[ 12:15 ] - state[ 6:9 ] )
-		constraint[ i, 6 ] = norm( state[ 18:21 ] )
-		constraint[ i, 7 ] = norm( state[ 24:27 ] )
-		constraint[ i, 8 ] = norm( state[ 30:33 ] )
+		constraint[ i, 0 ] += H01
+		constraint[ i, 1 ] += H12
 
 	return constraint.flatten()
 
@@ -424,7 +443,7 @@ def plot(
 	surf_y = volume[ 1 ]
 	surf_x, surf_y = meshgrid( surf_x, surf_y )
 	surf_z = ones( surf_x.shape ) * floor_z
-	view.plot_surface( surf_x, surf_y, surf_z, alpha = 0.1 )
+	# view.plot_surface( surf_x, surf_y, surf_z, alpha = 0.1 )
 
 	quiver_scale = .25
 	view.quiver(
@@ -638,29 +657,36 @@ if __name__ == "__main__":
 
 	ti = perf_counter()
 
-	n_frames = 600
+	n_frames = 300
 	time_step = 0.01
 	n_robots = 3
 	state = zeros( (12 * n_robots,) )
-	state[ 0 ] = 2
-	state[ 6 ] = 2.5
-	state[ 12 ] = 3
+	state[ 0 ] = 2.
+	state[ 6 ] = 2.
+	state[ 7 ] = 1.
+	state[ 12 ] = 2.
+	state[ 13 ] = 2.
 	actuation = zeros( (6 * n_robots,) )
 	area = array( [ [ -4, 4 ], [ -4, 4 ], [ -2, 6 ] ] )
 	max_actuation_x = 300.
 	max_actuation_t = 1.
 	floor_depth = 3.
+	tunnel_ceiling_depth = 1.
+	tunnel_floor_depth = 2.
+	tunnel_left_wall = 1.
+	tunnel_right_wall = -1.
 
 	horizon = 15
 	time_steps_per_act = 15
 
 	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
-								 (.5, [ -3., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
-								 (1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
-								 (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12) ]
+			(.33, [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
+			(.66, [ -2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
+			(1., [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
+			(2., [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12) ]
 
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
-	trajectory[ :, 0, 2 ] = 1.3 * cos( 2.5 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.3
+	# trajectory[ :, 0, 2 ] = 1.3 * cos( 2.5 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.3
 
 	# plt.plot( trajectory[:, 0, 2] )
 	# plt.show()
@@ -710,21 +736,44 @@ if __name__ == "__main__":
 			record = True
 			)
 
+	# -----0---1---2----3----4----5----6--7--8--9--10-11-12-13-14
+	# -----H01-H12-dp01-dp12-dr01-dr12-v0-v1-v2-y0-y1-y2-z0-z1-z2
+	lb = [ -inf, -inf, 0.4, 0.4, 0, 0, 0., 0., 0., -inf, -inf, -inf, -inf, -inf, -inf ]
+	ub = [ floor_depth, floor_depth, 2.6, 2.6, 2.6, 2.6, 8., 8., 8., inf, inf, inf, floor_depth,
+				 floor_depth, floor_depth ]
+
+	if bluerov_chain.state[ 0 ] < 0.5:
+		lb[ 0 ] = tunnel_ceiling_depth
+		ub[ 0 ] = tunnel_floor_depth
+		lb[ 9 ] = tunnel_right_wall
+		ub[ 9 ] = tunnel_left_wall
+		lb[ 10 ] = tunnel_right_wall
+		ub[ 10 ] = tunnel_left_wall
+		lb[ 12 ] = tunnel_ceiling_depth
+		ub[ 12 ] = tunnel_floor_depth
+
+	if bluerov_chain.state[ 6 ] < 0.5:
+		lb[ 1 ] = tunnel_ceiling_depth
+		ub[ 1 ] = tunnel_floor_depth
+		lb[ 11 ] = tunnel_right_wall
+		ub[ 11 ] = tunnel_left_wall
+		lb[ 13 ] = tunnel_ceiling_depth
+		ub[ 13 ] = tunnel_floor_depth
+
+	if bluerov_chain.state[ 12 ] < 0.5:
+		lb[ 14 ] = tunnel_ceiling_depth
+		ub[ 14 ] = tunnel_floor_depth
+
 	mpc_controller.constraints = (NonlinearConstraint(
-			constraint_f,  # -------------H01-H12-dp01-dp12-dr01-dr12-v0--v1--v2
-			array( [ [ -inf, -inf, 0.4, 0.4, 0, 0, 0., 0., 0. ] ] ).repeat(
-					horizon, axis = 0
-					).flatten(), array(
-					[ [ floor_depth, floor_depth, 2.6, 2.6, 2.6, 2.6, 8., 5., 5. ] ]
-					).repeat(
-					horizon, axis = 0
-					).flatten()
+			constraint_f,
+			array( [ lb ] ).repeat( horizon, axis = 0 ).flatten(),
+			array( [ ub ] ).repeat( horizon, axis = 0 ).flatten()
 			),)
 
-	# mpc_controller.bounds = (Bounds(
-	# 		array( [ [ -10, -10, -10, -.1, -.1, -.1 ] ] ).repeat( n_robots, axis = 0 ).flatten(),
-	# 		array( [ [ 10, 10, 10, .1, .1, .1 ] ] ).repeat( n_robots, axis = 0 ).flatten()
-	# 		),)
+	# mpc_controller.bounds = Bounds(
+	# 		array( [ [ -50, -50, -50, -.1, -.1, -.1 ] ] ).repeat( n_robots, axis = 0 ).flatten(),
+	# 		array( [ [ 50, 50, 50, .1, .1, .1 ] ] ).repeat( n_robots, axis = 0 ).flatten()
+	# 		)
 
 	previous_nfeval_record = [ 0 ]
 	previous_H01_record = [ 0. ]
