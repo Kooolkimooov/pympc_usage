@@ -11,6 +11,7 @@ from PIL import Image
 from scipy.spatial.transform import Rotation
 
 from mpc import *
+from utils import generate_trajectory, Logger, serialize_others
 
 
 def robot(
@@ -279,7 +280,7 @@ if __name__ == "__main__":
 
 		mpc.target_trajectory = trajectory[ frame + 1:frame + mpc.horizon + 1 ]
 
-		mpc.optimize()
+		mpc.compute_actuation()
 		mpc.apply_result()
 		bluerov.step()
 

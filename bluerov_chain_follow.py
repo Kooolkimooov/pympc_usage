@@ -4,13 +4,14 @@ from os import mkdir, path, remove
 from time import time
 
 from cycler import cycler
-from numpy import array, cos, cross, diag, diff, inf, meshgrid, nan, ones, pi, sin, sqrt, tan
+from numpy import array, cos, cross, diag, inf, meshgrid, nan, ones, pi, sin, sqrt, tan
 from numpy.linalg import inv, norm
 from PIL import Image
 from scipy.spatial.transform import Rotation
 
 from calc_catenary_from_ext_points import *
 from mpc import *
+from utils import generate_trajectory, Logger, serialize_others
 
 
 def compute_rotation_matrix( phi: float, theta: float, psi: float ) -> ndarray:
@@ -672,7 +673,7 @@ if __name__ == "__main__":
 		# 		trajectory[ frame:frame + 2, 0, :6 ], axis = 0
 		# 		) / time_step
 
-		mpc_controller.optimize()
+		mpc_controller.compute_actuation()
 		mpc_controller.apply_result()
 		bluerov_chain.step()
 

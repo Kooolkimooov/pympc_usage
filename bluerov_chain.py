@@ -11,6 +11,7 @@ from scipy.spatial.transform import Rotation
 
 from calc_catenary_from_ext_points import *
 from mpc import *
+from utils import generate_trajectory, Logger, serialize_others
 
 
 def compute_rotation_matrix( phi: float, theta: float, psi: float ) -> ndarray:
@@ -839,7 +840,7 @@ if __name__ == "__main__":
 		mpc_controller.constraints = (
 				NonlinearConstraint( constraint_f, array( lb ).flatten(), array( ub ).flatten() ),)
 
-		mpc_controller.optimize()
+		mpc_controller.compute_actuation()
 		mpc_controller.apply_result()
 		bluerov_chain.step()
 

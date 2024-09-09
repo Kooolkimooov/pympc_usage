@@ -9,6 +9,7 @@ from numpy import array, cos, linspace, pi, sin
 from PIL import Image
 
 from mpc import *
+from utils import Logger, serialize_others
 
 
 # pendulum with cart
@@ -187,7 +188,7 @@ if __name__ == "__main__":
 
 		mpc.target_trajectory = array( trajectory[ frame + 1:frame + mpc.horizon + 1 ] )
 
-		mpc.optimize()
+		mpc.compute_actuation()
 		mpc.apply_result()
 		turtle_model.step()
 
