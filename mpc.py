@@ -34,10 +34,10 @@ def rungeKutta4(
 	k2 = function( current_state + a21 * k1 * time_step, *args, **kwargs )
 	k3 = function( current_state + a31 * k1 * time_step + a32 * k2 * time_step, *args, **kwargs )
 	k4 = function(
-		current_state + a41 * k1 * time_step + a42 * k2 * time_step + a43 * k3 * time_step,
-		*args,
-		**kwargs
-		)
+			current_state + a41 * k1 * time_step + a42 * k2 * time_step + a43 * k3 * time_step,
+			*args,
+			**kwargs
+			)
 
 	new_state = (
 			current_state + b1 * k1 * time_step + b2 * k2 * time_step + b3 * k3 * time_step + b4 * k4 *
@@ -186,15 +186,12 @@ class MPC:
 				bounds = self.bounds,
 				constraints = self.constraints,
 				options = {
-						'maxiter': self.max_iter
+						'maxiter': self.max_iter, 'disp': self.verbose
 						}
 				)
 
 		if self.record:
 			self.times.append( perf_counter() - ti )
-
-		if self.verbose:
-			print( self.raw_result.message )
 
 		if self.raw_result.success:
 			self.result = self.raw_result.x.reshape( self.result_shape )

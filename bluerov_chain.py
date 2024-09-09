@@ -4,7 +4,7 @@ from os import mkdir, path, remove
 from time import time
 
 from cycler import cycler
-from numpy import array, cos, cross, diag, inf, meshgrid, nan, ones, pi, sin, tan
+from numpy import array, cos, cross, diag, diff, inf, meshgrid, nan, ones, pi, sin, tan
 from numpy.linalg import inv, norm
 from PIL import Image
 from scipy.spatial.transform import Rotation
@@ -142,67 +142,12 @@ def three_robots_chain(
 	return xdot
 
 
-def three_robots_chain_linear(
-		x: ndarray,
-		u: ndarray,
-		weight: ndarray,
-		buoyancy: ndarray,
-		center_of_mass: ndarray,
-		center_of_volume: ndarray,
-		inverted_inertial_matrix: ndarray,
-		hydrodynamic_matrix: ndarray
-		) -> ndarray:
-	"""
-	:param x: state of the chain such that x = [pose_robot_0_wf, pose_robot_1_wf, vel_robot_0_rf,
-	vel_robot_1_rf]
-	:param u: actuation of the chain such that u = [actuation_robot_0, actuation_robot_1]
-	:param hydrodynamic_matrix:
-	:param inverted_inertial_matrix:
-	:param center_of_volume:
-	:param center_of_mass:
-	:param buoyancy:
-	:param weight:
-	:return: xdot: derivative of the state of the chain
-	"""
-
-	x0 = x[ :6 ]
-	x0d = x[ 18:24 ]
-	u0 = u[ :6 ]
-
-	x1 = x[ 6:12 ]
-	x1d = x[ 24:30 ]
-	u1 = u[ 6:12 ]
-
-	x2 = x[ 12:18 ]
-	x2d = x[ 30:36 ]
-	u2 = u[ 12:18 ]
-
-	R0 = eye( 6 )
-	R1 = eye( 6 )
-	R2 = eye( 6 )
-
-	s0 = compute_hydrostatic_force(
-			weight, buoyancy, center_of_mass, center_of_volume, R0[ :3, :3 ]
-			)
-	s1 = compute_hydrostatic_force(
-			weight, buoyancy, center_of_mass, center_of_volume, R1[ :3, :3 ]
-			)
-	s2 = compute_hydrostatic_force(
-			weight, buoyancy, center_of_mass, center_of_volume, R2[ :3, :3 ]
-			)
-
-	xdot = zeros( x.shape )
-
-	xdot[ :6 ] = R0 @ x0d
-	xdot[ 18:24 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x0d + s0 + u0)
-
-	xdot[ 6:12 ] = R1 @ x1d
-	xdot[ 24:30 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x1d + s1 + u1)
-
-	xdot[ 12:18 ] = R2 @ x2d
-	xdot[ 30:36 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x2d + s2 + u2)
-
-	return xdot
+def three_robot_chain_objective( trajectory: ndarray, actuation: ndarray ):
+	obj = 0.
+	trajectory_derivative = diff( trajectory, axis = 0 )
+	obj += norm( trajectory_derivative[ :, 0, 6:9 ], axis = 1 ).sum()
+	obj += norm( trajectory_derivative[ :, 0, 12:15 ], axis = 1 ).sum()
+	return obj
 
 
 def constraint_f( candidate_actuation_derivative ):
@@ -307,6 +252,13 @@ def plot(
 	view.set_zlim( *volume[ 2 ] )
 	view.invert_yaxis()
 	view.invert_zaxis()
+
+	inset_view_xz = view.inset_axes( [ 0, .8, .2, .2 ] )
+	inset_view_xz.set_xlabel( "x" )
+	inset_view_xz.set_ylabel( "z" )
+	inset_view_xz.set_xlim( *volume[ 0 ] )
+	inset_view_xz.set_ylim( *volume[ 2 ] )
+	inset_view_xz.invert_yaxis()
 
 	t_0 = time_previous[ 0 ]
 	if crop_history and len( time_previous ) > 2 * mpc.horizon:
@@ -432,18 +384,34 @@ def plot(
 			f"{c_frame + 1}/{n_frame} - {mpc.times[ -1 ]}s - {len(mpc.predicted_trajectories)=}"
 			)
 
+	# floor
+	surf_x = [ 0, volume[ 0 ][ 1 ] ]
+	surf_y = volume[ 1 ]
+	surf_x, surf_y = meshgrid( surf_x, surf_y )
+	surf_z = ones( surf_x.shape ) * floor_z
+	view.plot_surface( surf_x, surf_y, surf_z, alpha = 0.1 )
+	inset_view_xz.plot( [ 0, volume[ 0 ][ 1 ] ], [ floor_z, floor_z ] )
+
+	surf_x = [ volume[ 0 ][ 0 ], 0 ]
+	surf_y = [ -1, 1 ]
+	surf_x, surf_y = meshgrid( surf_x, surf_y )
+	surf_z = ones( surf_x.shape ) * 2
+	view.plot_surface( surf_x, surf_y, surf_z, alpha = 0.1 )
+	inset_view_xz.plot( [ volume[ 0 ][ 0 ], 0 ], [ 2, 2 ] )
+
+	surf_x = [ volume[ 0 ][ 0 ], 0 ]
+	surf_y = [ -1, 1 ]
+	surf_x, surf_y = meshgrid( surf_x, surf_y )
+	surf_z = ones( surf_x.shape ) * 1
+	view.plot_surface( surf_x, surf_y, surf_z, alpha = 0.1 )
+	inset_view_xz.plot( [ volume[ 0 ][ 0 ], 0 ], [ 1, 1 ] )
+
 	target_pose = mpc.target_trajectory[ 0, 0 ]
 
 	state_r0 = Rotation.from_euler( 'xyz', mpc.model.state[ 3:6 ] ).as_matrix()
 	state_r1 = Rotation.from_euler( 'xyz', mpc.model.state[ 9:12 ] ).as_matrix()
 	state_r2 = Rotation.from_euler( 'xyz', mpc.model.state[ 15:18 ] ).as_matrix()
 	target_r0 = Rotation.from_euler( 'xyz', target_pose[ 3:6 ] ).as_matrix()
-
-	surf_x = volume[ 0 ]
-	surf_y = volume[ 1 ]
-	surf_x, surf_y = meshgrid( surf_x, surf_y )
-	surf_z = ones( surf_x.shape ) * floor_z
-	# view.plot_surface( surf_x, surf_y, surf_z, alpha = 0.1 )
 
 	quiver_scale = .25
 	view.quiver(
@@ -462,6 +430,11 @@ def plot(
 	view.quiver(
 			*target_pose[ :3 ], *(target_r0 @ (quiver_scale * array( [ 1., 0., 0. ] ))), color = 'black'
 			)
+
+	inset_view_xz.scatter( mpc.model.state[ 0 ], mpc.model.state[ 2 ], color = 'blue' )
+	inset_view_xz.scatter( mpc.model.state[ 6 ], mpc.model.state[ 8 ], color = 'red' )
+	inset_view_xz.scatter( mpc.model.state[ 12 ], mpc.model.state[ 14 ], color = 'green' )
+	inset_view_xz.scatter( target_pose[ 0 ], target_pose[ 2 ], color = 'black' )
 
 	previous_states_array = array( mpc.model.previous_states )
 
@@ -484,8 +457,21 @@ def plot(
 			color = 'green'
 			)
 
+	inset_view_xz.plot(
+			previous_states_array[ :, 0 ], previous_states_array[ :, 2 ], color = 'blue'
+			)
+	inset_view_xz.plot(
+			previous_states_array[ :, 6 ], previous_states_array[ :, 8 ], color = 'red'
+			)
+	inset_view_xz.plot(
+			previous_states_array[ :, 12 ], previous_states_array[ :, 14 ], color = 'green'
+			)
+
 	view.plot(
 			full_trajectory[ :, 0, 0 ], full_trajectory[ :, 0, 1 ], full_trajectory[ :, 0, 2 ], ':'
+			)
+	inset_view_xz.plot(
+			full_trajectory[ :, 0, 0 ], full_trajectory[ :, 0, 2 ], ':'
 			)
 
 	try:
@@ -523,6 +509,9 @@ def plot(
 
 	view.plot( cat01[ :, 0 ], cat01[ :, 1 ], cat01[ :, 2 ], 'blue' )
 	view.plot( cat12[ :, 0 ], cat12[ :, 1 ], cat12[ :, 2 ], 'red' )
+
+	inset_view_xz.plot( cat01[ :, 0 ], cat01[ :, 2 ], 'blue' )
+	inset_view_xz.plot( cat12[ :, 0 ], cat12[ :, 2 ], 'red' )
 
 	ax_cat_H.plot( time_previous, H01_record )
 	ax_cat_H.plot( time_previous, H12_record )
@@ -657,8 +646,8 @@ if __name__ == "__main__":
 
 	ti = perf_counter()
 
-	n_frames = 300
-	time_step = 0.01
+	n_frames = 1000
+	time_step = 0.05
 	n_robots = 3
 	state = zeros( (12 * n_robots,) )
 	state[ 0 ] = 2.
@@ -667,7 +656,7 @@ if __name__ == "__main__":
 	state[ 12 ] = 2.
 	state[ 13 ] = 2.
 	actuation = zeros( (6 * n_robots,) )
-	area = array( [ [ -4, 4 ], [ -4, 4 ], [ -2, 6 ] ] )
+	area = array( [ [ -3, 3 ], [ -3, 3 ], [ -2, 4 ] ] )
 	max_actuation_x = 300.
 	max_actuation_t = 1.
 	floor_depth = 3.
@@ -676,14 +665,14 @@ if __name__ == "__main__":
 	tunnel_left_wall = 1.
 	tunnel_right_wall = -1.
 
-	horizon = 15
-	time_steps_per_act = 15
+	horizon = 25
+	time_steps_per_act = 25
 
 	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
-			(.33, [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
-			(.66, [ -2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
-			(1., [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
-			(2., [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12) ]
+								 (.2, [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
+								 (.6, [ -3., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
+								 (1., [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
+								 (2., [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12) ]
 
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
 	# trajectory[ :, 0, 2 ] = 1.3 * cos( 2.5 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.3
@@ -712,13 +701,14 @@ if __name__ == "__main__":
 	pose_weight_matrix[ 15:18, 15:18 ] *= 1.
 
 	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
-	actuation_weight_matrix[ 0:3, 0:3 ] *= 0.
+	actuation_weight_matrix[ 0:3, 0:3 ] *= 0.01
 	actuation_weight_matrix[ 3:6, 3:6 ] *= 1000.
-	actuation_weight_matrix[ 6:9, 6:9 ] *= 0.
+	actuation_weight_matrix[ 6:9, 6:9 ] *= 0.01
 	actuation_weight_matrix[ 9:12, 9:12 ] *= 1000.
-	actuation_weight_matrix[ 12:15, 12:15 ] *= 0.
+	actuation_weight_matrix[ 12:15, 12:15 ] *= 0.01
 	actuation_weight_matrix[ 15:18, 15:18 ] *= 1000.
 
+	objective_weight = 1.
 	final_cost_weight = 1.
 
 	bluerov_chain = Model(
@@ -729,51 +719,62 @@ if __name__ == "__main__":
 			bluerov_chain,
 			horizon,
 			trajectory,
+			objective = three_robot_chain_objective,
 			time_steps_per_actuation = time_steps_per_act,
 			pose_weight_matrix = pose_weight_matrix,
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
+			objective_weight = objective_weight,
 			final_weight = final_cost_weight,
 			record = True
 			)
 
+	# mpc_controller.verbose = True
+
+	dp_lb = 0.2
+	dp_ub = 2.8
+	dr_lb = -inf
+	dr_ub = 2.8
+	v_lb = -inf
+	v_ub = 5.
+
 	# -----0---1---2----3----4----5----6--7--8--9--10-11-12-13-14
 	# -----H01-H12-dp01-dp12-dr01-dr12-v0-v1-v2-y0-y1-y2-z0-z1-z2
-	lb = [ -inf, -inf, 0.4, 0.4, 0, 0, 0., 0., 0., -inf, -inf, -inf, -inf, -inf, -inf ]
-	ub = [ floor_depth, floor_depth, 2.6, 2.6, 2.6, 2.6, 8., 8., 8., inf, inf, inf, floor_depth,
-				 floor_depth, floor_depth ]
 
-	if bluerov_chain.state[ 0 ] < 0.5:
-		lb[ 0 ] = tunnel_ceiling_depth
-		ub[ 0 ] = tunnel_floor_depth
-		lb[ 9 ] = tunnel_right_wall
-		ub[ 9 ] = tunnel_left_wall
-		lb[ 10 ] = tunnel_right_wall
-		ub[ 10 ] = tunnel_left_wall
-		lb[ 12 ] = tunnel_ceiling_depth
-		ub[ 12 ] = tunnel_floor_depth
+	lb_base = [ -inf, -inf, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb, -inf, -inf, -inf, -inf,
+							-inf, -inf ]
+	ub_base = [ floor_depth, floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub, inf, inf,
+							inf,
+							floor_depth, floor_depth, floor_depth ]
 
-	if bluerov_chain.state[ 6 ] < 0.5:
-		lb[ 1 ] = tunnel_ceiling_depth
-		ub[ 1 ] = tunnel_floor_depth
-		lb[ 11 ] = tunnel_right_wall
-		ub[ 11 ] = tunnel_left_wall
-		lb[ 13 ] = tunnel_ceiling_depth
-		ub[ 13 ] = tunnel_floor_depth
+	lb_r0 = [ tunnel_ceiling_depth, -inf, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb,
+						tunnel_right_wall, tunnel_right_wall, -inf, tunnel_ceiling_depth, -inf, -inf ]
+	ub_r0 = [ tunnel_floor_depth, floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub,
+						tunnel_left_wall, tunnel_left_wall, inf, tunnel_floor_depth, floor_depth, floor_depth ]
 
-	if bluerov_chain.state[ 12 ] < 0.5:
-		lb[ 14 ] = tunnel_ceiling_depth
-		ub[ 14 ] = tunnel_floor_depth
+	lb_r1 = [ tunnel_ceiling_depth, tunnel_ceiling_depth, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb,
+						v_lb, tunnel_right_wall, tunnel_right_wall, tunnel_right_wall, tunnel_ceiling_depth,
+						tunnel_ceiling_depth, -inf ]
+	ub_r1 = [ tunnel_floor_depth, tunnel_floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub,
+						tunnel_left_wall, tunnel_left_wall, tunnel_left_wall, tunnel_floor_depth,
+						tunnel_floor_depth, floor_depth ]
 
-	mpc_controller.constraints = (NonlinearConstraint(
-			constraint_f,
-			array( [ lb ] ).repeat( horizon, axis = 0 ).flatten(),
-			array( [ ub ] ).repeat( horizon, axis = 0 ).flatten()
-			),)
+	lb_r2 = [ tunnel_ceiling_depth, tunnel_ceiling_depth, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb,
+						v_lb, tunnel_right_wall, tunnel_right_wall, tunnel_right_wall, tunnel_ceiling_depth,
+						tunnel_ceiling_depth, tunnel_ceiling_depth ]
+	ub_r2 = [ tunnel_floor_depth, tunnel_floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub,
+						tunnel_left_wall, tunnel_left_wall, tunnel_left_wall, tunnel_floor_depth,
+						tunnel_floor_depth, tunnel_floor_depth ]
 
-	# mpc_controller.bounds = Bounds(
-	# 		array( [ [ -50, -50, -50, -.1, -.1, -.1 ] ] ).repeat( n_robots, axis = 0 ).flatten(),
-	# 		array( [ [ 50, 50, 50, .1, .1, .1 ] ] ).repeat( n_robots, axis = 0 ).flatten()
-	# 		)
+	mpc_controller.bounds = Bounds(
+			array( [ [ -200, -200, -200, -.1, -.1, -.1 ] ] ).repeat( n_robots, axis = 0 ).flatten(),
+			array( [ [ 200, 200, 200, .1, .1, .1 ] ] ).repeat( n_robots, axis = 0 ).flatten()
+			)
+
+	lb = [ lb_base ] * horizon
+	ub = [ ub_base ] * horizon
+
+	mpc_controller.constraints = (
+			NonlinearConstraint( constraint_f, array( lb ).flatten(), array( ub ).flatten() ),)
 
 	previous_nfeval_record = [ 0 ]
 	previous_H01_record = [ 0. ]
@@ -804,9 +805,48 @@ if __name__ == "__main__":
 
 		mpc_controller.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
 
+		n_in_tunnel = (bluerov_chain.state[ 0 ] < 0.5) + (bluerov_chain.state[ 6 ] < 0.5) + (
+				bluerov_chain.state[ 12 ] < 0.5)
+
+		if n_in_tunnel == 0:
+			logger.log( 'r0 out r1 out r2 out' )
+			lb.pop( 0 )
+			ub.pop( 0 )
+			lb.append( lb_base )
+			ub.append( ub_base )
+
+		if n_in_tunnel == 1:
+			logger.log( 'r0 in r1 out r2 out' )
+			lb.pop( 0 )
+			ub.pop( 0 )
+			lb.append( lb_r0 )
+			ub.append( ub_r0 )
+
+		if n_in_tunnel == 2:
+			logger.log( 'r0 in r1 in r2 out' )
+			lb.pop( 0 )
+			ub.pop( 0 )
+			lb.append( lb_r1 )
+			ub.append( ub_r1 )
+
+		if n_in_tunnel == 3:
+			logger.log( 'r0 in r1 in r2 in' )
+			lb.pop( 0 )
+			ub.pop( 0 )
+			lb.append( lb_r2 )
+			ub.append( ub_r2 )
+
+		mpc_controller.constraints = (
+				NonlinearConstraint( constraint_f, array( lb ).flatten(), array( ub ).flatten() ),)
+
 		mpc_controller.optimize()
 		mpc_controller.apply_result()
 		bluerov_chain.step()
+
+		if mpc_controller.raw_result.success:
+			mpc_controller.tolerance = 1e-6
+		elif mpc_controller.tolerance < 1:
+			mpc_controller.tolerance *= 10
 
 		logger.log( f"{perf_counter() - ti:.0f}s" )
 		logger.log( f"{mpc_controller.times[ -1 ]:.3f}s" )
