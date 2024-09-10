@@ -166,8 +166,7 @@ def constraint_f( candidate_actuation_derivative ):
 	# 2 constraints on cables (lowest points),
 	# 4 on inter robot_distance (2 horizontal, 2 vertical),
 	# 3 on robot speed
-	# 6 on robot position
-	n_constraints = 2 + 4 + 3 + 6
+	n_constraints = 2 + 4 + 3
 	constraint = zeros( (mpc_controller.horizon, n_constraints) )
 
 	# z position of robots 0 and 1; we add H afterward
@@ -194,11 +193,6 @@ def constraint_f( candidate_actuation_derivative ):
 	constraint[ :, 6 ] = norm( predicted_trajectory[ :, 0, 18:21 ], axis = 1 )
 	constraint[ :, 7 ] = norm( predicted_trajectory[ :, 0, 24:27 ], axis = 1 )
 	constraint[ :, 8 ] = norm( predicted_trajectory[ :, 0, 30:33 ], axis = 1 )
-
-	# positions on y and z
-	constraint[ :, 9:11 ] = predicted_trajectory[ :, 0, 1:3 ]
-	constraint[ :, 11:13 ] = predicted_trajectory[ :, 0, 7:9 ]
-	constraint[ :, 13:15 ] = predicted_trajectory[ :, 0, 13:15 ]
 
 	for i, state in enumerate( predicted_trajectory[ :, 0 ] ):
 
@@ -648,14 +642,12 @@ if __name__ == "__main__":
 	ti = perf_counter()
 
 	n_frames = 1000
-	time_step = 0.05
+	time_step = 0.01
 	n_robots = 3
 	state = zeros( (12 * n_robots,) )
 	state[ 0 ] = 2.
-	state[ 6 ] = 2.
-	state[ 7 ] = 1.
-	state[ 12 ] = 2.
-	state[ 13 ] = 2.
+	state[ 6 ] = 2.5
+	state[ 12 ] = 3.
 	actuation = zeros( (6 * n_robots,) )
 	area = array( [ [ -3, 3 ], [ -3, 3 ], [ -2, 4 ] ] )
 	max_actuation_x = 300.
@@ -670,17 +662,20 @@ if __name__ == "__main__":
 	time_steps_per_act = 25
 
 	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
-								 (.2, [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
-								 (.6, [ -3., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
-								 (1., [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12),
-								 (2., [ 2., 0., 1.5, 0., 0., 0. ] + [ 0. ] * 12) ]
+								 (.5, [ -3., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
+								 (1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12),
+								 (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12) ]
 
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
-	# trajectory[ :, 0, 2 ] = 1.3 * cos( 2.5 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.3
+	trajectory[ :, 0, 2 ] = 1.3 * cos( 2.5 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.3
 
 	# plt.plot( trajectory[:, 0, 2] )
+	# plt.plot( norm(diff(trajectory[:, 0, :3], axis=0), axis=1) / time_step )
 	# plt.show()
 	# exit()
+
+	max_required_speed = max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step
+	print(f'{max_required_speed=}')
 
 	model_kwargs = {
 			"weight"                  : 11.5 * array( [ 0., 0., 9.81 ] ),
@@ -695,22 +690,21 @@ if __name__ == "__main__":
 
 	pose_weight_matrix = eye( actuation.shape[ 0 ] )
 	pose_weight_matrix[ 0:3, 0:3 ] *= 10.
-	pose_weight_matrix[ 3:6, 3:6 ] *= 1.
+	pose_weight_matrix[ 3:6, 3:6 ] *= 5.
 	pose_weight_matrix[ 6:9, 6:9 ] *= 0.
-	pose_weight_matrix[ 9:12, 9:12 ] *= 1.
+	pose_weight_matrix[ 9:12, 9:12 ] *= 5.
 	pose_weight_matrix[ 12:15, 12:15 ] *= 0.
-	pose_weight_matrix[ 15:18, 15:18 ] *= 1.
+	pose_weight_matrix[ 15:18, 15:18 ] *= 5.
 
 	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
-	actuation_weight_matrix[ 0:3, 0:3 ] *= 0.01
+	actuation_weight_matrix[ 0:3, 0:3 ] *= 0.
 	actuation_weight_matrix[ 3:6, 3:6 ] *= 1000.
-	actuation_weight_matrix[ 6:9, 6:9 ] *= 0.01
+	actuation_weight_matrix[ 6:9, 6:9 ] *= 0.
 	actuation_weight_matrix[ 9:12, 9:12 ] *= 1000.
-	actuation_weight_matrix[ 12:15, 12:15 ] *= 0.01
+	actuation_weight_matrix[ 12:15, 12:15 ] *= 0.
 	actuation_weight_matrix[ 15:18, 15:18 ] *= 1000.
 
-	objective_weight = 1.
-	final_cost_weight = 1.
+	final_cost_weight = 10.
 
 	bluerov_chain = Model(
 			three_robots_chain, time_step, state, actuation, kwargs = model_kwargs, record = True
@@ -720,11 +714,10 @@ if __name__ == "__main__":
 			bluerov_chain,
 			horizon,
 			trajectory,
-			objective = three_robot_chain_objective,
+			tolerance = 1e-3,
 			time_steps_per_actuation = time_steps_per_act,
 			pose_weight_matrix = pose_weight_matrix,
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
-			objective_weight = objective_weight,
 			final_weight = final_cost_weight,
 			record = True
 			)
@@ -738,37 +731,15 @@ if __name__ == "__main__":
 	v_lb = -inf
 	v_ub = 5.
 
-	# -----0---1---2----3----4----5----6--7--8--9--10-11-12-13-14
-	# -----H01-H12-dp01-dp12-dr01-dr12-v0-v1-v2-y0-y1-y2-z0-z1-z2
+	# -----0---1---2----3----4----5----6--7--8-
+	# -----H01-H12-dp01-dp12-dr01-dr12-v0-v1-v2
 
-	lb_base = [ -inf, -inf, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb, -inf, -inf, -inf, -inf,
-							-inf, -inf ]
-	ub_base = [ floor_depth, floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub, inf, inf,
-							inf,
-							floor_depth, floor_depth, floor_depth ]
-
-	lb_r0 = [ tunnel_ceiling_depth, -inf, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb,
-						tunnel_right_wall, tunnel_right_wall, -inf, tunnel_ceiling_depth, -inf, -inf ]
-	ub_r0 = [ tunnel_floor_depth, floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub,
-						tunnel_left_wall, tunnel_left_wall, inf, tunnel_floor_depth, floor_depth, floor_depth ]
-
-	lb_r1 = [ tunnel_ceiling_depth, tunnel_ceiling_depth, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb,
-						v_lb, tunnel_right_wall, tunnel_right_wall, tunnel_right_wall, tunnel_ceiling_depth,
-						tunnel_ceiling_depth, -inf ]
-	ub_r1 = [ tunnel_floor_depth, tunnel_floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub,
-						tunnel_left_wall, tunnel_left_wall, tunnel_left_wall, tunnel_floor_depth,
-						tunnel_floor_depth, floor_depth ]
-
-	lb_r2 = [ tunnel_ceiling_depth, tunnel_ceiling_depth, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb,
-						v_lb, tunnel_right_wall, tunnel_right_wall, tunnel_right_wall, tunnel_ceiling_depth,
-						tunnel_ceiling_depth, tunnel_ceiling_depth ]
-	ub_r2 = [ tunnel_floor_depth, tunnel_floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub,
-						tunnel_left_wall, tunnel_left_wall, tunnel_left_wall, tunnel_floor_depth,
-						tunnel_floor_depth, tunnel_floor_depth ]
+	lb_base = [ -inf, -inf, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb ]
+	ub_base = [ floor_depth, floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub ]
 
 	mpc_controller.bounds = Bounds(
-			array( [ [ -200, -200, -200, -.1, -.1, -.1 ] ] ).repeat( n_robots, axis = 0 ).flatten(),
-			array( [ [ 200, 200, 200, .1, .1, .1 ] ] ).repeat( n_robots, axis = 0 ).flatten()
+			array( [ [ -20, -20, -20, -.1, -.1, -.1 ] ] ).repeat( n_robots, axis = 0 ).flatten(),
+			array( [ [ 20, 20, 20, .1, .1, .1 ] ] ).repeat( n_robots, axis = 0 ).flatten()
 			)
 
 	lb = [ lb_base ] * horizon
@@ -781,7 +752,7 @@ if __name__ == "__main__":
 	previous_H01_record = [ 0. ]
 	previous_H12_record = [ 0. ]
 
-	logger = Logger()
+	logger = Logger(False)
 
 	folder = (f'./plots/{three_robots_chain.__name__}_'
 						f'{int( time() )}')
@@ -800,91 +771,105 @@ if __name__ == "__main__":
 	with open( f'{folder}/config.json', 'w' ) as f:
 		dump( bluerov_chain.__dict__ | mpc_controller.__dict__, f, default = serialize_others )
 
+	logger.log( "index" )
+	logger.log( "sim_time" )
+	logger.log( "step_time" )
+	logger.log( "success" )
+	logger.log( "C01" )
+	logger.log( "C12" )
+	logger.log( "D01" )
+	logger.log( "D12" )
+	logger.log( "H01" )
+	logger.log( "H12" )
+	logger.log( "state_r0" )
+	logger.log( "state_r1" )
+	logger.log( "state_r2" )
+	logger.log( "speed_r0" )
+	logger.log( "speed_r1" )
+	logger.log( "speed_r2" )
+	logger.log( "actuation_r0" )
+	logger.log( "actuation_r1" )
+	logger.log( "actuation_r2" )
+	logger.lognl( "" )
+
 	for frame in range( n_frames ):
 
-		logger.log( f"frame {frame + 1}/{n_frames}" )
-
 		mpc_controller.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
-
-		n_in_tunnel = (bluerov_chain.state[ 0 ] < 0.5) + (bluerov_chain.state[ 6 ] < 0.5) + (
-				bluerov_chain.state[ 12 ] < 0.5)
-
-		if n_in_tunnel == 0:
-			logger.log( 'r0 out r1 out r2 out' )
-			lb.pop( 0 )
-			ub.pop( 0 )
-			lb.append( lb_base )
-			ub.append( ub_base )
-
-		if n_in_tunnel == 1:
-			logger.log( 'r0 in r1 out r2 out' )
-			lb.pop( 0 )
-			ub.pop( 0 )
-			lb.append( lb_r0 )
-			ub.append( ub_r0 )
-
-		if n_in_tunnel == 2:
-			logger.log( 'r0 in r1 in r2 out' )
-			lb.pop( 0 )
-			ub.pop( 0 )
-			lb.append( lb_r1 )
-			ub.append( ub_r1 )
-
-		if n_in_tunnel == 3:
-			logger.log( 'r0 in r1 in r2 in' )
-			lb.pop( 0 )
-			ub.pop( 0 )
-			lb.append( lb_r2 )
-			ub.append( ub_r2 )
-
-		mpc_controller.constraints = (
-				NonlinearConstraint( constraint_f, array( lb ).flatten(), array( ub ).flatten() ),)
 
 		mpc_controller.compute_actuation()
 		mpc_controller.apply_result()
 		bluerov_chain.step()
 
-		if mpc_controller.raw_result.success:
-			mpc_controller.tolerance = 1e-6
-		elif mpc_controller.tolerance < 1:
-			mpc_controller.tolerance *= 10
+		try:
+			C01, D01, H01 = get_catenary_param(
+					bluerov_chain.state[ 2 ] - bluerov_chain.state[ 8 ],
+					norm( bluerov_chain.state[ 0:2 ] - bluerov_chain.state[ 6:8 ] ),
+					3
+					)
+			C12, D12, H12 = get_catenary_param(
+					bluerov_chain.state[ 8 ] - bluerov_chain.state[ 14 ],
+					norm( bluerov_chain.state[ 6:8 ] - bluerov_chain.state[ 12:14 ] ),
+					3
+					)
+		except:
+			C01 = None
+			C12 = None
+			D01 = None
+			D12 = None
+			H01 = None
+			H12 = None
 
-		logger.log( f"{perf_counter() - ti:.0f}s" )
-		logger.log( f"{mpc_controller.times[ -1 ]:.3f}s" )
+
+		logger.log( f"{frame}" )
+		logger.log( f"{perf_counter() - ti:.6f}" )
+		logger.log( f"{mpc_controller.times[ -1 ]:.6f}" )
 		logger.log( f"{mpc_controller.raw_result.success}" )
-		logger.log( f"{[ round( float( v ), 3 ) for v in bluerov_chain.actuation[ :3 ] ]}" )
-		logger.log( f"{[ round( float( v ), 3 ) for v in bluerov_chain.actuation[ 6:9 ] ]}" )
-		logger.log( f"{[ round( float( v ), 3 ) for v in bluerov_chain.actuation[ 12:15 ] ]}" )
-
-		fig = plot(
-				mpc = mpc_controller,
-				full_trajectory = trajectory,
-				c_frame = frame,
-				n_frame = n_frames,
-				volume = area,
-				max_ux = max_actuation_x,
-				max_ut = max_actuation_t,
-				floor_z = floor_depth,
-				f_eval_record = previous_nfeval_record,
-				H01_record = previous_H01_record,
-				H12_record = previous_H12_record,
-				crop_history = True
-				)
-
-		plt.savefig( f'{folder}/{frame}.png' )
-		plt.close( 'all' )
-		del fig
-
-		logger.lognl( f'saved figure {frame}.png' )
+		logger.log( f"{C01}" )
+		logger.log( f"{C12}" )
+		logger.log( f"{D01}" )
+		logger.log( f"{D12}" )
+		logger.log( f"{H01}" )
+		logger.log( f"{H12}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 0:6 ] ]}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 6:12 ] ]}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 12:18 ] ]}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 18:24 ] ]}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 24:30 ] ]}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 30:36 ] ]}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 0:6 ] ]}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 6:12 ] ]}" )
+		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 12:18 ] ]}" )
+		logger.lognl( "" )
 		logger.save_at( folder )
 
+		print( f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {mpc_controller.times[ -1 ]:.6f}" )
+
+		# fig = plot(
+		# 		mpc = mpc_controller,
+		# 		full_trajectory = trajectory,
+		# 		c_frame = frame,
+		# 		n_frame = n_frames,
+		# 		volume = area,
+		# 		max_ux = max_actuation_x,
+		# 		max_ut = max_actuation_t,
+		# 		floor_z = floor_depth,
+		# 		f_eval_record = previous_nfeval_record,
+		# 		H01_record = previous_H01_record,
+		# 		H12_record = previous_H12_record,
+		# 		crop_history = True
+		# 		)
+		#
+		# plt.savefig( f'{folder}/{frame}.png' )
+		# plt.close( 'all' )
+		# del fig
+
 	# create gif from frames
-	logger.log( 'creating gif ...' )
-	names = [ image for image in glob( f"{folder}/*.png" ) ]
-	names.sort( key = lambda x: path.getmtime( x ) )
-	frames = [ Image.open( name ) for name in names ]
-	frame_one = frames[ 0 ]
-	frame_one.save(
-			f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True
-			)
-	logger.log( f'saved at {folder}/animation.gif' )
+	# logger.log( 'creating gif ...' )
+	# names = [ image for image in glob( f"{folder}/*.png" ) ]
+	# names.sort( key = lambda x: path.getmtime( x ) )
+	# frames = [ Image.open( name ) for name in names ]
+	# frame_one = frames[ 0 ]
+	# frame_one.save(
+	# 		f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True
+	# 		)
+	# logger.log( f'saved at {folder}/animation.gif' )
