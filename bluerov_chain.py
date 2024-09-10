@@ -6,7 +6,6 @@ from time import time
 from cycler import cycler
 from numpy import array, cos, cross, diag, diff, inf, meshgrid, nan, ones, pi, sin, tan
 from numpy.linalg import inv, norm
-from PIL import Image
 from scipy.spatial.transform import Rotation
 
 from calc_catenary_from_ext_points import *
@@ -641,7 +640,8 @@ if __name__ == "__main__":
 
 	ti = perf_counter()
 
-	n_frames = 1000
+	n_frames = 2000
+	tolerance = 1e-6
 	time_step = 0.01
 	n_robots = 3
 	state = zeros( (12 * n_robots,) )
@@ -652,7 +652,7 @@ if __name__ == "__main__":
 	area = array( [ [ -3, 3 ], [ -3, 3 ], [ -2, 4 ] ] )
 	max_actuation_x = 300.
 	max_actuation_t = 1.
-	floor_depth = 3.
+	floor_depth = 2.
 	tunnel_ceiling_depth = 1.
 	tunnel_floor_depth = 2.
 	tunnel_left_wall = 1.
@@ -667,15 +667,16 @@ if __name__ == "__main__":
 								 (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 12) ]
 
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
-	trajectory[ :, 0, 2 ] = 1.3 * cos( 2.5 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.3
+	trajectory[ :, 0, 2 ] = 1.5 * cos( 1.25 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.5
+
+	max_required_speed = (
+				max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
+	print( f'{max_required_speed=}' )
 
 	# plt.plot( trajectory[:, 0, 2] )
 	# plt.plot( norm(diff(trajectory[:, 0, :3], axis=0), axis=1) / time_step )
 	# plt.show()
 	# exit()
-
-	max_required_speed = max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step
-	print(f'{max_required_speed=}')
 
 	model_kwargs = {
 			"weight"                  : 11.5 * array( [ 0., 0., 9.81 ] ),
@@ -714,7 +715,7 @@ if __name__ == "__main__":
 			bluerov_chain,
 			horizon,
 			trajectory,
-			tolerance = 1e-3,
+			tolerance = tolerance,
 			time_steps_per_actuation = time_steps_per_act,
 			pose_weight_matrix = pose_weight_matrix,
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
@@ -724,12 +725,12 @@ if __name__ == "__main__":
 
 	# mpc_controller.verbose = True
 
-	dp_lb = 0.2
-	dp_ub = 2.8
+	dp_lb = 0.4
+	dp_ub = 2.6
 	dr_lb = -inf
-	dr_ub = 2.8
+	dr_ub = 2.6
 	v_lb = -inf
-	v_ub = 5.
+	v_ub = 3.
 
 	# -----0---1---2----3----4----5----6--7--8-
 	# -----H01-H12-dp01-dp12-dr01-dr12-v0-v1-v2
@@ -752,10 +753,12 @@ if __name__ == "__main__":
 	previous_H01_record = [ 0. ]
 	previous_H12_record = [ 0. ]
 
-	logger = Logger(False)
+	logger = Logger( False )
 
 	folder = (f'./plots/{three_robots_chain.__name__}_'
 						f'{int( time() )}')
+
+	print( folder )
 
 	if path.exists( folder ):
 		files_in_dir = glob( f'{folder}/*' )
@@ -800,6 +803,11 @@ if __name__ == "__main__":
 		mpc_controller.apply_result()
 		bluerov_chain.step()
 
+		if not mpc_controller.raw_result.success and mpc_controller.tolerance < 1:
+			mpc_controller.tolerance *= 10
+		elif mpc_controller.raw_result.success and mpc_controller.tolerance > tolerance:
+			mpc_controller.tolerance /= 10
+
 		try:
 			C01, D01, H01 = get_catenary_param(
 					bluerov_chain.state[ 2 ] - bluerov_chain.state[ 8 ],
@@ -818,7 +826,6 @@ if __name__ == "__main__":
 			D12 = None
 			H01 = None
 			H12 = None
-
 
 		logger.log( f"{frame}" )
 		logger.log( f"{perf_counter() - ti:.6f}" )
@@ -842,34 +849,20 @@ if __name__ == "__main__":
 		logger.lognl( "" )
 		logger.save_at( folder )
 
-		print( f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {mpc_controller.times[ -1 ]:.6f}" )
+		print(
+			f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {mpc_controller.times[ -1 ]:.6f} - "
+			f"{mpc_controller.tolerance} - {mpc_controller.raw_result.success}"
+			)
 
-		# fig = plot(
-		# 		mpc = mpc_controller,
-		# 		full_trajectory = trajectory,
-		# 		c_frame = frame,
-		# 		n_frame = n_frames,
-		# 		volume = area,
-		# 		max_ux = max_actuation_x,
-		# 		max_ut = max_actuation_t,
-		# 		floor_z = floor_depth,
-		# 		f_eval_record = previous_nfeval_record,
-		# 		H01_record = previous_H01_record,
-		# 		H12_record = previous_H12_record,
-		# 		crop_history = True
-		# 		)
-		#
-		# plt.savefig( f'{folder}/{frame}.png' )
-		# plt.close( 'all' )
-		# del fig
+# fig = plot(	# 		mpc = mpc_controller,	# 		full_trajectory = trajectory,	# 		c_frame =	#
+# frame,	# 		n_frame = n_frames,	# 		volume = area,	# 		max_ux = max_actuation_x,
+# 		max_ut = max_actuation_t,	# 		floor_z = floor_depth,	# 		f_eval_record =
+# 		previous_nfeval_record,	# 		H01_record = previous_H01_record,	# 		H12_record =
+# 		previous_H12_record,	# 		crop_history = True	# 		)	#	# plt.savefig( f'{folder}/{
+# 		frame}.png' )	# plt.close( 'all' )	# del fig
 
-	# create gif from frames
-	# logger.log( 'creating gif ...' )
-	# names = [ image for image in glob( f"{folder}/*.png" ) ]
-	# names.sort( key = lambda x: path.getmtime( x ) )
-	# frames = [ Image.open( name ) for name in names ]
-	# frame_one = frames[ 0 ]
-	# frame_one.save(
-	# 		f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True
-	# 		)
-	# logger.log( f'saved at {folder}/animation.gif' )
+# create gif from frames	# logger.log( 'creating gif ...' )	# names = [ image for image in glob(
+# f"{folder}/*.png" ) ]	# names.sort( key = lambda x: path.getmtime( x ) )	# frames = [
+# Image.open( name ) for name in names ]	# frame_one = frames[ 0 ]	# frame_one.save(	# 		f"{
+# folder}/animation.gif", append_images = frames, loop = True, save_all = True	# 		)	#
+# logger.log( f'saved at {folder}/animation.gif' )
