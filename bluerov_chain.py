@@ -641,7 +641,7 @@ if __name__ == "__main__":
 	ti = perf_counter()
 
 	n_frames = 2000
-	tolerance = 1e-6
+	tolerance = 1e-4
 	time_step = 0.01
 	n_robots = 3
 	state = zeros( (12 * n_robots,) )
@@ -652,7 +652,7 @@ if __name__ == "__main__":
 	area = array( [ [ -3, 3 ], [ -3, 3 ], [ -2, 4 ] ] )
 	max_actuation_x = 300.
 	max_actuation_t = 1.
-	floor_depth = 2.
+	floor_depth = 3.5
 	tunnel_ceiling_depth = 1.
 	tunnel_floor_depth = 2.
 	tunnel_left_wall = 1.
@@ -726,9 +726,9 @@ if __name__ == "__main__":
 	# mpc_controller.verbose = True
 
 	dp_lb = 0.4
-	dp_ub = 2.6
+	dp_ub = 2.8
 	dr_lb = -inf
-	dr_ub = 2.6
+	dr_ub = 2.8
 	v_lb = -inf
 	v_ub = 3.
 
