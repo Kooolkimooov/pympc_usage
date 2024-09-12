@@ -652,7 +652,7 @@ if __name__ == "__main__":
 	area = array( [ [ -3, 3 ], [ -3, 3 ], [ -2, 4 ] ] )
 	max_actuation_x = 300.
 	max_actuation_t = 1.
-	floor_depth = 3.5
+	floor_depth = 3.00001
 	tunnel_ceiling_depth = 1.
 	tunnel_floor_depth = 2.
 	tunnel_left_wall = 1.
@@ -670,7 +670,7 @@ if __name__ == "__main__":
 	trajectory[ :, 0, 2 ] = 1.5 * cos( 1.25 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.5
 
 	max_required_speed = (
-				max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
+			max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
 	print( f'{max_required_speed=}' )
 
 	# plt.plot( trajectory[:, 0, 2] )
@@ -715,6 +715,8 @@ if __name__ == "__main__":
 			bluerov_chain,
 			horizon,
 			trajectory,
+			objective = three_robot_chain_objective,
+			objective_weight = 10.,
 			tolerance = tolerance,
 			time_steps_per_actuation = time_steps_per_act,
 			pose_weight_matrix = pose_weight_matrix,
@@ -732,16 +734,18 @@ if __name__ == "__main__":
 	v_lb = -inf
 	v_ub = 3.
 
+	mpc_controller.bounds = Bounds(
+			array( [ [ -20, -20, -20, -.1, -.1, -.1 ] ] ).repeat( n_robots, axis = 0 ).flatten(),
+			array( [ [ 20, 20, 20, .1, .1, .1 ] ] ).repeat( n_robots, axis = 0 ).flatten()
+			)
+
+
 	# -----0---1---2----3----4----5----6--7--8-
 	# -----H01-H12-dp01-dp12-dr01-dr12-v0-v1-v2
 
 	lb_base = [ -inf, -inf, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb ]
 	ub_base = [ floor_depth, floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub ]
 
-	mpc_controller.bounds = Bounds(
-			array( [ [ -20, -20, -20, -.1, -.1, -.1 ] ] ).repeat( n_robots, axis = 0 ).flatten(),
-			array( [ [ 20, 20, 20, .1, .1, .1 ] ] ).repeat( n_robots, axis = 0 ).flatten()
-			)
 
 	lb = [ lb_base ] * horizon
 	ub = [ ub_base ] * horizon
@@ -793,6 +797,7 @@ if __name__ == "__main__":
 	logger.log( "actuation_r0" )
 	logger.log( "actuation_r1" )
 	logger.log( "actuation_r2" )
+	logger.log( "objective" )
 	logger.lognl( "" )
 
 	for frame in range( n_frames ):
@@ -846,13 +851,23 @@ if __name__ == "__main__":
 		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 0:6 ] ]}" )
 		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 6:12 ] ]}" )
 		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 12:18 ] ]}" )
+		logger.log(
+				f"{mpc_controller.objective_weight * three_robot_chain_objective(
+						mpc_controller.predict(
+								(
+										mpc_controller.result.cumsum( axis = 0 ) + 
+										mpc_controller.model.actuation).repeat( mpc_controller.time_steps_per_actuation, axis = 0 )
+								),
+						mpc_controller.result,
+						)}"
+				)
 		logger.lognl( "" )
 		logger.save_at( folder )
 
 		print(
-			f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {mpc_controller.times[ -1 ]:.6f} - "
-			f"{mpc_controller.tolerance} - {mpc_controller.raw_result.success}"
-			)
+				f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {mpc_controller.times[ -1 ]:.6f} - "
+				f"{mpc_controller.tolerance} - {mpc_controller.raw_result.success}"
+				)
 
 # fig = plot(	# 		mpc = mpc_controller,	# 		full_trajectory = trajectory,	# 		c_frame =	#
 # frame,	# 		n_frame = n_frames,	# 		volume = area,	# 		max_ux = max_actuation_x,

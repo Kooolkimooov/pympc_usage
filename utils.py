@@ -1,5 +1,5 @@
 from numpy import ndarray, zeros
-from scipy.optimize import NonlinearConstraint
+from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint
 
 
 class Logger:
@@ -94,5 +94,9 @@ def serialize_others( obj: any ) -> str:
 		return obj.__name__
 	if isinstance( obj, ndarray ):
 		return obj.tolist()
+	if isinstance( obj, LinearConstraint ):
+		return obj.__dict__
 	if isinstance( obj, NonlinearConstraint ):
+		return obj.__dict__
+	if isinstance( obj, Bounds ):
 		return obj.__dict__
