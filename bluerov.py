@@ -293,7 +293,7 @@ if __name__ == "__main__":
 		plt.close( 'all' )
 		del fig
 
-		logger.lognl( f'saved figure {frame}.png' )
+		logger.lognl( f'savd figure {frame}.png' )
 		logger.save_at( folder )
 
 	# create gif from frames
