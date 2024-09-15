@@ -229,6 +229,7 @@ if __name__ == "__main__":
 	state[ 6 ] = 2.5
 	state[ 12 ] = 3.
 	state[ 18 ] = 3.5
+	state[ 20 ] = -1.
 	actuation = zeros( (6 * (n_robots - 1),) )
 	area = array( [ [ -3, 3 ], [ -3, 3 ], [ -2, 4 ] ] )
 	max_actuation_x = 300.
