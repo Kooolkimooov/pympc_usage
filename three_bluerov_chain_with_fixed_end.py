@@ -149,7 +149,7 @@ def three_robot_chain_objective( trajectory: ndarray, actuation: ndarray ):
 
 
 def constraint_f( candidate_actuation_derivative ):
-	global mpc_controller
+	global three_bluerov_chain_mpc
 
 	candidate_actuation = candidate_actuation_derivative.reshape(
 			mpc_controller.result_shape
@@ -296,7 +296,7 @@ if __name__ == "__main__":
 			record = True
 			)
 
-	mpc_controller = MPC(
+	three_bluerov_chain_mpc = MPC(
 			bluerov_chain,
 			horizon,
 			trajectory,
@@ -312,7 +312,7 @@ if __name__ == "__main__":
 
 	# mpc_controller.verbose = True
 
-	mpc_controller.bounds = Bounds(
+	three_bluerov_chain_mpc.bounds = Bounds(
 			array( [ [ -20, -20, -20, -.1, -.1, -.1 ] ] ).repeat( n_robots-1, axis = 0 ).flatten(),
 			array( [ [ 20, 20, 20, .1, .1, .1 ] ] ).repeat( n_robots-1, axis = 0 ).flatten()
 			)
@@ -335,7 +335,7 @@ if __name__ == "__main__":
 	lb = [ lb_base ] * horizon
 	ub = [ ub_base ] * horizon
 
-	mpc_controller.constraints = (
+	three_bluerov_chain_mpc.constraints = (
 			NonlinearConstraint( constraint_f, array( lb ).flatten(), array( ub ).flatten() ),)
 
 	previous_nfeval_record = [ 0 ]
@@ -362,7 +362,7 @@ if __name__ == "__main__":
 		mkdir( folder )
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( bluerov_chain.__dict__ | mpc_controller.__dict__, f, default = serialize_others )
+		dump( bluerov_chain.__dict__ | three_bluerov_chain_mpc.__dict__, f, default = serialize_others )
 
 	logger.log( "index" )
 	logger.log( "sim_time" )
@@ -393,16 +393,16 @@ if __name__ == "__main__":
 
 	for frame in range( n_frames ):
 
-		mpc_controller.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
+		three_bluerov_chain_mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
 
-		mpc_controller.compute_actuation()
-		mpc_controller.apply_result()
+		three_bluerov_chain_mpc.compute_actuation()
+		three_bluerov_chain_mpc.apply_result()
 		bluerov_chain.step()
 
-		if not mpc_controller.raw_result.success and mpc_controller.tolerance < 1:
-			mpc_controller.tolerance *= 10
-		elif mpc_controller.raw_result.success and mpc_controller.tolerance > tolerance:
-			mpc_controller.tolerance /= 10
+		if not three_bluerov_chain_mpc.raw_result.success and three_bluerov_chain_mpc.tolerance < 1:
+			three_bluerov_chain_mpc.tolerance *= 10
+		elif three_bluerov_chain_mpc.raw_result.success and three_bluerov_chain_mpc.tolerance > tolerance:
+			three_bluerov_chain_mpc.tolerance /= 10
 
 		try:
 			C01, D01, H01 = get_catenary_param(
@@ -433,8 +433,8 @@ if __name__ == "__main__":
 
 		logger.log( f"{frame}" )
 		logger.log( f"{perf_counter() - ti:.6f}" )
-		logger.log( f"{mpc_controller.times[ -1 ]:.6f}" )
-		logger.log( f"{mpc_controller.raw_result.success}" )
+		logger.log( f"{three_bluerov_chain_mpc.times[ -1 ]:.6f}" )
+		logger.log( f"{three_bluerov_chain_mpc.raw_result.success}" )
 		logger.log( f"{C01}" )
 		logger.log( f"{C12}" )
 		logger.log( f"{C23}" )
@@ -456,15 +456,15 @@ if __name__ == "__main__":
 		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 6:12 ] ]}" )
 		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 12:18 ] ]}" )
 		logger.log(
-				f"{mpc_controller.objective_weight * three_robot_chain_objective(
-						mpc_controller.predict(
-								(mpc_controller.result.cumsum( axis = 0 ) + mpc_controller.model.actuation).repeat( mpc_controller.time_steps_per_actuation, axis = 0 )
-								), mpc_controller.result, )}"
+				f"{three_bluerov_chain_mpc.objective_weight * three_robot_chain_objective(
+						three_bluerov_chain_mpc.predict(
+								(three_bluerov_chain_mpc.result.cumsum( axis = 0 ) + three_bluerov_chain_mpc.model.actuation).repeat( three_bluerov_chain_mpc.time_steps_per_actuation, axis = 0 )
+								), three_bluerov_chain_mpc.result, )}"
 				)
 		logger.lognl( "" )
 		logger.save_at( folder )
 
 		print(
-				f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {mpc_controller.times[ -1 ]:.6f} - "
-				f"{mpc_controller.tolerance} - {mpc_controller.raw_result.success}"
+				f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {three_bluerov_chain_mpc.times[ -1 ]:.6f} - "
+				f"{three_bluerov_chain_mpc.tolerance} - {three_bluerov_chain_mpc.raw_result.success}"
 				)

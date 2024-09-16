@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# author: Vincent Hugel
+# author: Vincent Hugel @ COSMER | UTLN
 
 import matplotlib.pyplot as plt
 import numpy as np
