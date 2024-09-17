@@ -51,6 +51,7 @@ class Model:
 			time_step: float,
 			initial_state: ndarray,
 			initial_actuation: ndarray,
+			kwargs: dict = None,
 			record: bool = False
 			):
 
@@ -62,13 +63,18 @@ class Model:
 		self.state = deepcopy( initial_state )
 		self.actuation = deepcopy( initial_actuation )
 
+		if kwargs is None:
+			self.kwargs = {}
+		else:
+			self.kwargs = kwargs
+
 		self.record = record
 		if self.record:
 			self.previous_states = [ deepcopy( self.state ) ]
 			self.previous_actuations = [ deepcopy( self.actuation ) ]
 
 	def dynamics( self, state: ndarray, actuation: ndarray ) -> ndarray:
-		return self.model_dynamics( state, actuation )
+		return self.model_dynamics( state, actuation, **self.kwargs )
 
 	def step( self ):
 		self.state = rungeKutta4( self.dynamics, self.time_step, self.state, self.actuation )
