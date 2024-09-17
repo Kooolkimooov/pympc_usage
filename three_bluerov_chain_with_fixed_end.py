@@ -8,7 +8,7 @@ from numpy.linalg import inv, norm
 
 from calc_catenary_from_ext_points import *
 from mpc import *
-from utils import generate_trajectory, Logger, serialize_others
+from utils import check, generate_trajectory, Logger, serialize_others
 
 
 def compute_rotation_matrix( phi: float, theta: float, psi: float ) -> ndarray:
@@ -59,11 +59,7 @@ def build_inertial_matrix(
 
 
 def compute_hydrostatic_force(
-		weight: ndarray,
-		buoyancy: ndarray,
-		center_of_mass: ndarray,
-		center_of_volume: ndarray,
-		rotation_matrix
+		weight: ndarray, buoyancy: ndarray, center_of_mass: ndarray, center_of_volume: ndarray, rotation_matrix
 		) -> ndarray:
 	force = zeros( 6 )
 	force[ :3 ] = rotation_matrix.T @ (weight + buoyancy)
@@ -149,22 +145,22 @@ def three_robot_chain_objective( trajectory: ndarray, actuation: ndarray ):
 
 
 def constraint_f( candidate_actuation_derivative ):
-	global three_bluerov_chain_mpc
+	global three_bluerov_chain_with_fixed_end_mpc
 
 	candidate_actuation = candidate_actuation_derivative.reshape(
-			mpc_controller.result_shape
-			).cumsum( axis = 0 ) + mpc_controller.model.actuation
+			three_bluerov_chain_with_fixed_end_mpc.result_shape
+			).cumsum( axis = 0 ) + three_bluerov_chain_with_fixed_end_mpc.model.actuation
 	candidate_actuation = candidate_actuation.repeat(
-			mpc_controller.time_steps_per_actuation, axis = 0
+			three_bluerov_chain_with_fixed_end_mpc.time_steps_per_actuation, axis = 0
 			)
 
-	predicted_trajectory = mpc_controller.predict( candidate_actuation, with_speed = True )
+	predicted_trajectory = three_bluerov_chain_with_fixed_end_mpc.predict( candidate_actuation, with_speed = True )
 
 	# 3 constraints on cables (lowest points),
 	# 6 on inter robot_distance (3 horizontal, 2 3d),
 	# 3 on robot speed
 	n_constraints = 3 + 6 + 3
-	constraint = zeros( (mpc_controller.horizon, n_constraints) )
+	constraint = zeros( (three_bluerov_chain_with_fixed_end_mpc.horizon, n_constraints) )
 
 	# z position of robots 0 and 1; we add H afterward
 	constraint[ :, 0 ] = predicted_trajectory[ :, 0, 2 ]
@@ -247,8 +243,7 @@ if __name__ == "__main__":
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
 	trajectory[ :, 0, 2 ] = 1.5 * cos( 1.25 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.5
 
-	max_required_speed = (
-			max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
+	max_required_speed = (max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
 	print( f'{max_required_speed=}' )
 
 	# plt.plot( trajectory[:, 0, 2] )
@@ -287,17 +282,12 @@ if __name__ == "__main__":
 
 	final_cost_weight = 10.
 
-	bluerov_chain = Model(
-			three_robots_chain_with_fixed_end,
-			time_step,
-			state,
-			actuation,
-			kwargs = model_kwargs,
-			record = True
+	three_bluerov_chain_with_fixed_end_model = Model(
+			three_robots_chain_with_fixed_end, time_step, state, actuation, kwargs = model_kwargs, record = True
 			)
 
-	three_bluerov_chain_mpc = MPC(
-			bluerov_chain,
+	three_bluerov_chain_with_fixed_end_mpc = MPC(
+			three_bluerov_chain_with_fixed_end_model,
 			horizon,
 			trajectory,
 			objective = three_robot_chain_objective,
@@ -310,11 +300,11 @@ if __name__ == "__main__":
 			record = True
 			)
 
-	# mpc_controller.verbose = True
+	# three_bluerov_chain_with_fixed_end_mpc.verbose = True
 
-	three_bluerov_chain_mpc.bounds = Bounds(
-			array( [ [ -20, -20, -20, -.1, -.1, -.1 ] ] ).repeat( n_robots-1, axis = 0 ).flatten(),
-			array( [ [ 20, 20, 20, .1, .1, .1 ] ] ).repeat( n_robots-1, axis = 0 ).flatten()
+	three_bluerov_chain_with_fixed_end_mpc.bounds = Bounds(
+			array( [ [ -20, -20, -20, -.1, -.1, -.1 ] ] ).repeat( n_robots - 1, axis = 0 ).flatten(),
+			array( [ [ 20, 20, 20, .1, .1, .1 ] ] ).repeat( n_robots - 1, axis = 0 ).flatten()
 			)
 
 	dp_lb = 0.4
@@ -328,14 +318,12 @@ if __name__ == "__main__":
 	# -----H01-H12-H23-dp01-dp12-dp23-dr01-dr12-dr23-v0-v1-v2
 
 	lb_base = [ -inf, -inf, -inf, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb ]
-	ub_base = [ floor_depth, floor_depth, floor_depth, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub,
-							v_ub,
-							v_ub, v_ub ]
+	ub_base = [ floor_depth, floor_depth, floor_depth, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub ]
 
 	lb = [ lb_base ] * horizon
 	ub = [ ub_base ] * horizon
 
-	three_bluerov_chain_mpc.constraints = (
+	three_bluerov_chain_with_fixed_end_mpc.constraints = (
 			NonlinearConstraint( constraint_f, array( lb ).flatten(), array( ub ).flatten() ),)
 
 	previous_nfeval_record = [ 0 ]
@@ -345,24 +333,15 @@ if __name__ == "__main__":
 
 	logger = Logger( False )
 
-	folder = (f'./plots/{three_robots_chain_with_fixed_end.__name__}_'
+	folder = (f'./export/{three_robots_chain_with_fixed_end.__name__}_'
 						f'{int( time() )}')
 
 	print( folder )
-
-	if path.exists( folder ):
-		files_in_dir = glob( f'{folder}/*' )
-		if len( files_in_dir ) > 0:
-			if input( f"{folder} contains data. Remove? (y/n) " ) == 'y':
-				for fig in files_in_dir:
-					remove( fig )
-			else:
-				exit()
-	else:
-		mkdir( folder )
+	check(folder)
+	check(f'{folder}/data')
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( bluerov_chain.__dict__ | three_bluerov_chain_mpc.__dict__, f, default = serialize_others )
+		dump( three_bluerov_chain_with_fixed_end_mpc.__dict__, f, default = serialize_others )
 
 	logger.log( "index" )
 	logger.log( "sim_time" )
@@ -393,31 +372,46 @@ if __name__ == "__main__":
 
 	for frame in range( n_frames ):
 
-		three_bluerov_chain_mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
+		three_bluerov_chain_with_fixed_end_mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
+		three_bluerov_chain_with_fixed_end_mpc.compute_actuation()
+		three_bluerov_chain_with_fixed_end_mpc.apply_result()
+		three_bluerov_chain_with_fixed_end_model.step()
 
-		three_bluerov_chain_mpc.compute_actuation()
-		three_bluerov_chain_mpc.apply_result()
-		bluerov_chain.step()
+		if (
+				not three_bluerov_chain_with_fixed_end_mpc.raw_result.success and
+				three_bluerov_chain_with_fixed_end_mpc.tolerance < 1):
+			three_bluerov_chain_with_fixed_end_mpc.tolerance *= 10
+		elif (
+				three_bluerov_chain_with_fixed_end_mpc.raw_result.success and three_bluerov_chain_with_fixed_end_mpc.tolerance
+				> tolerance):
+			three_bluerov_chain_with_fixed_end_mpc.tolerance /= 10
 
-		if not three_bluerov_chain_mpc.raw_result.success and three_bluerov_chain_mpc.tolerance < 1:
-			three_bluerov_chain_mpc.tolerance *= 10
-		elif three_bluerov_chain_mpc.raw_result.success and three_bluerov_chain_mpc.tolerance > tolerance:
-			three_bluerov_chain_mpc.tolerance /= 10
+		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
+			dump( three_bluerov_chain_with_fixed_end_mpc.__dict__, f, default = serialize_others )
 
 		try:
 			C01, D01, H01 = get_catenary_param(
-					bluerov_chain.state[ 2 ] - bluerov_chain.state[ 8 ],
-					norm( bluerov_chain.state[ 0:2 ] - bluerov_chain.state[ 6:8 ] ),
+					three_bluerov_chain_with_fixed_end_model.state[ 2 ] - three_bluerov_chain_with_fixed_end_model.state[ 8 ],
+					norm(
+							three_bluerov_chain_with_fixed_end_model.state[ 0:2 ] - three_bluerov_chain_with_fixed_end_model.state[
+																																			6:8 ]
+							),
 					3
 					)
 			C12, D12, H12 = get_catenary_param(
-					bluerov_chain.state[ 8 ] - bluerov_chain.state[ 14 ],
-					norm( bluerov_chain.state[ 6:8 ] - bluerov_chain.state[ 12:14 ] ),
+					three_bluerov_chain_with_fixed_end_model.state[ 8 ] - three_bluerov_chain_with_fixed_end_model.state[ 14 ],
+					norm(
+							three_bluerov_chain_with_fixed_end_model.state[ 6:8 ] - three_bluerov_chain_with_fixed_end_model.state[
+																																			12:14 ]
+							),
 					3
 					)
 			C23, D23, H23 = get_catenary_param(
-					bluerov_chain.state[ 14 ] - bluerov_chain.state[ 20 ],
-					norm( bluerov_chain.state[ 12:14 ] - bluerov_chain.state[ 18:20 ] ),
+					three_bluerov_chain_with_fixed_end_model.state[ 14 ] - three_bluerov_chain_with_fixed_end_model.state[ 20 ],
+					norm(
+							three_bluerov_chain_with_fixed_end_model.state[ 12:14 ] - three_bluerov_chain_with_fixed_end_model.state[
+																																				18:20 ]
+							),
 					3
 					)
 		except:
@@ -433,8 +427,12 @@ if __name__ == "__main__":
 
 		logger.log( f"{frame}" )
 		logger.log( f"{perf_counter() - ti:.6f}" )
-		logger.log( f"{three_bluerov_chain_mpc.times[ -1 ]:.6f}" )
-		logger.log( f"{three_bluerov_chain_mpc.raw_result.success}" )
+		logger.log(
+				f"{three_bluerov_chain_with_fixed_end_mpc.times[ -1 ]:.6f}"
+				)
+		logger.log(
+				f"{three_bluerov_chain_with_fixed_end_mpc.raw_result.success}"
+				)
 		logger.log( f"{C01}" )
 		logger.log( f"{C12}" )
 		logger.log( f"{C23}" )
@@ -444,27 +442,30 @@ if __name__ == "__main__":
 		logger.log( f"{H01}" )
 		logger.log( f"{H12}" )
 		logger.log( f"{H23}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 0:6 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 6:12 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 12:18 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 18:24 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 24:30 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 30:36 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 36:42 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.state[ 42:48 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 0:6 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 6:12 ] ]}" )
-		logger.log( f"{[ float( v ) for v in bluerov_chain.actuation[ 12:18 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 0:6 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 6:12 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 12:18 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 18:24 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 24:30 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 30:36 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 36:42 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 42:48 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.actuation[ 0:6 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.actuation[ 6:12 ] ]}" )
+		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.actuation[ 12:18 ] ]}" )
 		logger.log(
-				f"{three_bluerov_chain_mpc.objective_weight * three_robot_chain_objective(
-						three_bluerov_chain_mpc.predict(
-								(three_bluerov_chain_mpc.result.cumsum( axis = 0 ) + three_bluerov_chain_mpc.model.actuation).repeat( three_bluerov_chain_mpc.time_steps_per_actuation, axis = 0 )
-								), three_bluerov_chain_mpc.result, )}"
+				f"{three_bluerov_chain_with_fixed_end_mpc.objective_weight * three_robot_chain_objective(
+						three_bluerov_chain_with_fixed_end_mpc.predict(
+								(three_bluerov_chain_with_fixed_end_mpc.result.cumsum(
+										axis = 0
+										) + three_bluerov_chain_with_fixed_end_mpc.model.actuation).repeat( three_bluerov_chain_with_fixed_end_mpc.time_steps_per_actuation, axis = 0 )
+								), three_bluerov_chain_with_fixed_end_mpc.result, )}"
 				)
 		logger.lognl( "" )
 		logger.save_at( folder )
 
 		print(
-				f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {three_bluerov_chain_mpc.times[ -1 ]:.6f} - "
-				f"{three_bluerov_chain_mpc.tolerance} - {three_bluerov_chain_mpc.raw_result.success}"
+				f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {three_bluerov_chain_with_fixed_end_mpc.times[ -1 ]:.6f} - "
+				f"{three_bluerov_chain_with_fixed_end_mpc.tolerance} - "
+				f"{three_bluerov_chain_with_fixed_end_mpc.raw_result.success}"
 				)
