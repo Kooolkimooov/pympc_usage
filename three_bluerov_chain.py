@@ -4,7 +4,7 @@ from time import time
 from numpy import array, cos, diff, inf, pi, r_
 from numpy.linalg import norm
 
-from bluerov import Bluerov
+from bluerov import Bluerov, Bluerov3DOA
 from calc_catenary_from_ext_points import *
 from mpc import *
 from utils import check, generate_trajectory, Logger, serialize_others
@@ -72,14 +72,54 @@ class ChainOf3( Bluerov ):
 		"""
 		state_derivative = zeros( state.shape )
 
-		state_derivative[ self.br0_state ] = super().__call__(
-				state[ self.br0_state ], actuation[ self.br0_actuation ]
+		state_derivative[ self.br0_state ] = Bluerov.__call__(
+				self, state[ self.br0_state ], actuation[ self.br0_actuation ]
 				)
-		state_derivative[ self.br1_state ] = super().__call__(
-				state[ self.br1_state ], actuation[ self.br1_actuation ]
+		state_derivative[ self.br1_state ] = Bluerov.__call__(
+				self, state[ self.br1_state ], actuation[ self.br1_actuation ]
 				)
-		state_derivative[ self.br2_state ] = super().__call__(
-				state[ self.br2_state ], actuation[ self.br2_actuation ]
+		state_derivative[ self.br2_state ] = Bluerov.__call__(
+				self, state[ self.br2_state ], actuation[ self.br2_actuation ]
+				)
+
+		return state_derivative
+
+
+class ChainOf33DOA( ChainOf3, Bluerov3DOA ):
+	actuation_size = 9
+
+	br0_actuation_start = 0
+	br0_actuation = slice( 0, 3 )
+	br0_linear_actuation = slice( 0, 3 )
+	br0_angular_actuation = slice( 0, 0 )
+
+	br1_actuation_start = 3
+	br1_actuation = slice( 3, 6 )
+	br1_linear_actuation = slice( 3, 6 )
+	br1_angular_actuation = slice( 0, 0 )
+
+	br2_actuation_start = 6
+	br2_actuation = slice( 6, 9 )
+	br2_linear_actuation = slice( 6, 9 )
+	br2_angular_actuation = slice( 0, 0 )
+
+	def __call__( self, state: ndarray, actuation: ndarray ) -> ndarray:
+		"""
+		evalutes the dynamics of each robot of the chain
+		:param state: current state of the system
+		:param actuation: current actuation of the system
+		:return: state derivative of the system
+		"""
+		state_derivative = zeros( state.shape )
+
+		state_derivative[ self.br0_state ] = Bluerov3DOA.__call__(
+				self, state[ self.br0_state ], actuation[ self.br0_actuation ]
+				)
+		state_derivative[ self.br1_state ] = Bluerov3DOA.__call__(
+				self, state[ self.br1_state ], actuation[ self.br1_actuation ]
+				)
+		state_derivative[ self.br2_state ] = Bluerov3DOA.__call__(
+				self, state[ self.br2_state ], actuation[ self.br2_actuation ]
 				)
 
 		return state_derivative
@@ -99,7 +139,7 @@ def three_robot_chain_constraint( candidate_actuation_derivative ):
 
 	candidate_actuation = candidate_actuation_derivative.reshape(
 			three_bluerov_chain_mpc.result_shape
-			).cumsum( axis = 0 ) + three_bluerov_chain_mpc.model.actuation
+			).cumsum( axis = 0 ) * three_bluerov_chain_mpc.time_step + three_bluerov_chain_mpc.model.actuation
 	candidate_actuation = candidate_actuation.repeat(
 			three_bluerov_chain_mpc.time_steps_per_actuation, axis = 0
 			)

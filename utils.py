@@ -114,20 +114,21 @@ def check( folder: str, recursive = False ) -> int:
 						print( f'removing {object}' )
 						remove( object )
 						n -= 1
-			else:
-				return n
 	else:
 		mkdir( folder )
-		return n
+
+	return n
 
 
-def gif_from_pngs( folder: str ):
+def gif_from_pngs( folder: str, duration: float = None ):
+	if duration is None:
+		duration = 33.
 	names = [ image for image in glob( f"{folder}/*.png" ) ]
 	names.sort( key = lambda x: path.getmtime( x ) )
 	frames = [ Image.open( name ) for name in names ]
 	frame_one = frames[ 0 ]
 	frame_one.save(
-			f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True
+			f"{folder}/animation.gif", append_images = frames, loop = True, save_all = True, duration = duration
 			)
 
 
@@ -142,7 +143,9 @@ def serialize_others( obj: any ):
 		return str( obj )
 	try:
 		output = { }
-		for base in obj.__class__.__bases__:
+		# class attribute priority is for left most class in inheritance list,
+		# we reverse the __bases__ list to get the correct order
+		for base in reversed( get_all_bases( obj.__class__ ) ):
 			output |= base.__dict__
 		output |= obj.__class__.__dict__
 		output |= obj.__dict__
@@ -150,6 +153,15 @@ def serialize_others( obj: any ):
 		return output
 	except:
 		return 'unable to process'
+
+
+def get_all_bases( obj: any ):
+	bases = obj.__bases__
+	for base in bases:
+		if base.__name__ == 'object':
+			continue
+		bases += get_all_bases( base )
+	return bases
 
 
 def print_dict( d: dict, prefix: str = '' ):
