@@ -15,6 +15,7 @@ class MPC:
 			horizon: int,
 			target_trajectory: ndarray,
 			objective: callable = None,
+			time_step: float = None,
 			time_steps_per_actuation: int = 1,
 			guess_from_last_solution: bool = True,
 			tolerance: float = 1e-6,
@@ -28,14 +29,41 @@ class MPC:
 			record: bool = False,
 			verbose: bool = False
 			):
-
-		assert objective is None or list( signature( objective ).parameters ) == [ 'trajectory',
-																																							 'actuation' ]
+		"""
+		PREDICTION ASSUMES THAT THE MODELS STATE IS X = [POSE, POSE_DERIVATIVE]
+		:param model: model of the system
+		:param horizon: prediction horizon
+		:param target_trajectory: target trajectory
+		:param objective: objective function, must have the following signature: f(trajectory,
+		actuation)
+		:param time_step: time step of the mpc prediction if None get the model simulation time step
+		:param time_steps_per_actuation: number of time steps per proposed actuation over the horizon
+		:param guess_from_last_solution: whether to use the last solution as the initial guess
+		:param tolerance: tolerance for the optimization algorithm
+		:param max_iter: maximum number of iterations for the optimization algorithm
+		:param bounds: bounds for the optimization variables
+		:param constraints: constraints for the optimization variables
+		:param pose_weight_matrix: weight matrix for the pose error; shape: (state_dim//2,
+		state_dim//2)
+		:param actuation_derivative_weight_matrix: weight matrix for the actuation derivative; shape:
+		(actuation_dim, actuation_dim)
+		:param objective_weight: weight for the objective function
+		:param final_weight: weight for the final pose error
+		:param record: whether to record the computation times, predicted trajectories and candidate
+		actuations
+		:param verbose: whether to print the optimization results
+		"""
 
 		self.model = model
 		self.horizon = horizon
 		self.target_trajectory = target_trajectory
 		self.objective = objective
+
+		if time_step is None:
+			self.time_step = self.model.time_step
+		else:
+			self.time_step = time_step
+
 		self.time_steps_per_actuation = time_steps_per_actuation
 		self.guess_from_last_solution = guess_from_last_solution
 		self.tolerance = tolerance
@@ -74,25 +102,41 @@ class MPC:
 		if self.record:
 			self.predicted_trajectories = [ ]
 			self.candidate_actuations = [ ]
-			self.times = [ ]
+			self.compute_times = [ ]
 
 		self.verbose = verbose
 
 	def predict( self, actuation: ndarray, with_speed = False ) -> ndarray:
+		"""
+		predicts the trajectory given the proposed actuation over the horizon
+		ASSUMES THAT THE MODELS STATE IS X = [POSE, POSE_DERIVATIVE]
+		:param actuation: proposed actuation over the horizon
+		:param with_speed: whether to return the predicted speed as well
+		:return: predicted trajectory
+		"""
+
 		p_state = deepcopy( self.model.state )
 		vec_size = (self.model.state.shape[ 0 ]) if with_speed else (self.model.state.shape[ 0 ] // 2)
 		predicted_trajectory = zeros( (self.horizon, 1, vec_size) )
 
 		for i in range( self.horizon ):
-			p_state += self.model.dynamics( p_state, actuation[ i, 0 ] ) * self.model.time_step
+			p_state += self.model.dynamics(p_state, actuation[ i, 0 ] ) * self.time_step
 			predicted_trajectory[ i ] = p_state[ :vec_size ]
 
 		return predicted_trajectory
 
 	def apply_result( self ):
+		"""
+		applies the first actuation derivative of the current result to the model
+		"""
+
 		self.model.actuation += self.result[ 0, 0 ]
 
 	def compute_actuation( self ):
+		"""
+		computes the best actuation for the current state with a given horizon. records the computation
+		time if record is True
+		"""
 
 		if self.record:
 			self.predicted_trajectories.clear()
@@ -111,12 +155,18 @@ class MPC:
 				)
 
 		if self.record:
-			self.times.append( perf_counter() - ti )
+			self.compute_times.append( perf_counter() - ti )
 
 		if self.raw_result.success:
 			self.result = self.raw_result.x.reshape( self.result_shape )
 
 	def cost( self, actuations_derivative: ndarray ) -> float:
+		"""
+		cost function for the optimization. records the predicted trajectories and candidate actuations
+		:param actuations_derivative: proposed actuation derivative over the horizon
+		:return: cost
+		"""
+
 		actuations_derivative = actuations_derivative.reshape( self.result_shape )
 		actuations = actuations_derivative.cumsum( axis = 0 ) + self.model.actuation
 

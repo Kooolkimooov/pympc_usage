@@ -1,150 +1,88 @@
-from glob import glob
 from json import dump
-from os import mkdir, path, remove
 from time import time
 
-from numpy import array, cos, cross, diag, diff, inf, pi, sin, tan
-from numpy.linalg import inv, norm
+from numpy import array, cos, diff, inf, pi, r_
+from numpy.linalg import norm
 
 from calc_catenary_from_ext_points import *
 from mpc import *
+from three_bluerov_chain import ChainOf3, three_robot_chain_objective
 from utils import check, generate_trajectory, Logger, serialize_others
 
 
-def compute_rotation_matrix( phi: float, theta: float, psi: float ) -> ndarray:
-	cPhi, sPhi = cos( phi ), sin( phi )
-	cTheta, sTheta, tTheta = cos( theta ), sin( theta ), tan( theta )
-	cPsi, sPsi = cos( psi ), sin( psi )
-	matrix = zeros( (6, 6) )
-	matrix[ 0, :3 ] = array(
-			[ cPsi * cTheta, -sPsi * cPhi + cPsi * sTheta * sPhi, sPsi * sPhi + cPsi * sTheta * cPhi ]
-			)
-	matrix[ 1, :3 ] = array(
-			[ sPsi * cTheta, cPsi * cPhi + sPsi * sTheta * sPhi, -cPsi * sPhi + sPsi * sTheta * cPhi ]
-			)
-	matrix[ 2, :3 ] = array( [ -sTheta, cTheta * sPhi, cTheta * cPhi ] )
-	matrix[ 3, 3: ] = array( [ 1, sPhi * tTheta, cPhi * tTheta ] )
-	matrix[ 4, 3: ] = array( [ 0, cPhi, -sPhi ] )
-	matrix[ 5, 3: ] = array( [ 0, sPhi / cTheta, cPhi / cTheta ] )
-	return matrix
+class ChainOf3FixedEnd( ChainOf3 ):
+	state_size = 48
+
+	br0_pose = slice( 0, 6 )
+	br0_position = slice( 0, 3 )
+	br0_xy = slice( 0, 2 )
+	br0_z = 2
+	br0_orientation = slice( 3, 6 )
+
+	br1_pose = slice( 6, 12 )
+	br1_position = slice( 6, 9 )
+	br1_xy = slice( 6, 8 )
+	br1_z = 8
+	br1_orientation = slice( 9, 12 )
+
+	br2_pose = slice( 12, 18 )
+	br2_position = slice( 12, 15 )
+	br2_xy = slice( 12, 14 )
+	br2_z = 14
+	br2_orientation = slice( 15, 18 )
+
+	brf_pose = slice( 18, 24 )
+	brf_position = slice( 18, 21 )
+	brf_xy = slice( 18, 20 )
+	brf_z = 20
+	brf_orientation = slice( 21, 24 )
+
+	br0_speed = slice( 24, 30 )
+	br0_linear_speed = slice( 24, 27 )
+	br0_angular_speed = slice( 27, 30 )
+
+	br1_speed = slice( 30, 36 )
+	br1_linear_speed = slice( 30, 33 )
+	br1_angular_speed = slice( 33, 36 )
+
+	br2_speed = slice( 36, 42 )
+	br2_linear_speed = slice( 36, 39 )
+	br2_angular_speed = slice( 39, 42 )
+
+	brf_speed = slice( 42, 48 )
+	brf_linear_speed = slice( 42, 45 )
+	brf_angular_speed = slice( 45, 48 )
+
+	br0_actuation_start = 0
+	br0_actuation = slice( 0, 6 )
+	br0_linear_actuation = slice( 0, 3 )
+	br0_angular_actuation = slice( 3, 6 )
+
+	br1_actuation_start = 6
+	br1_actuation = slice( 6, 12 )
+	br1_linear_actuation = slice( 6, 9 )
+	br1_angular_actuation = slice( 9, 12 )
+
+	br2_actuation_start = 12
+	br2_actuation = slice( 12, 18 )
+	br2_linear_actuation = slice( 12, 15 )
+	br2_angular_actuation = slice( 15, 18 )
+
+	br0_state = r_[ br0_pose, br0_speed ]
+	br1_state = r_[ br1_pose, br1_speed ]
+	br2_state = r_[ br2_pose, br2_speed ]
+
+	def __call__( self, state: ndarray, actuation: ndarray ) -> ndarray:
+		"""
+		evalutes the dynamics of each robot of the chain
+		:param state: current state of the system
+		:param actuation: current actuation of the system
+		:return: state derivative of the system
+		"""
+		return super().__call__( state, actuation )
 
 
-def build_inertial_matrix(
-		mass: float, center_of_mass: ndarray, inertial_coefficients: list[ float ]
-		):
-	inertial_matrix = eye( 6 )
-	for i in range( 3 ):
-		inertial_matrix[ i, i ] = mass
-		inertial_matrix[ i + 3, i + 3 ] = inertial_coefficients[ i ]
-	inertial_matrix[ 0, 4 ] = mass * center_of_mass[ 2 ]
-	inertial_matrix[ 0, 5 ] = - mass * center_of_mass[ 1 ]
-	inertial_matrix[ 1, 3 ] = - mass * center_of_mass[ 2 ]
-	inertial_matrix[ 1, 5 ] = mass * center_of_mass[ 0 ]
-	inertial_matrix[ 2, 3 ] = mass * center_of_mass[ 1 ]
-	inertial_matrix[ 2, 4 ] = - mass * center_of_mass[ 0 ]
-	inertial_matrix[ 4, 0 ] = mass * center_of_mass[ 2 ]
-	inertial_matrix[ 5, 0 ] = - mass * center_of_mass[ 1 ]
-	inertial_matrix[ 3, 1 ] = - mass * center_of_mass[ 2 ]
-	inertial_matrix[ 5, 1 ] = mass * center_of_mass[ 0 ]
-	inertial_matrix[ 3, 2 ] = mass * center_of_mass[ 1 ]
-	inertial_matrix[ 4, 2 ] = - mass * center_of_mass[ 0 ]
-	inertial_matrix[ 3, 4 ] = - inertial_coefficients[ 3 ]
-	inertial_matrix[ 3, 5 ] = - inertial_coefficients[ 4 ]
-	inertial_matrix[ 4, 5 ] = - inertial_coefficients[ 5 ]
-	inertial_matrix[ 4, 3 ] = - inertial_coefficients[ 3 ]
-	inertial_matrix[ 5, 3 ] = - inertial_coefficients[ 4 ]
-	inertial_matrix[ 5, 4 ] = - inertial_coefficients[ 5 ]
-
-	return inertial_matrix
-
-
-def compute_hydrostatic_force(
-		weight: ndarray, buoyancy: ndarray, center_of_mass: ndarray, center_of_volume: ndarray, rotation_matrix
-		) -> ndarray:
-	force = zeros( 6 )
-	force[ :3 ] = rotation_matrix.T @ (weight + buoyancy)
-	force[ 3: ] = cross( center_of_mass, rotation_matrix.T @ weight ) + cross(
-			center_of_volume, rotation_matrix.T @ buoyancy
-			)
-
-	return force
-
-
-def three_robots_chain_with_fixed_end(
-		state: ndarray,
-		actuation: ndarray,
-		weight: ndarray,
-		buoyancy: ndarray,
-		center_of_mass: ndarray,
-		center_of_volume: ndarray,
-		inverted_inertial_matrix: ndarray,
-		hydrodynamic_matrix: ndarray
-		) -> ndarray:
-	"""
-	:param state: state of the chain such that
-	x = [	pose_robot_0_wf, pose_robot_1_wf, pose_robot_2_wf, pose_robot_3_wf, vel_robot_0_rf,
-	vel_robot_1_rf, vel_robot_2_rf, vel_robot_3_rf]
-		poses: [0:6-6:12-12:18-18:24]--speeds: [24:30-30:36-36:42-42:48]
-	:param actuation: actuation of the chain such that
-	u = [actuation_robot_0, actuation_robot_1, actuation_robot_2]
-	:param hydrodynamic_matrix
-	:param inverted_inertial_matrix
-	:param center_of_volume
-	:param center_of_mass
-	:param buoyancy
-	:param weight
-	:return: ndarray: derivative of the state of the chain
-	"""
-
-	x0 = state[ :6 ]
-	x0d = state[ 24:30 ]
-	u0 = actuation[ :6 ]
-
-	x1 = state[ 6:12 ]
-	x1d = state[ 30:36 ]
-	u1 = actuation[ 6:12 ]
-
-	x2 = state[ 12:18 ]
-	x2d = state[ 36:42 ]
-	u2 = actuation[ 12:18 ]
-
-	R0 = compute_rotation_matrix( *x0[ 3: ] )
-	R1 = compute_rotation_matrix( *x1[ 3: ] )
-	R2 = compute_rotation_matrix( *x2[ 3: ] )
-
-	s0 = compute_hydrostatic_force(
-			weight, buoyancy, center_of_mass, center_of_volume, R0[ :3, :3 ]
-			)
-	s1 = compute_hydrostatic_force(
-			weight, buoyancy, center_of_mass, center_of_volume, R1[ :3, :3 ]
-			)
-	s2 = compute_hydrostatic_force(
-			weight, buoyancy, center_of_mass, center_of_volume, R2[ :3, :3 ]
-			)
-
-	xdot = zeros( state.shape )
-
-	xdot[ :6 ] = R0 @ x0d
-	xdot[ 24:30 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x0d + s0 + u0)
-
-	xdot[ 6:12 ] = R1 @ x1d
-	xdot[ 30:36 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x1d + s1 + u1)
-
-	xdot[ 12:18 ] = R2 @ x2d
-	xdot[ 36:42 ] = inverted_inertial_matrix @ (hydrodynamic_matrix @ x2d + s2 + u2)
-
-	return xdot
-
-
-def three_robot_chain_objective( trajectory: ndarray, actuation: ndarray ):
-	obj = 0.
-	trajectory_derivative = diff( trajectory, axis = 0 )
-	obj += norm( trajectory_derivative[ :, 0, 6:9 ], axis = 1 ).sum()
-	obj += norm( trajectory_derivative[ :, 0, 12:15 ], axis = 1 ).sum()
-	return obj
-
-
-def constraint_f( candidate_actuation_derivative ):
+def chain_of_three_fixed_end_constraint( candidate_actuation_derivative ):
 	global three_bluerov_chain_with_fixed_end_mpc
 
 	candidate_actuation = candidate_actuation_derivative.reshape(
@@ -155,6 +93,7 @@ def constraint_f( candidate_actuation_derivative ):
 			)
 
 	predicted_trajectory = three_bluerov_chain_with_fixed_end_mpc.predict( candidate_actuation, with_speed = True )
+	predicted_trajectory = predicted_trajectory[ :, 0 ]
 
 	# 3 constraints on cables (lowest points),
 	# 6 on inter robot_distance (3 horizontal, 2 3d),
@@ -163,43 +102,52 @@ def constraint_f( candidate_actuation_derivative ):
 	constraint = zeros( (three_bluerov_chain_with_fixed_end_mpc.horizon, n_constraints) )
 
 	# z position of robots 0 and 1; we add H afterward
-	constraint[ :, 0 ] = predicted_trajectory[ :, 0, 2 ]
-	constraint[ :, 1 ] = predicted_trajectory[ :, 0, 8 ]
-	constraint[ :, 2 ] = predicted_trajectory[ :, 0, 14 ]
+	constraint[ :, 0 ] = predicted_trajectory[ :, ChainOf3FixedEnd.br0_z ]
+	constraint[ :, 1 ] = predicted_trajectory[ :, ChainOf3FixedEnd.br1_z ]
+	constraint[ :, 2 ] = predicted_trajectory[ :, ChainOf3FixedEnd.br2_z ]
 
 	# horizontal distance between consecutive robots
 	constraint[ :, 3 ] = norm(
-			predicted_trajectory[ :, 0, 6:8 ] - predicted_trajectory[ :, 0, 0:2 ], axis = 1
+			predicted_trajectory[ :, ChainOf3FixedEnd.br1_xy ] - predicted_trajectory[ :, ChainOf3FixedEnd.br0_xy ], axis = 1
 			)
 	constraint[ :, 4 ] = norm(
-			predicted_trajectory[ :, 0, 12:14 ] - predicted_trajectory[ :, 0, 6:8 ], axis = 1
+			predicted_trajectory[ :, ChainOf3FixedEnd.br2_xy ] - predicted_trajectory[ :, ChainOf3FixedEnd.br1_xy ], axis = 1
 			)
 	constraint[ :, 5 ] = norm(
-			predicted_trajectory[ :, 0, 18:20 ] - predicted_trajectory[ :, 0, 12:14 ], axis = 1
+			predicted_trajectory[ :, ChainOf3FixedEnd.brf_xy ] - predicted_trajectory[ :, ChainOf3FixedEnd.br1_xy ], axis = 1
 			)
 
 	# distance between consecutive robots
 	constraint[ :, 6 ] = norm(
-			predicted_trajectory[ :, 0, 6:9 ] - predicted_trajectory[ :, 0, 0:3 ], axis = 1
+			predicted_trajectory[ :, ChainOf3FixedEnd.br1_position ] - predicted_trajectory[ :,
+																																 ChainOf3FixedEnd.br0_position ], axis = 1
 			)
 	constraint[ :, 7 ] = norm(
-			predicted_trajectory[ :, 0, 12:15 ] - predicted_trajectory[ :, 0, 6:9 ], axis = 1
+			predicted_trajectory[ :, ChainOf3FixedEnd.br2_position ] - predicted_trajectory[ :,
+																																 ChainOf3FixedEnd.br1_position ], axis = 1
 			)
 	constraint[ :, 8 ] = norm(
-			predicted_trajectory[ :, 0, 18:21 ] - predicted_trajectory[ :, 0, 12:15 ], axis = 1
+			predicted_trajectory[ :, ChainOf3FixedEnd.brf_position ] - predicted_trajectory[ :,
+																																 ChainOf3FixedEnd.br2_position ], axis = 1
 			)
 
 	# speed
-	constraint[ :, 9 ] = norm( predicted_trajectory[ :, 0, 24:27 ], axis = 1 )
-	constraint[ :, 10 ] = norm( predicted_trajectory[ :, 0, 30:33 ], axis = 1 )
-	constraint[ :, 11 ] = norm( predicted_trajectory[ :, 0, 36:39 ], axis = 1 )
+	constraint[ :, 9 ] = norm( predicted_trajectory[ :, ChainOf3FixedEnd.br0_speed ], axis = 1 )
+	constraint[ :, 10 ] = norm( predicted_trajectory[ :, ChainOf3FixedEnd.br1_speed ], axis = 1 )
+	constraint[ :, 11 ] = norm( predicted_trajectory[ :, ChainOf3FixedEnd.br2_speed ], axis = 1 )
 
-	for i, state in enumerate( predicted_trajectory[ :, 0 ] ):
+	for i, state in enumerate( predicted_trajectory ):
 
 		try:
-			_, _, H01 = get_catenary_param( state[ 2 ] - state[ 8 ], constraint[ i, 3 ], 3 )
-			_, _, H12 = get_catenary_param( state[ 8 ] - state[ 14 ], constraint[ i, 4 ], 3 )
-			_, _, H23 = get_catenary_param( state[ 14 ] - state[ 20 ], constraint[ i, 5 ], 3 )
+			_, _, H01 = get_catenary_param(
+					state[ ChainOf3FixedEnd.br0_z ] - state[ ChainOf3FixedEnd.br1_z ], constraint[ i, 3 ], 3
+					)
+			_, _, H12 = get_catenary_param(
+					state[ ChainOf3FixedEnd.br1_z ] - state[ ChainOf3FixedEnd.br2_z ], constraint[ i, 4 ], 3
+					)
+			_, _, H23 = get_catenary_param(
+					state[ ChainOf3FixedEnd.br2_z ] - state[ ChainOf3FixedEnd.brf_z ], constraint[ i, 5 ], 3
+					)
 		except:
 			H01 = 1.5
 			H12 = 1.5
@@ -219,29 +167,26 @@ if __name__ == "__main__":
 	n_frames = 2000
 	tolerance = 1e-4
 	time_step = 0.01
-	n_robots = 4
-	state = zeros( (12 * n_robots,) )
+
+	state = zeros( (ChainOf3FixedEnd.state_size,) )
 	state[ 0 ] = 2.
+	state[ 2 ] = 1.
 	state[ 6 ] = 2.5
+	state[ 8 ] = 1.
 	state[ 12 ] = 3.
+	state[ 14 ] = 1.
 	state[ 18 ] = 3.5
-	state[ 20 ] = -1.
-	actuation = zeros( (6 * (n_robots - 1),) )
-	area = array( [ [ -3, 3 ], [ -3, 3 ], [ -2, 4 ] ] )
-	max_actuation_x = 300.
-	max_actuation_t = 1.
-	floor_depth = 3.00001
+
+	actuation = zeros( (ChainOf3FixedEnd.actuation_size,) )
 
 	horizon = 25
 	time_steps_per_act = 25
 
-	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * (n_robots - 1) * 6),
-								 (.5, [ -3., 0., 0., 0., 0., 0. ] + [ 0. ] * (n_robots - 1) * 6),
-								 (1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * (n_robots - 1) * 6),
-								 (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * (n_robots - 1) * 6) ]
+	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (.5, [ -3., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
+								 (1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18) ]
 
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
-	trajectory[ :, 0, 2 ] = 1.5 * cos( 1.25 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 1.5
+	trajectory[ :, 0, 2 ] = 1.5 * cos( 1.25 * (trajectory[ :, 0, 0 ] - 2) + pi ) + 2.5
 
 	max_required_speed = (max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
 	print( f'{max_required_speed=}' )
@@ -251,39 +196,29 @@ if __name__ == "__main__":
 	# plt.show()
 	# exit()
 
-	model_kwargs = {
-			"weight"                  : 11.5 * array( [ 0., 0., 9.81 ] ),
-			"buoyancy"                : 120. * array( [ 0., 0., -1. ] ),
-			"center_of_mass"          : array( [ 0., 0., 0. ] ),
-			"center_of_volume"        : array( [ 0., 0., - 0.02 ] ),
-			"inverted_inertial_matrix": inv(
-					build_inertial_matrix( 11.5, array( [ 0., 0., 0. ] ), [ .16, .16, .16, 0.0, 0.0, 0.0 ] )
-					),
-			"hydrodynamic_matrix"     : diag( array( [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ] ) )
-			}
-
 	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
-	pose_weight_matrix[ 0:3, 0:3 ] *= 10.
-	pose_weight_matrix[ 3:6, 3:6 ] *= 5.
-	pose_weight_matrix[ 6:9, 6:9 ] *= 0.
-	pose_weight_matrix[ 9:12, 9:12 ] *= 5.
-	pose_weight_matrix[ 12:15, 12:15 ] *= 0.
-	pose_weight_matrix[ 15:18, 15:18 ] *= 5.
-	pose_weight_matrix[ 18:21, 18:21 ] *= 0.
-	pose_weight_matrix[ 21:24, 21:24 ] *= 0.
+	pose_weight_matrix[ ChainOf3FixedEnd.br0_position, ChainOf3FixedEnd.br0_position ] *= 10.
+	pose_weight_matrix[ ChainOf3FixedEnd.br0_orientation, ChainOf3FixedEnd.br0_orientation ] *= 5.
+	pose_weight_matrix[ ChainOf3FixedEnd.br1_position, ChainOf3FixedEnd.br1_position ] *= 0.
+	pose_weight_matrix[ ChainOf3FixedEnd.br1_orientation, ChainOf3FixedEnd.br1_orientation ] *= 5.
+	pose_weight_matrix[ ChainOf3FixedEnd.br2_position, ChainOf3FixedEnd.br2_position ] *= 0.
+	pose_weight_matrix[ ChainOf3FixedEnd.br2_orientation, ChainOf3FixedEnd.br2_orientation ] *= 5.
+	pose_weight_matrix[ ChainOf3FixedEnd.brf_position, ChainOf3FixedEnd.brf_position ] *= 0.
+	pose_weight_matrix[ ChainOf3FixedEnd.brf_orientation, ChainOf3FixedEnd.brf_orientation ] *= 0.
 
 	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
-	actuation_weight_matrix[ 0:3, 0:3 ] *= 0.
-	actuation_weight_matrix[ 3:6, 3:6 ] *= 1000.
-	actuation_weight_matrix[ 6:9, 6:9 ] *= 0.
-	actuation_weight_matrix[ 9:12, 9:12 ] *= 1000.
-	actuation_weight_matrix[ 12:15, 12:15 ] *= 0.
-	actuation_weight_matrix[ 15:18, 15:18 ] *= 1000.
+	actuation_weight_matrix[ ChainOf3FixedEnd.br0_linear_actuation, ChainOf3FixedEnd.br0_linear_actuation ] *= 0.
+	actuation_weight_matrix[ ChainOf3FixedEnd.br0_angular_actuation, ChainOf3FixedEnd.br0_angular_actuation ] *= 1000.
+	actuation_weight_matrix[ ChainOf3FixedEnd.br1_linear_actuation, ChainOf3FixedEnd.br1_linear_actuation ] *= 0.
+	actuation_weight_matrix[ ChainOf3FixedEnd.br1_angular_actuation, ChainOf3FixedEnd.br1_angular_actuation ] *= 1000.
+	actuation_weight_matrix[ ChainOf3FixedEnd.br2_linear_actuation, ChainOf3FixedEnd.br2_linear_actuation ] *= 0.
+	actuation_weight_matrix[ ChainOf3FixedEnd.br2_angular_actuation, ChainOf3FixedEnd.br2_angular_actuation ] *= 1000.
 
 	final_cost_weight = 10.
+	objective_weight = 1.
 
 	three_bluerov_chain_with_fixed_end_model = Model(
-			three_robots_chain_with_fixed_end, time_step, state, actuation, kwargs = model_kwargs, record = True
+			ChainOf3FixedEnd(), time_step, state, actuation, record = True
 			)
 
 	three_bluerov_chain_with_fixed_end_mpc = MPC(
@@ -291,22 +226,21 @@ if __name__ == "__main__":
 			horizon,
 			trajectory,
 			objective = three_robot_chain_objective,
-			objective_weight = 10.,
+			objective_weight = objective_weight,
 			tolerance = tolerance,
 			time_steps_per_actuation = time_steps_per_act,
 			pose_weight_matrix = pose_weight_matrix,
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
 			final_weight = final_cost_weight,
-			record = True
+			record = True,
+			# verbose = True
 			)
 
-	# three_bluerov_chain_with_fixed_end_mpc.verbose = True
-
-	three_bluerov_chain_with_fixed_end_mpc.bounds = Bounds(
-			array( [ [ -20, -20, -20, -.1, -.1, -.1 ] ] ).repeat( n_robots - 1, axis = 0 ).flatten(),
-			array( [ [ 20, 20, 20, .1, .1, .1 ] ] ).repeat( n_robots - 1, axis = 0 ).flatten()
-			)
-
+	floor_depth = 4.00001
+	du_l_ub = 20.
+	du_l_lb = -20.
+	du_a_ub = .1
+	du_a_lb = -.1
 	dp_lb = 0.4
 	dp_ub = 2.8
 	dr_lb = -inf
@@ -314,8 +248,15 @@ if __name__ == "__main__":
 	v_lb = -inf
 	v_ub = 3.
 
-	# -----0---1---2---3----4----5----6----7----8----9--10-11
-	# -----H01-H12-H23-dp01-dp12-dp23-dr01-dr12-dr23-v0-v1-v2
+	three_bluerov_chain_with_fixed_end_mpc.bounds = Bounds(
+			array( [ [ du_l_lb, du_l_lb, du_l_lb, du_a_lb, du_a_lb, du_a_lb ] ] ).repeat( 3, axis = 0 ).flatten(),
+			array( [ [ du_l_ub, du_l_ub, du_l_ub, du_a_ub, du_a_ub, du_a_ub ] ] ).repeat( 3, axis = 0 ).flatten()
+			)
+
+	constraints_labels = [ '$z_0+H_{01}$', '$z_1+H_{12}$', '$z_2+H_{2fe}$', '$|P_0^{x,y}-P_1^{x,y}|$',
+												 '$|P_1^{x,y}-P_2^{x,y}|$', '$|P_2^{x,y}-P_fe^{x,y}|$', '$|P_0^{x,y,z}-P_1^{x,y,z}|$',
+												 '$|P_1^{x,y,z}-P_2^{x,y,z}|$', '$|P_2^{x,y,z}-P_fe^{x,y,z}|$', '$|V_0|$', '$|V_1|$',
+												 '$|V_2|$' ]
 
 	lb_base = [ -inf, -inf, -inf, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb ]
 	ub_base = [ floor_depth, floor_depth, floor_depth, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub ]
@@ -323,149 +264,49 @@ if __name__ == "__main__":
 	lb = [ lb_base ] * horizon
 	ub = [ ub_base ] * horizon
 
-	three_bluerov_chain_with_fixed_end_mpc.constraints = (
-			NonlinearConstraint( constraint_f, array( lb ).flatten(), array( ub ).flatten() ),)
+	constraint = NonlinearConstraint( chain_of_three_fixed_end_constraint, array( lb ).flatten(), array( ub ).flatten() )
+	constraint.labels = constraints_labels
+
+	three_bluerov_chain_with_fixed_end_mpc.constraints = (constraint,)
 
 	previous_nfeval_record = [ 0 ]
 	previous_H01_record = [ 0. ]
 	previous_H12_record = [ 0. ]
 	previous_H23_record = [ 0. ]
 
-	logger = Logger( False )
+	folder = f'./export/three_robots_chain_with_fixed_end_{int( time() )}'
+	if check( folder ) + check( f'{folder}/data' ):
+		exit()
 
-	folder = (f'./export/{three_robots_chain_with_fixed_end.__name__}_'
-						f'{int( time() )}')
-
-	print( folder )
-	check(folder)
-	check(f'{folder}/data')
+	logger = Logger()
 
 	with open( f'{folder}/config.json', 'w' ) as f:
 		dump( three_bluerov_chain_with_fixed_end_mpc.__dict__, f, default = serialize_others )
 
-	logger.log( "index" )
-	logger.log( "sim_time" )
-	logger.log( "step_time" )
-	logger.log( "success" )
-	logger.log( "C01" )
-	logger.log( "C12" )
-	logger.log( "C23" )
-	logger.log( "D01" )
-	logger.log( "D12" )
-	logger.log( "D23" )
-	logger.log( "H01" )
-	logger.log( "H12" )
-	logger.log( "H23" )
-	logger.log( "state_r0" )
-	logger.log( "state_r1" )
-	logger.log( "state_r2" )
-	logger.log( "state_r3" )
-	logger.log( "speed_r0" )
-	logger.log( "speed_r1" )
-	logger.log( "speed_r2" )
-	logger.log( "speed_r3" )
-	logger.log( "actuation_r0" )
-	logger.log( "actuation_r1" )
-	logger.log( "actuation_r2" )
-	logger.log( "objective" )
-	logger.lognl( "" )
-
 	for frame in range( n_frames ):
 
+		logger.log( f'frame {frame + 1}/{n_frames} starts at {perf_counter() - ti}' )
+
 		three_bluerov_chain_with_fixed_end_mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
+
 		three_bluerov_chain_with_fixed_end_mpc.compute_actuation()
 		three_bluerov_chain_with_fixed_end_mpc.apply_result()
 		three_bluerov_chain_with_fixed_end_model.step()
 
+		# try to recover if the optimization failed
 		if (
 				not three_bluerov_chain_with_fixed_end_mpc.raw_result.success and
 				three_bluerov_chain_with_fixed_end_mpc.tolerance < 1):
 			three_bluerov_chain_with_fixed_end_mpc.tolerance *= 10
+			logger.log( 'increasing tolerance' )
 		elif (
 				three_bluerov_chain_with_fixed_end_mpc.raw_result.success and three_bluerov_chain_with_fixed_end_mpc.tolerance
 				> tolerance):
 			three_bluerov_chain_with_fixed_end_mpc.tolerance /= 10
+			logger.log( 'decreasing tolerance' )
 
 		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
 			dump( three_bluerov_chain_with_fixed_end_mpc.__dict__, f, default = serialize_others )
 
-		try:
-			C01, D01, H01 = get_catenary_param(
-					three_bluerov_chain_with_fixed_end_model.state[ 2 ] - three_bluerov_chain_with_fixed_end_model.state[ 8 ],
-					norm(
-							three_bluerov_chain_with_fixed_end_model.state[ 0:2 ] - three_bluerov_chain_with_fixed_end_model.state[
-																																			6:8 ]
-							),
-					3
-					)
-			C12, D12, H12 = get_catenary_param(
-					three_bluerov_chain_with_fixed_end_model.state[ 8 ] - three_bluerov_chain_with_fixed_end_model.state[ 14 ],
-					norm(
-							three_bluerov_chain_with_fixed_end_model.state[ 6:8 ] - three_bluerov_chain_with_fixed_end_model.state[
-																																			12:14 ]
-							),
-					3
-					)
-			C23, D23, H23 = get_catenary_param(
-					three_bluerov_chain_with_fixed_end_model.state[ 14 ] - three_bluerov_chain_with_fixed_end_model.state[ 20 ],
-					norm(
-							three_bluerov_chain_with_fixed_end_model.state[ 12:14 ] - three_bluerov_chain_with_fixed_end_model.state[
-																																				18:20 ]
-							),
-					3
-					)
-		except:
-			C01 = None
-			C12 = None
-			C23 = None
-			D01 = None
-			D12 = None
-			D23 = None
-			H01 = None
-			H12 = None
-			H23 = None
-
-		logger.log( f"{frame}" )
-		logger.log( f"{perf_counter() - ti:.6f}" )
-		logger.log(
-				f"{three_bluerov_chain_with_fixed_end_mpc.times[ -1 ]:.6f}"
-				)
-		logger.log(
-				f"{three_bluerov_chain_with_fixed_end_mpc.raw_result.success}"
-				)
-		logger.log( f"{C01}" )
-		logger.log( f"{C12}" )
-		logger.log( f"{C23}" )
-		logger.log( f"{D01}" )
-		logger.log( f"{D12}" )
-		logger.log( f"{D23}" )
-		logger.log( f"{H01}" )
-		logger.log( f"{H12}" )
-		logger.log( f"{H23}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 0:6 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 6:12 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 12:18 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 18:24 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 24:30 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 30:36 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 36:42 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.state[ 42:48 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.actuation[ 0:6 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.actuation[ 6:12 ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_with_fixed_end_model.actuation[ 12:18 ] ]}" )
-		logger.log(
-				f"{three_bluerov_chain_with_fixed_end_mpc.objective_weight * three_robot_chain_objective(
-						three_bluerov_chain_with_fixed_end_mpc.predict(
-								(three_bluerov_chain_with_fixed_end_mpc.result.cumsum(
-										axis = 0
-										) + three_bluerov_chain_with_fixed_end_mpc.model.actuation).repeat( three_bluerov_chain_with_fixed_end_mpc.time_steps_per_actuation, axis = 0 )
-								), three_bluerov_chain_with_fixed_end_mpc.result, )}"
-				)
-		logger.lognl( "" )
+		logger.lognl( f'{three_bluerov_chain_with_fixed_end_mpc.raw_result.success} ends at {perf_counter() - ti}' )
 		logger.save_at( folder )
-
-		print(
-				f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - {three_bluerov_chain_with_fixed_end_mpc.times[ -1 ]:.6f} - "
-				f"{three_bluerov_chain_with_fixed_end_mpc.tolerance} - "
-				f"{three_bluerov_chain_with_fixed_end_mpc.raw_result.success}"
-				)

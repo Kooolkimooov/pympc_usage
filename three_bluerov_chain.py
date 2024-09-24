@@ -1,7 +1,7 @@
 from json import dump
 from time import time
 
-from numpy import array, cos, diff, inf, pi
+from numpy import array, cos, diff, inf, pi, r_
 from numpy.linalg import norm
 
 from bluerov import Bluerov
@@ -14,73 +14,84 @@ class ChainOf3( Bluerov ):
 	state_size = 36
 	actuation_size = 18
 
-	br0_state = slice( 0, 12 )
 	br0_pose = slice( 0, 6 )
 	br0_position = slice( 0, 3 )
 	br0_xy = slice( 0, 2 )
 	br0_z = 2
 	br0_orientation = slice( 3, 6 )
-	br0_speed = slice( 6, 12 )
-	br0_linear_speed = slice( 6, 9 )
-	br0_angular_speed = slice( 9, 12 )
+
+	br1_pose = slice( 6, 12 )
+	br1_position = slice( 6, 9 )
+	br1_xy = slice( 6, 8 )
+	br1_z = 8
+	br1_orientation = slice( 9, 12 )
+
+	br2_pose = slice( 12, 18 )
+	br2_position = slice( 12, 15 )
+	br2_xy = slice( 12, 14 )
+	br2_z = 14
+	br2_orientation = slice( 15, 18 )
+
+	br0_speed = slice( 18, 24 )
+	br0_linear_speed = slice( 18, 21 )
+	br0_angular_speed = slice( 21, 24 )
+
+	br1_speed = slice( 24, 30 )
+	br1_linear_speed = slice( 24, 27 )
+	br1_angular_speed = slice( 27, 30 )
+
+	br2_speed = slice( 30, 36 )
+	br2_linear_speed = slice( 30, 33 )
+	br2_angular_speed = slice( 33, 36 )
 
 	br0_actuation_start = 0
 	br0_actuation = slice( 0, 6 )
 	br0_linear_actuation = slice( 0, 3 )
 	br0_angular_actuation = slice( 3, 6 )
 
-	br1_state = slice( 12, 24 )
-	br1_pose = slice( 12, 18 )
-	br1_position = slice( 12, 15 )
-	br1_xy = slice( 12, 14 )
-	br1_z = 14
-	br1_orientation = slice( 15, 18 )
-	br1_speed = slice( 18, 24 )
-	br1_linear_speed = slice( 18, 21 )
-	br1_angular_speed = slice( 21, 24 )
-
 	br1_actuation_start = 6
 	br1_actuation = slice( 6, 12 )
 	br1_linear_actuation = slice( 6, 9 )
 	br1_angular_actuation = slice( 9, 12 )
-
-	br2_start = 24
-	br2_state = slice( 24, 36 )
-	br2_pose = slice( 24, 30 )
-	br2_position = slice( 24, 27 )
-	br2_xy = slice( 24, 26 )
-	br2_z = 26
-	br2_orientation = slice( 27, 30 )
-	br2_speed = slice( 30, 36 )
-	br2_linear_speed = slice( 30, 33 )
-	br2_angular_speed = slice( 33, 36 )
 
 	br2_actuation_start = 12
 	br2_actuation = slice( 12, 18 )
 	br2_linear_actuation = slice( 12, 15 )
 	br2_angular_actuation = slice( 15, 18 )
 
+	br0_state = r_[ br0_pose, br0_speed ]
+	br1_state = r_[ br1_pose, br1_speed ]
+	br2_state = r_[ br2_pose, br2_speed ]
+
 	def __call__( self, state: ndarray, actuation: ndarray ) -> ndarray:
-		xdot = zeros( state.shape )
-		xdot[ ChainOf3.br0_state ] = super().__call__(
-				state[ ChainOf3.br0_state ], actuation[ ChainOf3.br0_actuation ]
+		"""
+		evalutes the dynamics of each robot of the chain
+		:param state: current state of the system
+		:param actuation: current actuation of the system
+		:return: state derivative of the system
+		"""
+		state_derivative = zeros( state.shape )
+
+		state_derivative[ self.br0_state ] = super().__call__(
+				state[ self.br0_state ], actuation[ self.br0_actuation ]
 				)
-		xdot[ ChainOf3.br1_state ] = super().__call__(
-				state[ ChainOf3.br1_state ], actuation[ ChainOf3.br1_actuation ]
+		state_derivative[ self.br1_state ] = super().__call__(
+				state[ self.br1_state ], actuation[ self.br1_actuation ]
 				)
-		xdot[ ChainOf3.br2_state ] = super().__call__(
-				state[ ChainOf3.br2_state ], actuation[ ChainOf3.br2_actuation ]
+		state_derivative[ self.br2_state ] = super().__call__(
+				state[ self.br2_state ], actuation[ self.br2_actuation ]
 				)
-		return xdot
+
+		return state_derivative
 
 
 def three_robot_chain_objective( trajectory: ndarray, actuation: ndarray ):
-	obj = 0.
+	objective = 0.
 	trajectory_derivative = diff( trajectory, axis = 0 )
-	obj += norm( trajectory_derivative[ :, 0, ChainOf3.br0_position ], axis = 1 ).sum()
-	obj += norm( trajectory_derivative[ :, 0, ChainOf3.br1_position ], axis = 1 ).sum()
-	obj += norm( trajectory_derivative[ :, 0, ChainOf3.br2_position ], axis = 1 ).sum()
-	return obj
+	objective += norm( trajectory_derivative[ :, 0, ChainOf3.br0_position ], axis = 1 ).sum()
+	objective += norm( trajectory_derivative[ :, 0, ChainOf3.br1_position ], axis = 1 ).sum()
+	objective += norm( trajectory_derivative[ :, 0, ChainOf3.br2_position ], axis = 1 ).sum()
+	return objective
 
 
 def three_robot_chain_constraint( candidate_actuation_derivative ):
@@ -159,13 +170,11 @@ if __name__ == "__main__":
 	time_step = 0.01
 
 	state = zeros( (ChainOf3.state_size,) )
-	actuation = zeros( (ChainOf3.actuation_size,) )
-	state[ ChainOf3.br0_state.start ] = 2.
-	state[ ChainOf3.br1_state.start ] = 2.5
-	state[ ChainOf3.br2_state.start ] = 3.
+	state[ ChainOf3.br0_position.start ] = 2.
+	state[ ChainOf3.br1_position.start ] = 2.5
+	state[ ChainOf3.br2_position.start ] = 3.
 
-	area = array( [ [ -3, 3 ], [ -3, 3 ], [ -2, 4 ] ] )
-	floor_depth = 3.00001
+	actuation = zeros( (ChainOf3.actuation_size,) )
 
 	horizon = 25
 	time_steps_per_act = 25
@@ -222,6 +231,7 @@ if __name__ == "__main__":
 
 	# mpc_controller.verbose = True
 
+	floor_depth = 3.00001
 	du_l_lb = -20.
 	du_l_ub = 20.
 	du_a_lb = -.1
@@ -238,8 +248,9 @@ if __name__ == "__main__":
 			array( [ [ du_l_ub, du_l_ub, du_l_ub, du_a_ub, du_a_ub, du_a_ub ] ] ).repeat( 3, axis = 0 ).flatten()
 			)
 
-	# -----0---1---2----3----4----5----6--7--8-
-	# -----H01-H12-dp01-dp12-dbr01-dbr12-v0-v1-v2
+	constraints_labels = [ '$z_0+H_{01}$', '$z_1+H_{12}$', '$|P_0^{x,y}-P_1^{x,y}|$', '$|P_1^{x,y}-P_2^{x,y}|$',
+												 '$|P_0^{x,y,z}-P_1^{x,y,z}|$', '$|P_1^{x,y,z}-P_2^{x,y,z}|$', '$|V_0|$', '$|V_1|$',
+												 '$|V_2|$' ]
 
 	lb_base = [ -inf, -inf, dp_lb, dp_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb ]
 	ub_base = [ floor_depth, floor_depth, dp_ub, dp_ub, dr_ub, dr_ub, v_ub, v_ub, v_ub ]
@@ -247,45 +258,23 @@ if __name__ == "__main__":
 	lb = [ lb_base ] * horizon
 	ub = [ ub_base ] * horizon
 
-	three_bluerov_chain_mpc.constraints = (NonlinearConstraint(
-			three_robot_chain_constraint, array( lb ).flatten(), array( ub ).flatten()
-			),)
+	constraint = NonlinearConstraint( three_robot_chain_constraint, array( lb ).flatten(), array( ub ).flatten() )
+	constraint.labels = constraints_labels
+
+	three_bluerov_chain_mpc.constraints = (constraint,)
 
 	previous_nfeval_record = [ 0 ]
 	previous_H01_record = [ 0. ]
 	previous_H12_record = [ 0. ]
 
-	logger = Logger( False )
+	logger = Logger()
 
-	folder = (f'./export/three_robot_chain_{int( time() )}')
-	check( folder )
-	check( f'{folder}/data' )
+	folder = f'./export/three_robots_chain_{int( time() )}'
+	if not (check( folder ) and check( f'{folder}/data' )):
+		exit()
 
 	with open( f'{folder}/config.json', 'w' ) as f:
 		dump( three_bluerov_chain_mpc.__dict__, f, default = serialize_others )
-
-	# headers
-	logger.log( "index" )
-	logger.log( "sim_time" )
-	logger.log( "step_time" )
-	logger.log( "success" )
-	logger.log( "C01" )
-	logger.log( "C12" )
-	logger.log( "D01" )
-	logger.log( "D12" )
-	logger.log( "H01" )
-	logger.log( "H12" )
-	logger.log( "state_br0" )
-	logger.log( "state_br1" )
-	logger.log( "state_br2" )
-	logger.log( "speed_br0" )
-	logger.log( "speed_br1" )
-	logger.log( "speed_br2" )
-	logger.log( "actuation_br0" )
-	logger.log( "actuation_br1" )
-	logger.log( "actuation_br2" )
-	logger.log( "objective" )
-	logger.lognl( "" )
 
 	for frame in range( n_frames ):
 
@@ -295,6 +284,7 @@ if __name__ == "__main__":
 		three_bluerov_chain_mpc.apply_result()
 		three_bluerov_chain_model.step()
 
+		# try to recover
 		if not three_bluerov_chain_mpc.raw_result.success and three_bluerov_chain_mpc.tolerance < 1:
 			three_bluerov_chain_mpc.tolerance *= 10
 		elif (three_bluerov_chain_mpc.raw_result.success and three_bluerov_chain_mpc.tolerance > tolerance):
@@ -303,56 +293,12 @@ if __name__ == "__main__":
 		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
 			dump( three_bluerov_chain_mpc.__dict__, f, default = serialize_others )
 
-		try:
-			C01, D01, H01 = get_catenary_param(
-					three_bluerov_chain_model.state[ ChainOf3.br0_z ] - three_bluerov_chain_model.state[ ChainOf3.br1_z ], norm(
-							three_bluerov_chain_model.state[ ChainOf3.br0_xy ] - three_bluerov_chain_model.state[ ChainOf3.br1_xy ]
-							), 3
-					)
-			C12, D12, H12 = get_catenary_param(
-					three_bluerov_chain_model.state[ ChainOf3.br1_z ] - three_bluerov_chain_model.state[ ChainOf3.br2_z ], norm(
-							three_bluerov_chain_model.state[ ChainOf3.br1_xy ] - three_bluerov_chain_model.state[ ChainOf3.br2_xy ]
-							), 3
-					)
-		except:
-			C01 = None
-			C12 = None
-			D01 = None
-			D12 = None
-			H01 = None
-			H12 = None
-
-		# logs
-		logger.log( f"{frame}" )
+		logger.log( f"{frame}/{n_frames}" )
 		logger.log( f"{perf_counter() - ti:.6f}" )
-		logger.log( f"{three_bluerov_chain_mpc.times[ -1 ]:.6f}" )
-		logger.log( f"{three_bluerov_chain_mpc.raw_result.success}" )
-		logger.log( f"{C01}" )
-		logger.log( f"{C12}" )
-		logger.log( f"{D01}" )
-		logger.log( f"{D12}" )
-		logger.log( f"{H01}" )
-		logger.log( f"{H12}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.state[ ChainOf3.br0_pose ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.state[ ChainOf3.br1_pose ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.state[ ChainOf3.br2_pose ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.state[ ChainOf3.br0_speed ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.state[ ChainOf3.br1_speed ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.state[ ChainOf3.br2_speed ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.actuation[ ChainOf3.br0_actuation ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.actuation[ ChainOf3.br1_actuation ] ]}" )
-		logger.log( f"{[ float( v ) for v in three_bluerov_chain_model.actuation[ ChainOf3.br0_actuation ] ]}" )
-		logger.log(
-				f"{three_bluerov_chain_mpc.objective_weight * three_robot_chain_objective(
-						three_bluerov_chain_mpc.predict(
-								(three_bluerov_chain_mpc.result.cumsum( axis = 0 ) + three_bluerov_chain_mpc.model.actuation).repeat( three_bluerov_chain_mpc.time_steps_per_actuation, axis = 0 )
-								), three_bluerov_chain_mpc.result, )}"
-				)
+		logger.log( f"{len( three_bluerov_chain_model.previous_states )}" )
+		logger.log( f"{len( three_bluerov_chain_mpc.predicted_trajectories )}" )
+		logger.log( f"{three_bluerov_chain_mpc.compute_times[ -1 ]:.6f}" )
+		logger.log( f"{three_bluerov_chain_mpc.tolerance} - {three_bluerov_chain_mpc.raw_result.success}" )
+
 		logger.lognl( "" )
 		logger.save_at( folder )
-
-		print(
-				f"{frame}/{n_frames} - {perf_counter() - ti:.6f} - "
-				f"{three_bluerov_chain_mpc.times[ -1 ]:.6f} - "
-				f"{three_bluerov_chain_mpc.tolerance} - {three_bluerov_chain_mpc.raw_result.success}"
-				)

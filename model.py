@@ -7,14 +7,14 @@ from numpy import ndarray
 def rungeKutta4(
 		function: callable, time_step: float, current_state: ndarray, *args, **kwargs
 		):
-	'''
+	"""
 	Runge-Kutta 4th order method
 	:param function: function to integrate, must have the following signature: f(x, *args, **kwargs)
 	:param time_step: time step
 	:param current_state: initial position
 	:param args: additional arguments for f
 	:param kwargs: additional keyword arguments for f
-	'''
+	"""
 
 	# coefficients of the Butcher tableau
 	a21 = .4
@@ -54,8 +54,15 @@ class Model:
 			kwargs: dict = None,
 			record: bool = False
 			):
-
-		assert list( signature( dynamics ).parameters )[ :2 ] == [ 'state', 'actuation' ]
+		"""
+		:param dynamics: function that describes the dynamics of the system, must have the following
+		signature: f(state, actuation, **kwargs)
+		:param time_step: time step of the simulation
+		:param initial_state: initial state of the system
+		:param initial_actuation: initial actuation of the system
+		:param kwargs: additional keyword arguments for dynamics
+		:param record: whether to record the states and actuations
+		"""
 
 		self.model_dynamics = dynamics
 		self.time_step = time_step
@@ -64,7 +71,7 @@ class Model:
 		self.actuation = deepcopy( initial_actuation )
 
 		if kwargs is None:
-			self.kwargs = {}
+			self.kwargs = { }
 		else:
 			self.kwargs = kwargs
 
@@ -74,9 +81,19 @@ class Model:
 			self.previous_actuations = [ deepcopy( self.actuation ) ]
 
 	def dynamics( self, state: ndarray, actuation: ndarray ) -> ndarray:
+		"""
+		evaluates the dynamics of the system
+		:param state: current state of the system
+		:param actuation: current actuation of the system
+		:return: state derivative of the system
+		"""
 		return self.model_dynamics( state, actuation, **self.kwargs )
 
 	def step( self ):
+		"""
+		integrates the system one time step. record the state and actuation if record is True
+		"""
+
 		self.state = rungeKutta4( self.dynamics, self.time_step, self.state, self.actuation )
 
 		if self.record:
