@@ -1,1 +1,0 @@
-frame 1/300	actuation=[0. 0. 0.]-[0. 0. 0.]-[0. 0. 0.]	state=[0. 0. 0.]-[1. 0. 0.]-[2. 0. 0.]	compute_time=3.692077s	n_f_eval=19	saved figure 0.png in 2.291728s

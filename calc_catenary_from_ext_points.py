@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-# author: Vincent Hugel
+# author: Vincent Hugel @ COSMER | UTLN
 
 import matplotlib.pyplot as plt
 import numpy as np
+from math import sinh
 import scipy.optimize as opt
 
 
@@ -17,7 +18,7 @@ def ma_fonction( xC, L, DH, dxAB ):
 
 
 def funcs( a, L, DH, dxAB ):
-	f = pow( L, 2 ) - pow( DH, 2 ) - pow( 2 * a * np.sinh( dxAB / (2 * a) ), 2 )
+	f = pow( L, 2 ) - pow( DH, 2 ) - pow( 2 * a * sinh( dxAB / (2 * a) ), 2 )
 	return f
 
 
@@ -27,7 +28,7 @@ def funcc( a, L, DH, dxAB ):
 
 
 def ma_derivee( xC, L, DH, dxAB ):
-	y = 2.0 * xC * (L * L - DH * DH) - 2.0 * dxAB * np.sinh( xC * dxAB )
+	y = 2.0 * xC * (L * L - DH * DH) - 2.0 * dxAB * sinh( xC * dxAB )
 	return y
 
 
