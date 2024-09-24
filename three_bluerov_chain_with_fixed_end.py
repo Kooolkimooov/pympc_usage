@@ -1,12 +1,12 @@
 from json import dump
 from time import time
 
-from numpy import array, cos, diff, inf, pi, r_
+from numpy import array, cos, inf, pi, r_
 from numpy.linalg import norm
 
 from calc_catenary_from_ext_points import *
 from mpc import *
-from three_bluerov_chain import ChainOf3, ChainOf33DOA
+from three_bluerov_chain import ChainOf3, ChainOf33DoA
 from utils import check, generate_trajectory, Logger, serialize_others
 
 
@@ -50,7 +50,7 @@ class ChainOf3FixedEnd( ChainOf3 ):
 		return ChainOf3.__call__( self, state, actuation )
 
 
-class ChainOf33DOAFixedEnd( ChainOf3FixedEnd, ChainOf33DOA ):
+class ChainOf33DoAFixedEnd( ChainOf3FixedEnd, ChainOf33DoA ):
 	actuation_size = 9
 
 	br0_actuation_start = 0
@@ -72,22 +72,15 @@ class ChainOf33DOAFixedEnd( ChainOf3FixedEnd, ChainOf33DOA ):
 		:param actuation: current actuation of the system
 		:return: state derivative of the system
 		"""
-		return ChainOf33DOA.__call__( self, state, actuation )
+		return ChainOf33DoA.__call__( self, state, actuation )
 
 
-def chain_of_three_fixed_end_constraint( candidate_actuation_derivative ):
+def chain_of_three_fixed_end_constraint( candidate ):
 	global three_bluerov_chain_with_fixed_end_mpc
 
-	candidate_actuation = candidate_actuation_derivative.reshape(
-			three_bluerov_chain_with_fixed_end_mpc.result_shape
-			).cumsum(
-			axis = 0
-			) * three_bluerov_chain_with_fixed_end_mpc.time_step + three_bluerov_chain_with_fixed_end_mpc.model.actuation
-	candidate_actuation = candidate_actuation.repeat(
-			three_bluerov_chain_with_fixed_end_mpc.time_steps_per_actuation, axis = 0
-			)
+	actuation, actuation_derivatives = three_bluerov_chain_with_fixed_end_mpc.get_actuation( candidate )
 
-	predicted_trajectory = three_bluerov_chain_with_fixed_end_mpc.predict( candidate_actuation, with_speed = True )
+	predicted_trajectory = three_bluerov_chain_with_fixed_end_mpc.predict( actuation )
 	predicted_trajectory = predicted_trajectory[ :, 0 ]
 
 	# 3 constraints on cables (lowest points),
@@ -155,30 +148,53 @@ def chain_of_three_fixed_end_constraint( candidate_actuation_derivative ):
 	return constraint.flatten()
 
 
+def chain_of_three_3_doa_fixed_end_objective( trajectory: ndarray, actuation: ndarray ):
+	objective = 0.
+
+	trajectory_derivative = diff( trajectory, axis = 0 )
+	objective += norm( trajectory_derivative[ :, 0, ChainOf33DoAFixedEnd.br0_position ], axis = 1 ).sum()
+	objective += norm( trajectory_derivative[ :, 0, ChainOf33DoAFixedEnd.br1_position ], axis = 1 ).sum()
+	objective += norm( trajectory_derivative[ :, 0, ChainOf33DoAFixedEnd.br2_position ], axis = 1 ).sum()
+
+	objective += norm(
+			trajectory[ :, 0, ChainOf33DoAFixedEnd.br0_position ] - trajectory[ :, 0,
+																															ChainOf33DoAFixedEnd.br1_position ] - 1.5, axis = 1
+			).sum()
+	objective += norm(
+			trajectory[ :, 0, ChainOf33DoAFixedEnd.br1_position ] - trajectory[ :, 0,
+																															ChainOf33DoAFixedEnd.br2_position ] - 1.5, axis = 1
+			).sum()
+	objective += norm(
+			trajectory[ :, 0, ChainOf33DoAFixedEnd.br2_position ] - trajectory[ :, 0,
+																															ChainOf33DoAFixedEnd.brf_position ] - 1.5, axis = 1
+			).sum()
+
+	return objective
+
+
 if __name__ == "__main__":
 
 	ti = perf_counter()
 
-
 	n_frames = 200
-	tolerance = 1e-4
+	tolerance = 1e-6
 	time_step = 0.1
 
-	model = ChainOf33DOAFixedEnd()
+	model = ChainOf33DoAFixedEnd()
 
-	state = zeros( (model.state_size,) )
-	state[ 0 ] = 2.
-	state[ 2 ] = 1.
-	state[ 6 ] = 2.5
-	state[ 8 ] = 1.
-	state[ 12 ] = 3.
-	state[ 14 ] = 1.
-	state[ 18 ] = 3.5
+	initial_state = zeros( (model.state_size,) )
+	initial_state[ 0 ] = 2.
+	initial_state[ 2 ] = 1.
+	initial_state[ 6 ] = 2.5
+	initial_state[ 8 ] = 1.
+	initial_state[ 12 ] = 3.
+	initial_state[ 14 ] = 1.
+	initial_state[ 18 ] = 3.5
 
-	actuation = zeros( (model.actuation_size,) )
+	initial_actuation = zeros( (model.actuation_size,) )
 
-	horizon = 10
-	time_steps_per_act = 10
+	horizon = 5
+	time_steps_per_act = 5
 
 	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (.5, [ -3., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
 								 (1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18) ]
@@ -193,8 +209,8 @@ if __name__ == "__main__":
 	# plt.show()
 	# exit()
 
-	pose_weight_matrix = eye( state.shape[ 0 ] // 2 )
-	pose_weight_matrix[ model.br0_position, model.br0_position ] *= 10.
+	pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
+	pose_weight_matrix[ model.br0_position, model.br0_position ] *= 500.
 	pose_weight_matrix[ model.br0_orientation, model.br0_orientation ] *= 5.
 	pose_weight_matrix[ model.br1_position, model.br1_position ] *= 0.
 	pose_weight_matrix[ model.br1_orientation, model.br1_orientation ] *= 5.
@@ -203,7 +219,7 @@ if __name__ == "__main__":
 	pose_weight_matrix[ model.brf_position, model.brf_position ] *= 0.
 	pose_weight_matrix[ model.brf_orientation, model.brf_orientation ] *= 0.
 
-	actuation_weight_matrix = eye( actuation.shape[ 0 ] )
+	actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
 	actuation_weight_matrix[ model.br0_linear_actuation, model.br0_linear_actuation ] *= 0.
 	actuation_weight_matrix[ model.br0_angular_actuation, model.br0_angular_actuation ] *= 1000.
 	actuation_weight_matrix[ model.br1_linear_actuation, model.br1_linear_actuation ] *= 0.
@@ -212,18 +228,19 @@ if __name__ == "__main__":
 	actuation_weight_matrix[ model.br2_angular_actuation, model.br2_angular_actuation ] *= 1000.
 
 	final_cost_weight = 0.
-	objective_weight = 1.
+	objective_weight = 100.
 
 	three_bluerov_chain_with_fixed_end_model = Model(
-			model, time_step, state, actuation, record = True
+			model, time_step, initial_state, initial_actuation, record = True
 			)
 
 	three_bluerov_chain_with_fixed_end_mpc = MPC(
 			three_bluerov_chain_with_fixed_end_model,
 			horizon,
 			trajectory,
-			# objective = three_robot_chain_objective,
-			# objective_weight = objective_weight,
+			optimize_on = 'actuation',
+			objective = chain_of_three_3_doa_fixed_end_objective,
+			objective_weight = objective_weight,
 			# time_step = time_step * 2,
 			tolerance = tolerance,
 			time_steps_per_actuation = time_steps_per_act,
@@ -235,29 +252,29 @@ if __name__ == "__main__":
 			)
 
 	floor_depth = 4.00001
-	du_l_ub = 2000.
-	du_l_lb = -2000.
-	du_a_ub = .1
-	du_a_lb = -.1
+	# du_l_ub = 2000.
+	# du_l_lb = -2000.
+	# du_a_ub = .1
+	# du_a_lb = -.1
 	dp_lb = 0.4
 	dp_ub = 2.8
 	dr_lb = -inf
 	dr_ub = 2.8
 	v_lb = -inf
-	v_ub = 3.
+	v_ub = 1.5
+
 	if v_ub < max_required_speed and 'y' == input(
 			f'the trajectory requires {max_required_speed} but the speed limit is {v_ub}, upgrade ? (y/n)'
 			):
 		v_ub = int( max_required_speed ) + 1.
 
-	bounds_lb_base = [ du_l_lb, du_l_lb, du_l_lb, du_a_lb, du_a_lb, du_a_lb ]
-	bounds_ub_base = [ du_l_ub, du_l_ub, du_l_ub, du_a_ub, du_a_ub, du_a_ub ]
+	# bounds_lb_base = [ du_l_lb, du_l_lb, du_l_lb, du_a_lb, du_a_lb, du_a_lb ]
+	# bounds_ub_base = [ du_l_ub, du_l_ub, du_l_ub, du_a_ub, du_a_ub, du_a_ub ]
 
-	three_bluerov_chain_with_fixed_end_mpc.bounds = Bounds(
-			array( [ bounds_lb_base[ model.br0_actuation ] ] ).repeat( 3, axis = 0 ).flatten(),
-			array( [ bounds_ub_base[ model.br0_actuation ] ] ).repeat( 3, axis = 0 ).flatten(),
-			keep_feasible = True
-			)
+	# three_bluerov_chain_with_fixed_end_mpc.bounds = Bounds(
+	# 		array( [ bounds_lb_base[ model.br0_actuation ] ] ).repeat( 3, axis = 0 ).flatten(),
+	# 		array( [ bounds_ub_base[ model.br0_actuation ] ] ).repeat( 3, axis = 0 ).flatten()
+	# 		)
 
 	constraints_labels = [ '$z_0+H_{01}$', '$z_1+H_{12}$', '$z_2+H_{2fe}$', '$|P_0^{x,y}-P_1^{x,y}|$',
 												 '$|P_1^{x,y}-P_2^{x,y}|$', '$|P_2^{x,y}-P_fe^{x,y}|$', '$|P_0^{x,y,z}-P_1^{x,y,z}|$',
@@ -320,6 +337,6 @@ if __name__ == "__main__":
 
 		logger.log( f'ends at {perf_counter() - ti}' )
 		logger.log( f'{three_bluerov_chain_with_fixed_end_mpc.raw_result.success}' )
-		logger.log( f'{norm( three_bluerov_chain_with_fixed_end_model.actuation )}' )
+		logger.log( f'{ three_bluerov_chain_with_fixed_end_model.actuation[ChainOf33DoAFixedEnd.br2_actuation] }' )
 		logger.lognl( '' )
 		logger.save_at( folder )

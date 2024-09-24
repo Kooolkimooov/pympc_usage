@@ -59,9 +59,9 @@ class MPC:
 		assert model_type in self.__MODEL_TYPE
 		assert optimize_on in self.__OPTIMIZE_ON
 
-		self.predict = self.__MODEL_TYPE[ model_type ][ 'predict' ]
-		self.get_actuation = self.__OPTIMIZE_ON[ optimize_on ][ 'get_actuation' ]
-		self.get_result = self.__OPTIMIZE_ON[ optimize_on ][ 'get_result' ]
+		self.predict = self.__MODEL_TYPE[ model_type ][ 'predict' ].__get__( self, MPC )
+		self.get_actuation = self.__OPTIMIZE_ON[ optimize_on ][ 'get_actuation' ].__get__( self, MPC )
+		self.get_result = self.__OPTIMIZE_ON[ optimize_on ][ 'get_result' ].__get__( self, MPC )
 
 		self.model = model
 		self.horizon = horizon
@@ -162,14 +162,16 @@ class MPC:
 
 		cost = 0.
 
-		predicted_trajectory = self.predict( actuation )
+		prediction = self.predict( actuation )
+		predicted_trajectory = prediction[ :, :, :self.model.state.shape[ 0 ] // 2 ]
+
 		error = predicted_trajectory - self.target_trajectory
 		cost += (error @ self.pose_weight_matrix @ error.transpose( (0, 2, 1) )).sum()
 		cost += (actuation_derivatives @ self.actuation_derivative_weight_matrix @ actuation_derivatives.transpose(
 				(0, 2, 1)
 				)).sum()
 		cost += 0. if self.objective is None else self.objective_weight * self.objective(
-				predicted_trajectory, actuation
+				prediction, actuation
 				)
 
 		cost /= self.horizon
@@ -182,7 +184,7 @@ class MPC:
 
 		return cost
 
-	def predict( self, actuation: ndarray, with_speed = False ) -> ndarray:
+	def predict( self, actuation: ndarray ) -> ndarray:
 		"""
 		predicts the trajectory given the proposed actuation over the horizon
 		ASSUMES THAT THE MODELS STATE IS X = [POSE, POSE_DERIVATIVE]
@@ -192,25 +194,24 @@ class MPC:
 		"""
 		raise NotImplementedError( 'predict method should have been implemented in __init__' )
 
-	def __predict_non_linear( self, actuation: ndarray, with_speed = False ) -> ndarray:
+	def get_actuation( self, candidate: ndarray ) -> tuple[ ndarray, ndarray ]:
+		raise NotImplementedError( 'predict method should have been implemented in __init__' )
+
+	def _predict_non_linear( self, actuation: ndarray ) -> ndarray:
 
 		p_state = deepcopy( self.model.state )
-		vec_size = (self.model.state.shape[ 0 ]) if with_speed else (self.model.state.shape[ 0 ] // 2)
-		predicted_trajectory = zeros( (self.horizon, 1, vec_size) )
+		predicted_trajectory = zeros( (self.horizon, 1, self.model.state.shape[ 0 ]) )
 
 		for i in range( self.horizon ):
 			p_state += self.model.dynamics( p_state, actuation[ i, 0 ] ) * self.time_step
-			predicted_trajectory[ i ] = p_state[ :vec_size ]
+			predicted_trajectory[ i ] = p_state
 
 		return predicted_trajectory
 
-	def __predict_linear( self, actuation: ndarray, with_speed = False ) -> ndarray:
+	def _predict_linear( self, actuation: ndarray ) -> ndarray:
 		raise NotImplementedError( 'predict method should have been implemented in __init__' )
 
-	def get_actuations( self, candidate: ndarray ) -> tuple[ ndarray, ndarray ]:
-		raise NotImplementedError( 'predict method should have been implemented in __init__' )
-
-	def __get_actuation_from_derivative( self, candidate: ndarray ) -> tuple[ ndarray, ndarray ]:
+	def _get_actuation_from_derivative( self, candidate: ndarray ) -> tuple[ ndarray, ndarray ]:
 		actuation_derivatives = candidate.reshape( self.result_shape )
 		actuation = actuation_derivatives.cumsum( axis = 0 ) * self.time_step + self.model.actuation
 		actuation = actuation.repeat( self.time_steps_per_actuation, axis = 0 )
@@ -218,27 +219,27 @@ class MPC:
 
 		return actuation, actuation_derivatives
 
-	def __get_actuation_from_actual( self, candidate: ndarray ) -> tuple[ ndarray, ndarray ]:
+	def _get_actuation_from_actual( self, candidate: ndarray ) -> tuple[ ndarray, ndarray ]:
 		actuation = candidate.reshape( self.result_shape )
-		actuation_derivatives = diff( actuation, prepend = self.model.actuation, axis = 0 ) / self.time_step
+		actuation_derivatives = diff( actuation, prepend = [ [ self.model.actuation ] ], axis = 0 ) / self.time_step
 		actuation = actuation.repeat( self.time_steps_per_actuation, axis = 0 )
 		actuation = actuation[ :self.horizon ]
 
 		return actuation, actuation_derivatives
 
-	def __get_result_from_derivative( self ):
-		pass
+	def _get_result_from_derivative( self ):
+		self.result = self.raw_result.x.reshape( self.result_shape )[ 0, 0 ] * self.model.time_step + self.model.actuation
 
-	def __get_result_from_actual( self ):
-		pass
+	def _get_result_from_actual( self ):
+		self.result = self.raw_result.x.reshape( self.result_shape )[ 0, 0 ]
 
 	__MODEL_TYPE = {
-			'nonlinear': { 'predict': __predict_non_linear }, 'linear': { 'predict': __predict_linear }
+			'nonlinear': { 'predict': _predict_non_linear }, 'linear': { 'predict': _predict_linear }
 			}
 
 	__OPTIMIZE_ON = {
-			'actuation'           : { 'get_actuation': __get_actuation_from_actual, 'get_result': __get_result_from_actual },
+			'actuation'           : { 'get_actuation': _get_actuation_from_actual, 'get_result': _get_result_from_actual },
 			'actuation_derivative': {
-					'get_actuation': __get_actuation_from_derivative, 'get_result': __get_result_from_derivative
+					'get_actuation': _get_actuation_from_derivative, 'get_result': _get_result_from_derivative
 					}
 			}

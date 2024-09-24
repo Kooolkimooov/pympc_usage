@@ -1,5 +1,5 @@
 from glob import glob
-from inspect import isfunction
+from inspect import isfunction, ismethod
 from os import mkdir, path, remove
 
 from numpy import array, cos, eye, ndarray, sin, tan, zeros
@@ -133,7 +133,7 @@ def gif_from_pngs( folder: str, duration: float = None ):
 
 
 def serialize_others( obj: any ):
-	if isfunction( obj ):
+	if isfunction( obj ) or ismethod( obj ):
 		return obj.__name__
 	if isinstance( obj, ndarray ):
 		return obj.tolist()

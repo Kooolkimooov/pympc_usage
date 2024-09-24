@@ -4,7 +4,7 @@ from time import time
 from numpy import array, cos, diff, inf, pi, r_
 from numpy.linalg import norm
 
-from bluerov import Bluerov, Bluerov3DOA
+from bluerov import Bluerov, Bluerov3DoA
 from calc_catenary_from_ext_points import *
 from mpc import *
 from utils import check, generate_trajectory, Logger, serialize_others
@@ -85,7 +85,7 @@ class ChainOf3( Bluerov ):
 		return state_derivative
 
 
-class ChainOf33DOA( ChainOf3, Bluerov3DOA ):
+class ChainOf33DoA( ChainOf3, Bluerov3DoA ):
 	actuation_size = 9
 
 	br0_actuation_start = 0
@@ -112,13 +112,13 @@ class ChainOf33DOA( ChainOf3, Bluerov3DOA ):
 		"""
 		state_derivative = zeros( state.shape )
 
-		state_derivative[ self.br0_state ] = Bluerov3DOA.__call__(
+		state_derivative[ self.br0_state ] = Bluerov3DoA.__call__(
 				self, state[ self.br0_state ], actuation[ self.br0_actuation ]
 				)
-		state_derivative[ self.br1_state ] = Bluerov3DOA.__call__(
+		state_derivative[ self.br1_state ] = Bluerov3DoA.__call__(
 				self, state[ self.br1_state ], actuation[ self.br1_actuation ]
 				)
-		state_derivative[ self.br2_state ] = Bluerov3DOA.__call__(
+		state_derivative[ self.br2_state ] = Bluerov3DoA.__call__(
 				self, state[ self.br2_state ], actuation[ self.br2_actuation ]
 				)
 
@@ -127,10 +127,12 @@ class ChainOf33DOA( ChainOf3, Bluerov3DOA ):
 
 def three_robot_chain_objective( trajectory: ndarray, actuation: ndarray ):
 	objective = 0.
+
 	trajectory_derivative = diff( trajectory, axis = 0 )
 	objective += norm( trajectory_derivative[ :, 0, ChainOf3.br0_position ], axis = 1 ).sum()
 	objective += norm( trajectory_derivative[ :, 0, ChainOf3.br1_position ], axis = 1 ).sum()
 	objective += norm( trajectory_derivative[ :, 0, ChainOf3.br2_position ], axis = 1 ).sum()
+
 	return objective
 
 

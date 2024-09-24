@@ -55,7 +55,8 @@ class Bluerov:
 		return xdot
 
 
-class Bluerov3DOA( Bluerov ):
+class Bluerov3DoA( Bluerov ):
+
 	actuation_size = 3
 
 	def __call__( self, state: ndarray, actuation: ndarray ) -> ndarray:
