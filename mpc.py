@@ -84,7 +84,7 @@ class MPC:
 		self.result_shape = (self.horizon // self.time_steps_per_actuation + add_one, 1, self.model.actuation.shape[ 0 ])
 
 		self.raw_result = None
-		self.result = zeros( self.result_shape )
+		self.result = zeros( self.model.actuation.shape )
 
 		self.pose_weight_matrix: ndarray = zeros(
 				(self.horizon, self.model.state.shape[ 0 ] // 2, self.model.state.shape[ 0 ] // 2)
