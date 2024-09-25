@@ -215,25 +215,25 @@ if __name__ == "__main__":
 	# exit()
 
 	pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
-	pose_weight_matrix[ model.br0_position, model.br0_position ] *= 500.
-	pose_weight_matrix[ model.br0_orientation, model.br0_orientation ] *= 5.
+	pose_weight_matrix[ model.br0_position, model.br0_position ] *= 10.
+	pose_weight_matrix[ model.br0_orientation, model.br0_orientation ] *= 1.
 	pose_weight_matrix[ model.br1_position, model.br1_position ] *= 0.
-	pose_weight_matrix[ model.br1_orientation, model.br1_orientation ] *= 5.
+	pose_weight_matrix[ model.br1_orientation, model.br1_orientation ] *= 1.
 	pose_weight_matrix[ model.br2_position, model.br2_position ] *= 0.
-	pose_weight_matrix[ model.br2_orientation, model.br2_orientation ] *= 5.
+	pose_weight_matrix[ model.br2_orientation, model.br2_orientation ] *= 1.
 	pose_weight_matrix[ model.brf_position, model.brf_position ] *= 0.
 	pose_weight_matrix[ model.brf_orientation, model.brf_orientation ] *= 0.
 
 	actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
 	actuation_weight_matrix[ model.br0_linear_actuation, model.br0_linear_actuation ] *= 0.
-	actuation_weight_matrix[ model.br0_angular_actuation, model.br0_angular_actuation ] *= 1000.
+	actuation_weight_matrix[ model.br0_angular_actuation, model.br0_angular_actuation ] *= 1.
 	actuation_weight_matrix[ model.br1_linear_actuation, model.br1_linear_actuation ] *= 0.
-	actuation_weight_matrix[ model.br1_angular_actuation, model.br1_angular_actuation ] *= 1000.
+	actuation_weight_matrix[ model.br1_angular_actuation, model.br1_angular_actuation ] *= 1.
 	actuation_weight_matrix[ model.br2_linear_actuation, model.br2_linear_actuation ] *= 0.
-	actuation_weight_matrix[ model.br2_angular_actuation, model.br2_angular_actuation ] *= 1000.
+	actuation_weight_matrix[ model.br2_angular_actuation, model.br2_angular_actuation ] *= 1.
 
 	final_cost_weight = 0.
-	objective_weight = 100.
+	objective_weight = .1
 
 	three_bluerov_chain_with_fixed_end_model = Model(
 			model, time_step, initial_state, initial_actuation, record = True
@@ -248,6 +248,7 @@ if __name__ == "__main__":
 			objective_weight = objective_weight,
 			# time_step = time_step * 2,
 			tolerance = tolerance,
+			max_iter = 100,
 			time_steps_per_actuation = time_steps_per_act,
 			pose_weight_matrix = pose_weight_matrix,
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
@@ -330,18 +331,20 @@ if __name__ == "__main__":
 				not three_bluerov_chain_with_fixed_end_mpc.raw_result.success and
 				three_bluerov_chain_with_fixed_end_mpc.tolerance < 1):
 			three_bluerov_chain_with_fixed_end_mpc.tolerance *= 10
-			logger.log( 'increasing tolerance' )
+			logger.log( f'increasing tolerance: {three_bluerov_chain_with_fixed_end_mpc.tolerance}' )
 		elif (
 				three_bluerov_chain_with_fixed_end_mpc.raw_result.success and three_bluerov_chain_with_fixed_end_mpc.tolerance
-				> tolerance):
+				> 2 * tolerance):  # *2 because of floating point error
 			three_bluerov_chain_with_fixed_end_mpc.tolerance /= 10
-			logger.log( 'decreasing tolerance' )
+			logger.log( f'decreasing tolerance: {three_bluerov_chain_with_fixed_end_mpc.tolerance}' )
+		else:
+			logger.log( f'keeping tolerance: {three_bluerov_chain_with_fixed_end_mpc.tolerance}' )
 
 		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
 			dump( three_bluerov_chain_with_fixed_end_mpc.__dict__, f, default = serialize_others )
 
 		logger.log( f'ends at {perf_counter() - ti}' )
 		logger.log( f'{three_bluerov_chain_with_fixed_end_mpc.raw_result.success}' )
-		logger.log( f'{ three_bluerov_chain_with_fixed_end_model.actuation[ChainOf33DoAFixedEnd.br2_actuation] }' )
+		logger.log( f'{three_bluerov_chain_with_fixed_end_model.actuation[ ChainOf33DoAFixedEnd.br2_actuation ]}' )
 		logger.lognl( '' )
 		logger.save_at( folder )
