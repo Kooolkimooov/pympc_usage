@@ -80,8 +80,8 @@ def chain_of_three_fixed_end_constraint( candidate ):
 
 	actuation, actuation_derivatives = three_bluerov_chain_with_fixed_end_mpc.get_actuation( candidate )
 
-	predicted_trajectory = three_bluerov_chain_with_fixed_end_mpc.predict( actuation )
-	predicted_trajectory = predicted_trajectory[ :, 0 ]
+	prediction = three_bluerov_chain_with_fixed_end_mpc.predict( actuation )
+	prediction = prediction[ :, 0 ]
 
 	# 3 constraints on cables (lowest points),
 	# 6 on inter robot_distance (3 horizontal, 2 3d),
@@ -90,41 +90,38 @@ def chain_of_three_fixed_end_constraint( candidate ):
 	constraint = zeros( (three_bluerov_chain_with_fixed_end_mpc.horizon, n_constraints) )
 
 	# z position of robots 0 and 1; we add H afterward
-	constraint[ :, 0 ] = predicted_trajectory[ :, ChainOf3FixedEnd.br0_z ]
-	constraint[ :, 1 ] = predicted_trajectory[ :, ChainOf3FixedEnd.br1_z ]
-	constraint[ :, 2 ] = predicted_trajectory[ :, ChainOf3FixedEnd.br2_z ]
+	constraint[ :, 0 ] = prediction[ :, ChainOf3FixedEnd.br0_z ]
+	constraint[ :, 1 ] = prediction[ :, ChainOf3FixedEnd.br1_z ]
+	constraint[ :, 2 ] = prediction[ :, ChainOf3FixedEnd.br2_z ]
 
 	# horizontal distance between consecutive robots
 	constraint[ :, 3 ] = norm(
-			predicted_trajectory[ :, ChainOf3FixedEnd.br1_xy ] - predicted_trajectory[ :, ChainOf3FixedEnd.br0_xy ], axis = 1
+			prediction[ :, ChainOf3FixedEnd.br1_xy ] - prediction[ :, ChainOf3FixedEnd.br0_xy ], axis = 1
 			)
 	constraint[ :, 4 ] = norm(
-			predicted_trajectory[ :, ChainOf3FixedEnd.br2_xy ] - predicted_trajectory[ :, ChainOf3FixedEnd.br1_xy ], axis = 1
+			prediction[ :, ChainOf3FixedEnd.br2_xy ] - prediction[ :, ChainOf3FixedEnd.br1_xy ], axis = 1
 			)
 	constraint[ :, 5 ] = norm(
-			predicted_trajectory[ :, ChainOf3FixedEnd.brf_xy ] - predicted_trajectory[ :, ChainOf3FixedEnd.br1_xy ], axis = 1
+			prediction[ :, ChainOf3FixedEnd.brf_xy ] - prediction[ :, ChainOf3FixedEnd.br2_xy ], axis = 1
 			)
 
 	# distance between consecutive robots
 	constraint[ :, 6 ] = norm(
-			predicted_trajectory[ :, ChainOf3FixedEnd.br1_position ] - predicted_trajectory[ :,
-																																 ChainOf3FixedEnd.br0_position ], axis = 1
+			prediction[ :, ChainOf3FixedEnd.br1_position ] - prediction[ :, ChainOf3FixedEnd.br0_position ], axis = 1
 			)
 	constraint[ :, 7 ] = norm(
-			predicted_trajectory[ :, ChainOf3FixedEnd.br2_position ] - predicted_trajectory[ :,
-																																 ChainOf3FixedEnd.br1_position ], axis = 1
+			prediction[ :, ChainOf3FixedEnd.br2_position ] - prediction[ :, ChainOf3FixedEnd.br1_position ], axis = 1
 			)
 	constraint[ :, 8 ] = norm(
-			predicted_trajectory[ :, ChainOf3FixedEnd.brf_position ] - predicted_trajectory[ :,
-																																 ChainOf3FixedEnd.br2_position ], axis = 1
+			prediction[ :, ChainOf3FixedEnd.brf_position ] - prediction[ :, ChainOf3FixedEnd.br2_position ], axis = 1
 			)
 
 	# speed
-	constraint[ :, 9 ] = norm( predicted_trajectory[ :, ChainOf3FixedEnd.br0_speed ], axis = 1 )
-	constraint[ :, 10 ] = norm( predicted_trajectory[ :, ChainOf3FixedEnd.br1_speed ], axis = 1 )
-	constraint[ :, 11 ] = norm( predicted_trajectory[ :, ChainOf3FixedEnd.br2_speed ], axis = 1 )
+	constraint[ :, 9 ] = norm( prediction[ :, ChainOf3FixedEnd.br0_speed ], axis = 1 )
+	constraint[ :, 10 ] = norm( prediction[ :, ChainOf3FixedEnd.br1_speed ], axis = 1 )
+	constraint[ :, 11 ] = norm( prediction[ :, ChainOf3FixedEnd.br2_speed ], axis = 1 )
 
-	for i, state in enumerate( predicted_trajectory ):
+	for i, state in enumerate( prediction ):
 
 		try:
 			_, _, H01 = get_catenary_param(
@@ -148,25 +145,33 @@ def chain_of_three_fixed_end_constraint( candidate ):
 	return constraint.flatten()
 
 
-def chain_of_three_3_doa_fixed_end_objective( trajectory: ndarray, actuation: ndarray ):
+def chain_of_three_3_doa_fixed_end_objective( prediction: ndarray, actuation: ndarray ):
 	objective = 0.
 
-	trajectory_derivative = diff( trajectory, axis = 0 )
-	objective += norm( trajectory_derivative[ :, 0, ChainOf33DoAFixedEnd.br0_position ], axis = 1 ).sum()
-	objective += norm( trajectory_derivative[ :, 0, ChainOf33DoAFixedEnd.br1_position ], axis = 1 ).sum()
-	objective += norm( trajectory_derivative[ :, 0, ChainOf33DoAFixedEnd.br2_position ], axis = 1 ).sum()
+	objective += norm( prediction[ :, 0, ChainOf33DoAFixedEnd.br0_linear_speed ], axis = 1 ).sum()
+	objective += norm( prediction[ :, 0, ChainOf33DoAFixedEnd.br1_linear_speed ], axis = 1 ).sum()
+	objective += norm( prediction[ :, 0, ChainOf33DoAFixedEnd.br2_linear_speed ], axis = 1 ).sum()
 
-	objective += norm(
-			trajectory[ :, 0, ChainOf33DoAFixedEnd.br0_position ] - trajectory[ :, 0,
-																															ChainOf33DoAFixedEnd.br1_position ] - 1.5, axis = 1
+	objective += abs(
+			norm(
+					prediction[ :, 0, ChainOf33DoAFixedEnd.br0_position ] - prediction[ :, 0,
+																																	ChainOf33DoAFixedEnd.br1_position ],
+					axis = 1
+					) - 1.5
 			).sum()
-	objective += norm(
-			trajectory[ :, 0, ChainOf33DoAFixedEnd.br1_position ] - trajectory[ :, 0,
-																															ChainOf33DoAFixedEnd.br2_position ] - 1.5, axis = 1
+	objective += abs(
+			norm(
+					prediction[ :, 0, ChainOf33DoAFixedEnd.br1_position ] - prediction[ :, 0,
+																																	ChainOf33DoAFixedEnd.br2_position ],
+					axis = 1
+					) - 1.5
 			).sum()
-	objective += norm(
-			trajectory[ :, 0, ChainOf33DoAFixedEnd.br2_position ] - trajectory[ :, 0,
-																															ChainOf33DoAFixedEnd.brf_position ] - 1.5, axis = 1
+	objective += abs(
+			norm(
+					prediction[ :, 0, ChainOf33DoAFixedEnd.br2_position ] - prediction[ :, 0,
+																																	ChainOf33DoAFixedEnd.brf_position ],
+					axis = 1
+					) - 1.5
 			).sum()
 
 	return objective
