@@ -1,7 +1,6 @@
-from numpy import array, cross, diag
+from numpy import array, cross, diag, ndarray, zeros
 from numpy.linalg import inv
 
-from mpc import *
 from utils import (
 	build_inertial_matrix, build_transformation_matrix,
 	)
@@ -13,6 +12,7 @@ class Bluerov:
 	paramters of the model are based on the BlueROV2 Heavy configuration
 	and are stored in the class as class variables
 	"""
+
 	state_size = 12
 	actuation_size = 6
 
@@ -29,7 +29,7 @@ class Bluerov:
 
 	hydrodynamic_matrix = diag( [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ] )
 
-	def __call__( self, state: ndarray, actuation: ndarray ) -> ndarray:
+	def __call__( self, state: ndarray, actuation: ndarray, perturbation: ndarray ) -> ndarray:
 		"""
 		evalutes the dynamics of the Bluerov model
 		:param state: current state of the system
@@ -40,27 +40,27 @@ class Bluerov:
 		transform_matrix = build_transformation_matrix( *state[ 3:6 ] )
 
 		hydrostatic_forces = zeros( 6 )
-		hydrostatic_forces[ :3 ] = transform_matrix[ :3, :3 ].T @ (Bluerov.weight + Bluerov.buoyancy)
+		hydrostatic_forces[ :3 ] = transform_matrix[ :3, :3 ].T @ (self.weight + self.buoyancy)
 		hydrostatic_forces[ 3: ] = cross(
-				Bluerov.center_of_mass, transform_matrix[ :3, :3 ].T @ Bluerov.weight
+				self.center_of_mass, transform_matrix[ :3, :3 ].T @ self.weight
 				) + cross(
-				Bluerov.center_of_volume, transform_matrix[ :3, :3 ].T @ Bluerov.buoyancy
+				self.center_of_volume, transform_matrix[ :3, :3 ].T @ self.buoyancy
 				)
 
 		xdot = zeros( state.shape )
 		xdot[ :6 ] = transform_matrix @ state[ 6: ]
-		xdot[ 6: ] = Bluerov.inverse_inertial_matrix @ (
-				Bluerov.hydrodynamic_matrix @ state[ 6: ] + hydrostatic_forces + actuation)
+		xdot[ 6: ] = self.inverse_inertial_matrix @ (
+				self.hydrodynamic_matrix @ state[ 6: ] + hydrostatic_forces + actuation + perturbation)
 
 		return xdot
 
 
-class Bluerov3DoA( Bluerov ):
+class BluerovNoAngularActuation( Bluerov ):
 
 	actuation_size = 3
 
-	def __call__( self, state: ndarray, actuation: ndarray ) -> ndarray:
+	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
 		six_dof_actuation = zeros( (6,) )
 		six_dof_actuation[ :3 ] = actuation
 
-		return Bluerov.__call__( self, state, six_dof_actuation )
+		return Bluerov.__call__( self, state, six_dof_actuation, perturbation )

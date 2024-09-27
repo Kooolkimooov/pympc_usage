@@ -11,7 +11,7 @@ class VS:
 			):
 
 		self.model = model
-		self.result = zeros( self.model.actuation )
+		self.result = zeros( self.model.actuation.shape )
 
 		self.record = record
 		if self.record:
@@ -27,8 +27,7 @@ class VS:
 		if self.record:
 			ti = perf_counter()
 
-		# TODO: Claire implement actuation with visual servoing method using self.model.state and
-		#  self.target
+		# TODO: Claire implement actuation with visual servoing method using self.model.state
 
 		if self.record:
 			self.times.append( perf_counter() - ti )

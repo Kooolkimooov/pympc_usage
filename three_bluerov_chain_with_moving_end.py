@@ -4,7 +4,7 @@ from time import time
 from numpy import array, cos, inf, linspace, pi, r_, sin
 from numpy.linalg import norm
 
-from bluerov import Bluerov, Bluerov3DoA
+from bluerov import Bluerov, BluerovNoAngularActuation
 from calc_catenary_from_ext_points import get_catenary_param
 from mpc import *
 from utils import check, generate_trajectory, Logger, serialize_others
@@ -83,16 +83,16 @@ class ChainOf43DoASurfaceEnd( Bluerov ):
 		"""
 		state_derivative = zeros( state.shape )
 
-		state_derivative[ self.br0_state ] = Bluerov3DoA.__call__(
+		state_derivative[ self.br0_state ] = BluerovNoAngularActuation.__call__(
 				self, state[ self.br0_state ], actuation[ self.br0_actuation ]
 				)
-		state_derivative[ self.br1_state ] = Bluerov3DoA.__call__(
+		state_derivative[ self.br1_state ] = BluerovNoAngularActuation.__call__(
 				self, state[ self.br1_state ], actuation[ self.br1_actuation ]
 				)
-		state_derivative[ self.br2_state ] = Bluerov3DoA.__call__(
+		state_derivative[ self.br2_state ] = BluerovNoAngularActuation.__call__(
 				self, state[ self.br2_state ], actuation[ self.br2_actuation ]
 				)
-		state_derivative[ self.brf_state ] = Bluerov3DoA.__call__(
+		state_derivative[ self.brf_state ] = BluerovNoAngularActuation.__call__(
 				self, state[ self.brf_state ], zeros( (self.actuation_size // 3,) )
 				)
 
