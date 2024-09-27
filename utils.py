@@ -5,6 +5,7 @@ from os import mkdir, path, remove
 from numpy import array, cos, eye, ndarray, sin, tan, zeros
 from PIL import Image
 
+G: float = 9.80665
 
 class Logger:
 	def __init__( self, print_to_terminal: bool = True ):

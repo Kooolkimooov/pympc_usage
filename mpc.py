@@ -1,13 +1,16 @@
 from copy import deepcopy
 from time import perf_counter
 
-from numpy import diff, eye, ndarray, zeros
+from numpy import diff, eye, ndarray, zeros, array
 from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint
 
 from model import Model
 
 
 class MPC:
+
+	MODEL_TYPE=[ 'linear', 'nonlinear' ]
+	OPTIMIZE_ON=[ 'actuation_derivative', 'actuation' ]
 
 	def __init__(
 			self,
@@ -56,12 +59,26 @@ class MPC:
 		:param verbose: whether to print the optimization results
 		"""
 
-		assert model_type in self.__MODEL_TYPE
-		assert optimize_on in self.__OPTIMIZE_ON
+		assert model_type in self.MODEL_TYPE
+		assert optimize_on in self.OPTIMIZE_ON
 
-		self.predict = self.__MODEL_TYPE[ model_type ][ 'predict' ].__get__( self, MPC )
-		self.get_actuation = self.__OPTIMIZE_ON[ optimize_on ][ 'get_actuation' ].__get__( self, MPC )
-		self.get_result = self.__OPTIMIZE_ON[ optimize_on ][ 'get_result' ].__get__( self, MPC )
+		match model_type:
+			case 'linear':
+				self.predict = self._predict_linear
+			case 'nonlinear':
+				self.predict = self._predict_non_linear
+			case _:
+				raise ValueError( f'model_type must be one of {self.MODEL_TYPE}' )
+
+		match optimize_on:
+			case 'actuation_derivative':
+				self.get_actuation = self._get_actuation_from_derivative
+				self.get_result = self._get_result_from_derivative
+			case 'actuation':
+				self.get_actuation = self._get_actuation_from_actual
+				self.get_result = self._get_result_from_actual
+			case _:
+				raise ValueError( f'optimize_on must be one of {self.OPTIMIZE_ON}' )
 
 		self.model = model
 		self.horizon = horizon
@@ -233,13 +250,12 @@ class MPC:
 	def _get_result_from_actual( self ):
 		self.result = self.raw_result.x.reshape( self.result_shape )[ 0, 0 ]
 
-	__MODEL_TYPE = {
-			'nonlinear': { 'predict': _predict_non_linear }, 'linear': { 'predict': _predict_linear }
-			}
-
-	__OPTIMIZE_ON = {
-			'actuation'           : { 'get_actuation': _get_actuation_from_actual, 'get_result': _get_result_from_actual },
-			'actuation_derivative': {
-					'get_actuation': _get_actuation_from_derivative, 'get_result': _get_result_from_derivative
-					}
-			}
+if __name__ == '__main__':
+	model = Model(lambda x: x, 0.1, array([0]), array([0]))
+	for m in MPC.MODEL_TYPE:
+		for o in MPC.OPTIMIZE_ON:
+			print(m, o)
+			mpc = MPC( model, 10, zeros( (10, 1, 1) ), model_type=m, optimize_on=o )
+			print('\t', mpc.predict.__name__)
+			print('\t', mpc.get_actuation.__name__)
+			print('\t', mpc.get_result.__name__)

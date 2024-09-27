@@ -16,18 +16,20 @@ class Bluerov:
 	state_size = 12
 	actuation_size = 6
 
-	mass = 11.5
-	center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
-	weight = array( [ 0., 0., mass * 9.80665 ] )
+	def __init__(self):
 
-	center_of_volume = array( [ 0.0, 0.0, -0.02 ] )
-	buoyancy = array( [ 0, 0, -120. ] )
+		self.mass = 11.5
+		self.center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
+		self.weight = array( [ 0., 0., self.mass * 9.80665 ] )
 
-	inverse_inertial_matrix = inv(
-			build_inertial_matrix( mass, center_of_mass, [ .16, .16, .16, 0., 0., 0. ] )
-			)
+		self.center_of_volume = array( [ 0.0, 0.0, -0.02 ] )
+		self.buoyancy = array( [ 0, 0, -120. ] )
 
-	hydrodynamic_matrix = diag( [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ] )
+		self.inverse_inertial_matrix = inv(
+				build_inertial_matrix( self.mass, self.center_of_mass, [ .16, .16, .16, 0., 0., 0. ] )
+				)
+
+		self.hydrodynamic_matrix = diag( [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ] )
 
 	def __call__( self, state: ndarray, actuation: ndarray, perturbation: ndarray ) -> ndarray:
 		"""
@@ -58,6 +60,9 @@ class Bluerov:
 class BluerovNoAngularActuation( Bluerov ):
 
 	actuation_size = 3
+
+	def __init__(self):
+		super().__init__()
 
 	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
 		six_dof_actuation = zeros( (6,) )
