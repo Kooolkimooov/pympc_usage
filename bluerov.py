@@ -118,3 +118,19 @@ class BluerovNoAngularActuation( Bluerov ):
 		six_dof_actuation[ :3 ] = actuation
 
 		return Bluerov.__call__( self, state, six_dof_actuation, perturbation )
+
+
+class USV( Bluerov ):
+	actuation_size = 2
+
+	def __init__( self ):
+		super().__init__()
+
+	def __call__( self, state, actuation, perturbation ):
+		six_dof_actuation = zeros( (6,) )
+		# linear actuation on x
+		six_dof_actuation[ 0 ] = actuation[ 0 ]
+		# angular actuation around z
+		six_dof_actuation[ 5 ] = actuation[ 1 ]
+
+		return Bluerov.__call__( self, state, six_dof_actuation, perturbation )

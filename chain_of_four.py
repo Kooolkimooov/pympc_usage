@@ -18,7 +18,7 @@ simplefilter( 'ignore', RuntimeWarning )
 class ChainOf4:
 
 	state_size = 4 * Bluerov.state_size
-	actuation_size = 4 * Bluerov.actuation_size
+	actuation_size = 3 * Bluerov.actuation_size + USV.actuation_size
 
 	def __init__( self ):
 		self.br_0 = Bluerov()
@@ -27,7 +27,7 @@ class ChainOf4:
 		self.c_12 = Catenary()
 		self.br_2 = Bluerov()
 		self.c_23 = Catenary()
-		self.br_3 = Bluerov()
+		self.br_3 = USV()
 
 		self.water_current_force = array( [ 0, 0, 0, 0, 0, 0 ] )
 
@@ -86,10 +86,10 @@ class ChainOf4:
 		self.br_2_linear_actuation = slice( 12, 15 )
 		self.br_2_angular_actuation = slice( 15, 18 )
 
-		self.br_3_actuation = slice( 18, 24 )
+		self.br_3_actuation = slice( 18, 20 )
 		self.br_3_actuation_start = 18
-		self.br_3_linear_actuation = slice( 18, 21 )
-		self.br_3_angular_actuation = slice( 21, 24 )
+		self.br_3_linear_actuation = 18
+		self.br_3_angular_actuation = 19
 
 		self.br_0_state = r_[ self.br_0_pose, self.br_0_speed ]
 		self.br_1_state = r_[ self.br_1_pose, self.br_1_speed ]
@@ -330,10 +330,10 @@ if __name__ == "__main__":
 	trajectory[ :, 0, model.br_0_z ] = 1.5 * cos(
 			1.25 * (trajectory[ :, 0, model.br_0_position ][ :, 0 ] - 2) + pi
 			) + 2.5
-	trajectory[ :, 0, model.br_3_z ] += -2. * sin( times / 6 )
-	trajectory[ :, 0, model.br_3_z ] += + .2 * sin( times )
-	trajectory[ :, 0, model.br_3_z ] += + .1 * sin( 3.3 * times )
-	trajectory[ :, 0, model.br_3_position ][ :, 0 ] = 3.5
+	# trajectory[ :, 0, model.br_3_z ] += -2.5 * sin( times / 6 )
+	# trajectory[ :, 0, model.br_3_z ] += + .2 * sin( times )
+	# trajectory[ :, 0, model.br_3_z ] += + .1 * sin( 3.3 * times )
+	# trajectory[ :, 0, model.br_3_position ][ :, 0 ] = 3.5
 
 	trajectory_derivative = diff( trajectory, append = trajectory[ :1, :, : ], axis = 0 ) / time_step
 
@@ -362,7 +362,7 @@ if __name__ == "__main__":
 	actuation_weight_matrix[ model.br_1_angular_actuation, model.br_1_angular_actuation ] *= 1.
 	actuation_weight_matrix[ model.br_2_linear_actuation, model.br_2_linear_actuation ] *= 1e-12
 	actuation_weight_matrix[ model.br_2_angular_actuation, model.br_2_angular_actuation ] *= 1.
-	actuation_weight_matrix[ model.br_3_linear_actuation, model.br_3_linear_actuation ] *= 1e-12
+	actuation_weight_matrix[ model.br_3_linear_actuation, model.br_3_linear_actuation ] *= 1e-3
 	actuation_weight_matrix[ model.br_3_angular_actuation, model.br_3_angular_actuation ] *= 1.
 
 	final_cost_weight = 0.
