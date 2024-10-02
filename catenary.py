@@ -14,6 +14,7 @@ class Catenary:
 		self.length = length
 		self.linear_mass = linear_mass
 
+		self.get_parameters = self._get_parameters_optimization
 		self.optimization_function = self._optimization_function_1
 		self.get_parameters = self._get_parameters_optimization
 
@@ -27,7 +28,8 @@ class Catenary:
 		- the parameters of the catenary:
 			- the parameter of the catenary (C, set to None if out of safe search space);
 			- vertical sag of the catenary (H, set to None if out of safe search space and 2D+ΔD > length);
-			- vertical distance between attachment points (ΔH, set to None if out of safe search space and 2D+ΔD > length);
+			- vertical distance between attachment points (ΔH, set to None if out of safe search space and 2D+ΔD >
+			length);
 			- horizontal half-length (D, set to None if out of safe search space and 2D+ΔD > length);
 			- horizontal asymmetric length (ΔD, set to None if out of safe search space and 2D+ΔD > length);
 		- the lowest point (x, y, z) of the catenary;
@@ -119,8 +121,11 @@ class Catenary:
 		return C, H, dH, D, dD
 
 	def _get_lowest_point( self, p1: ndarray, p2: ndarray, C: float, H: float, dH: float, D: float, dD: float ):
+
+		# case where ΔH is too small
 		if (C is None) and (H is not None):
 			return p1 + array( [ 0, 0, self.length / 2 ] )
+		# case where cable is taunt
 		elif C is None:
 			return p1 if p1[ 2 ] >= p2[ 2 ] else p2
 
@@ -131,12 +136,14 @@ class Catenary:
 
 	def _get_perturbations( self, p1: ndarray, p2: ndarray, C: float, D: float, dD: float ) -> tuple[ ndarray, ndarray ]:
 
+		# case where ΔH is too small
 		if (C is None) and (D is not None):
 			return array(
 					[ 0., 0., self.linear_mass * self.length * G / 2 ]
 					), array(
 					[ 0., 0., self.linear_mass * self.length * G / 2 ]
 					)
+		# case where cable is taunt
 		elif C is None:
 			return None, None
 
@@ -156,8 +163,10 @@ class Catenary:
 
 	def _discretize( self, p1: ndarray, p2: ndarray, C: float, H: float, D: float, dD: float, n: int = 100 ) -> ndarray:
 
+		# case where ΔH is too small
 		if (C is None) and (D is not None):
 			return array( [ p1, p1 + array( [ 0, 0, H ] ), p2 ] )
+		# case where cable is taunt
 		elif C is None:
 			return array( [ p1, p2 ] )
 
@@ -203,42 +212,80 @@ def test_1():
 
 	cat = Catenary()
 	# cat.optimization_function = cat._optimization_function_1 # μ=0.0004014649499549705 σ=0.0002544858910793164
-	cat.optimization_function = cat._optimization_function_2  # μ=0.00039219858003561965 σ=0.00023520437741971333
-	lengths = linspace( 3., 3., 1 )
+	# cat.optimization_function = cat._optimization_function_2  # μ=0.00039219858003561965 σ=0.00023520437741971333
+	lengths = linspace( 1., 10., 10 )
 
+	xlpisp = [ ]
+	zlpisp = [ ]
+	cs = [ ]
+	xs = [ ]
+	zs = [ ]
 	ts = [ ]
 	ls = [ ]
 	xoverl = [ ]
 	zoverl = [ ]
 
 	for l in lengths:
-		X = linspace( 0., l, 100 )
-		Z = linspace( -l, l, 200 )
+		X = linspace( 0., l, 200 )
+		Z = linspace( -l, l, 400 )
 		cat.length = l
 		with tqdm( X, desc = f'test 1 {l=:.2f}' ) as X:
 			for x in X:
 				for z in Z:
 					X.display( f'{X}\t{x=:.2f}\t{z=:.2f}\tn={len( ls )}' )
+					p1 = array( [ 0, 0, 0 ] )
+					p2 = array( [ x, 0, z ] )
 					try:
 						ti = perf_counter()
-						cat( array( [ 0, 0, 0 ] ), array( [ x, 0, z ] ) )
+						(c, _, _, _, _), lp, _, _ = cat( p1, p2 )
 						ts += [ perf_counter() - ti ]
+						cs += [ c ]
+						xs += [ x / l ]
+						zs += [ z / l ]
+						if norm( lp - p1 ) < 1e-3 or norm( lp - p2 ) < 1e-3:
+							xlpisp += [ x / l ]
+							zlpisp += [ z / l ]
 					except:
 						ls += [ l ]
 						xoverl += [ x / l ]
 						zoverl += [ z / l ]
 
+	print( 'times' )
 	print( mean( ts ), std( ts ) )
 	print( quantile( ts, [ 0.01, 0.25, 0.50, 0.75, 0.99 ] ) )
+	print( 'C' )
+	print( mean( cs ), std( cs ) )
+	print( quantile( cs, [ 0.01, 0.25, 0.50, 0.75, 0.99 ] ) )
 
 	plt.figure()
-	plt.scatter( ls, xoverl )
+	plt.scatter( xs, cs, s = .1 )
+	plt.xlabel( r'$(2D + \Delta D) / L$' )
+	plt.ylabel( r'$C$' )
+
+	plt.figure()
+	plt.scatter( zs, cs, s = .1 )
+	plt.xlabel( r'$\Delta H / L$' )
+	plt.ylabel( r'$C$' )
+
+	plt.figure()
+	plt.hist( cs, bins = 100 )
+	plt.xlabel( 'value of C' )
+	plt.ylabel( 'occurrences' )
+
+	plt.figure()
+	plt.scatter( xoverl, zoverl, s = .1 )
+	plt.xlabel( r'$(2D + \Delta D) / L$' )
+	plt.ylabel( r'$\Delta H / L$' )
 	plt.axis( 'equal' )
+	plt.legend( [ 'failed optimization' ] )
 	plt.grid()
 
 	plt.figure()
-	plt.scatter( xoverl, zoverl )
+	plt.scatter( xlpisp, zlpisp, s = .1 )
+	plt.xlabel( r'$(2D + \Delta D) / L$' )
+	plt.ylabel( r'$\Delta H / L$' )
 	plt.axis( 'equal' )
+	plt.legend( [ 'lowest point is p1 or p2' ] )
 	plt.grid()
 
 	plt.show()

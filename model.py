@@ -1,5 +1,4 @@
 from copy import deepcopy
-from inspect import signature
 
 from numpy import ndarray
 

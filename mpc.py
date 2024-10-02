@@ -1,7 +1,7 @@
 from copy import deepcopy
 from time import perf_counter
 
-from numpy import diff, eye, ndarray, zeros, array
+from numpy import array, diff, eye, ndarray, zeros
 from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint
 
 from model import Model
@@ -9,8 +9,8 @@ from model import Model
 
 class MPC:
 
-	MODEL_TYPE=[ 'linear', 'nonlinear' ]
-	OPTIMIZE_ON=[ 'actuation_derivative', 'actuation' ]
+	MODEL_TYPE = [ 'linear', 'nonlinear' ]
+	OPTIMIZE_ON = [ 'actuation_derivative', 'actuation' ]
 
 	def __init__(
 			self,
@@ -250,12 +250,13 @@ class MPC:
 	def _get_result_from_actual( self ):
 		self.result = self.raw_result.x.reshape( self.result_shape )[ 0, 0 ]
 
+
 if __name__ == '__main__':
-	model = Model(lambda x: x, 0.1, array([0]), array([0]))
+	model = Model( lambda x: x, 0.1, array( [ 0 ] ), array( [ 0 ] ) )
 	for m in MPC.MODEL_TYPE:
 		for o in MPC.OPTIMIZE_ON:
-			print(m, o)
-			mpc = MPC( model, 10, zeros( (10, 1, 1) ), model_type=m, optimize_on=o )
-			print('\t', mpc.predict.__name__)
-			print('\t', mpc.get_actuation.__name__)
-			print('\t', mpc.get_result.__name__)
+			print( m, o )
+			mpc = MPC( model, 10, zeros( (10, 1, 1) ), model_type = m, optimize_on = o )
+			print( '\t', mpc.predict.__name__ )
+			print( '\t', mpc.get_actuation.__name__ )
+			print( '\t', mpc.get_result.__name__ )

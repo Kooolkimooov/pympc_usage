@@ -2,10 +2,11 @@ from glob import glob
 from inspect import isfunction, ismethod
 from os import mkdir, path, remove
 
-from numpy import array, cos, eye, ndarray, sin, tan, zeros
+from numpy import array, ndarray, zeros
 from PIL import Image
 
 G: float = 9.80665
+
 
 class Logger:
 	def __init__( self, print_to_terminal: bool = True ):
@@ -187,51 +188,3 @@ def print_dict( d: dict, prefix: str = '' ):
 			continue
 
 		print( prefix + k + ':', v )
-
-
-def build_transformation_matrix( phi: float, theta: float, psi: float ) -> ndarray:
-	cPhi, sPhi = cos( phi ), sin( phi )
-	cTheta, sTheta, tTheta = cos( theta ), sin( theta ), tan( theta )
-	cPsi, sPsi = cos( psi ), sin( psi )
-
-	matrix = zeros( (6, 6) )
-	matrix[ 0, :3 ] = array(
-			[ cPsi * cTheta, -sPsi * cPhi + cPsi * sTheta * sPhi, sPsi * sPhi + cPsi * sTheta * cPhi ]
-			)
-	matrix[ 1, :3 ] = array(
-			[ sPsi * cTheta, cPsi * cPhi + sPsi * sTheta * sPhi, -cPsi * sPhi + sPsi * sTheta * cPhi ]
-			)
-	matrix[ 2, :3 ] = array( [ -sTheta, cTheta * sPhi, cTheta * cPhi ] )
-	matrix[ 3, 3: ] = array( [ 1, sPhi * tTheta, cPhi * tTheta ] )
-	matrix[ 4, 3: ] = array( [ 0, cPhi, -sPhi ] )
-	matrix[ 5, 3: ] = array( [ 0, sPhi / cTheta, cPhi / cTheta ] )
-	return matrix
-
-
-def build_inertial_matrix(
-		mass: float, center_of_mass: ndarray, inertial_coefficients: list[ float ]
-		) -> ndarray:
-	inertial_matrix = eye( 6 )
-	for i in range( 3 ):
-		inertial_matrix[ i, i ] = mass
-		inertial_matrix[ i + 3, i + 3 ] = inertial_coefficients[ i ]
-	inertial_matrix[ 0, 4 ] = mass * center_of_mass[ 2 ]
-	inertial_matrix[ 0, 5 ] = - mass * center_of_mass[ 1 ]
-	inertial_matrix[ 1, 3 ] = - mass * center_of_mass[ 2 ]
-	inertial_matrix[ 1, 5 ] = mass * center_of_mass[ 0 ]
-	inertial_matrix[ 2, 3 ] = mass * center_of_mass[ 1 ]
-	inertial_matrix[ 2, 4 ] = - mass * center_of_mass[ 0 ]
-	inertial_matrix[ 4, 0 ] = mass * center_of_mass[ 2 ]
-	inertial_matrix[ 5, 0 ] = - mass * center_of_mass[ 1 ]
-	inertial_matrix[ 3, 1 ] = - mass * center_of_mass[ 2 ]
-	inertial_matrix[ 5, 1 ] = mass * center_of_mass[ 0 ]
-	inertial_matrix[ 3, 2 ] = mass * center_of_mass[ 1 ]
-	inertial_matrix[ 4, 2 ] = - mass * center_of_mass[ 0 ]
-	inertial_matrix[ 3, 4 ] = - inertial_coefficients[ 3 ]
-	inertial_matrix[ 3, 5 ] = - inertial_coefficients[ 4 ]
-	inertial_matrix[ 4, 5 ] = - inertial_coefficients[ 5 ]
-	inertial_matrix[ 4, 3 ] = - inertial_coefficients[ 3 ]
-	inertial_matrix[ 5, 3 ] = - inertial_coefficients[ 4 ]
-	inertial_matrix[ 5, 4 ] = - inertial_coefficients[ 5 ]
-
-	return inertial_matrix

@@ -2,11 +2,11 @@ from json import dump
 from time import perf_counter, time
 from warnings import simplefilter
 
-from numpy import array, cos, diff, eye, inf, linspace, ndarray, pi, r_, sin, zeros
+from numpy import array, cos, diff, dot, eye, inf, linspace, ndarray, pi, r_, zeros
 from numpy.linalg import norm
 from scipy.optimize import NonlinearConstraint
 
-from bluerov import Bluerov
+from bluerov import Bluerov, USV
 from catenary import Catenary
 from model import Model
 from mpc import MPC
@@ -118,16 +118,13 @@ class ChainOf4:
 		# if the cable is taunt the perturbation is None
 		# here we should consider any pair with a taunt cable as a single body
 		if perturbation_01_0 is None:
-			perturbation_01_0 = zeros( (3,) )
-			perturbation_01_1 = zeros( (3,) )
+			perturbation_01_0, perturbation_01_1 = self.get_taunt_cable_perturbations( state, actuation, 0 )
 
 		if perturbation_12_1 is None:
-			perturbation_12_1 = zeros( (3,) )
-			perturbation_12_2 = zeros( (3,) )
+			perturbation_12_1, perturbation_12_2 = self.get_taunt_cable_perturbations( state, actuation, 1 )
 
 		if perturbation_23_2 is None:
-			perturbation_23_2 = zeros( (3,) )
-			perturbation_23_3 = zeros( (3,) )
+			perturbation_23_2, perturbation_23_3 = self.get_taunt_cable_perturbations( state, actuation, 2 )
 
 		perturbation_01_0.resize( (Bluerov.actuation_size,) )
 		perturbation_01_1.resize( (Bluerov.actuation_size,) )
@@ -155,12 +152,71 @@ class ChainOf4:
 
 		return state_derivative
 
+	def get_taunt_cable_perturbations( self, state: ndarray, actuation: ndarray, pair: int ) -> tuple[ ndarray,
+	ndarray ]:
+		match pair:
+			case 0:
+				br_0 = self.br_0
+				br_1 = self.br_1
+				br_0_state = self.br_0_state
+				br_0_position = self.br_0_position
+				br_0_orientation = self.br_0_orientation
+				br_0_actuation = self.br_0_actuation
+				br_1_state = self.br_1_state
+				br_1_position = self.br_1_position
+				br_1_orientation = self.br_1_orientation
+				br_1_actuation = self.br_1_actuation
+			case 1:
+				br_0 = self.br_1
+				br_1 = self.br_2
+				br_0_state = self.br_1_state
+				br_0_position = self.br_1_position
+				br_0_orientation = self.br_1_orientation
+				br_0_actuation = self.br_1_actuation
+				br_1_state = self.br_2_state
+				br_1_position = self.br_2_position
+				br_1_orientation = self.br_2_orientation
+				br_1_actuation = self.br_2_actuation
+			case 2:
+				br_0 = self.br_2
+				br_1 = self.br_3
+				br_0_state = self.br_2_state
+				br_0_position = self.br_2_position
+				br_0_orientation = self.br_2_orientation
+				br_0_actuation = self.br_2_actuation
+				br_1_state = self.br_3_state
+				br_1_position = self.br_3_position
+				br_1_orientation = self.br_3_orientation
+				br_1_actuation = self.br_3_actuation
+			case _:
+				raise RuntimeError( f'unknown {pair=}' )
+
+		direction = state[ br_1_position ] - state[ br_0_position ]
+		direction /= norm( direction )
+
+		br_0_transformation_matrix = br_0.build_transformation_matrix( *state[ br_0_orientation ] )
+		br_1_transformation_matrix = br_1.build_transformation_matrix( *state[ br_1_orientation ] )
+
+		br_0_acceleration = br_0( state[ br_0_state ], state[ br_0_actuation ], self.water_current_force )[ 6: ]
+		br_1_acceleration = br_1( state[ br_1_state ], state[ br_1_actuation ], self.water_current_force )[ 6: ]
+		br_0_forces = (br_0.inertial_matrix @ br_0_acceleration)[ :3 ]
+		br_1_forces = (br_1.inertial_matrix @ br_1_acceleration)[ :3 ]
+
+		perturbation_01_0 = br_0_transformation_matrix[ :3, :3 ] @ (direction * dot(
+				br_1_transformation_matrix[ :3, :3 ] @ br_1_forces, direction
+				))
+		perturbation_01_1 = br_1_transformation_matrix[ :3, :3 ] @ (direction * dot(
+				br_0_transformation_matrix[ :3, :3 ] @ br_0_forces, direction
+				))
+
+		return perturbation_01_0, perturbation_01_1
+
 
 def chain_of_4_constraints( self: MPC, candidate ):
 
 	chain: ChainOf4 = self.model.model_dynamics
 
-	actuation, actuation_derivatives = self.get_actuation( candidate )
+	actuation, _ = self.get_actuation( candidate )
 
 	prediction = self.predict( actuation )
 	prediction = prediction[ :, 0 ]
@@ -296,8 +352,7 @@ if __name__ == "__main__":
 	pose_weight_matrix[ model.br_1_orientation, model.br_1_orientation ] *= 1.
 	pose_weight_matrix[ model.br_2_position, model.br_2_position ] *= 0.
 	pose_weight_matrix[ model.br_2_orientation, model.br_2_orientation ] *= 1.
-	pose_weight_matrix[ model.br_3_xy, model.br_3_xy ] *= 0.
-	pose_weight_matrix[ model.br_3_z, model.br_3_z ] *= 0.
+	pose_weight_matrix[ model.br_3_position, model.br_3_position ] *= 0.
 	pose_weight_matrix[ model.br_3_orientation, model.br_3_orientation ] *= 0.
 
 	actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
@@ -323,7 +378,6 @@ if __name__ == "__main__":
 			trajectory,
 			optimize_on = 'actuation',
 			objective_weight = objective_weight,
-			# time_step = time_step * 2,
 			tolerance = tolerance,
 			max_iter = max_number_of_iteration,
 			time_steps_per_actuation = time_steps_per_actuation,
@@ -410,8 +464,8 @@ if __name__ == "__main__":
 		logger.log( f'frame {frame + 1}/{n_frames} starts at {perf_counter() - ti}' )
 
 		chain_mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
-		chain_model.state[ model.br_3_pose ] = trajectory[ frame, 0, model.br_3_pose ]
-		chain_model.state[ model.br_3_speed ] = trajectory_derivative[ frame, 0, model.br_3_pose ]
+		# chain_model.state[ model.br_3_pose ] = trajectory[ frame, 0, model.br_3_pose ]
+		# chain_model.state[ model.br_3_speed ] = trajectory_derivative[ frame, 0, model.br_3_pose ]
 
 		chain_mpc.compute_actuation()
 		chain_mpc.apply_result()
@@ -433,7 +487,6 @@ if __name__ == "__main__":
 
 		logger.log( f'ends at {perf_counter() - ti}' )
 		logger.log( f'{chain_mpc.raw_result.success}' )
-		logger.log( f'{chain_model.state[ model.br_3_linear_speed ]}' )
-		logger.log( f'{chain_model.state[ model.br_3_position ]}' )
+		logger.log( f'{chain_mpc.raw_result.message}' )
 		logger.lognl( '' )
 		logger.save_at( folder )
