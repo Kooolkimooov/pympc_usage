@@ -199,11 +199,13 @@ class ChainOf4:
 		direction = state[ br_1_position ] - state[ br_0_position ]
 		direction /= norm( direction )
 
+		null_perturbation = zeros( (br_0.state_size // 2,) )
+
 		br_0_transformation_matrix = br_0.build_transformation_matrix( *state[ br_0_orientation ] )
 		br_1_transformation_matrix = br_1.build_transformation_matrix( *state[ br_1_orientation ] )
 
-		br_0_acceleration = br_0( state[ br_0_state ], state[ br_0_actuation ], self.water_current_force )[ 6: ]
-		br_1_acceleration = br_1( state[ br_1_state ], state[ br_1_actuation ], self.water_current_force )[ 6: ]
+		br_0_acceleration = br_0( state[ br_0_state ], state[ br_0_actuation ], null_perturbation )[ 6: ]
+		br_1_acceleration = br_1( state[ br_1_state ], state[ br_1_actuation ], null_perturbation )[ 6: ]
 		br_0_forces = (br_0.inertial_matrix @ br_0_acceleration)[ :3 ]
 		br_1_forces = (br_1.inertial_matrix @ br_1_acceleration)[ :3 ]
 
