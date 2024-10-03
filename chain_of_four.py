@@ -143,14 +143,10 @@ class ChainOf4:
 				state[ self.br_0_state ], actuation[ self.br_0_actuation ], perturbation_01_0
 				)
 		state_derivative[ self.br_1_state ] = self.br_1(
-				state[ self.br_1_state ],
-				actuation[ self.br_1_actuation ],
-				perturbation_01_1 + perturbation_12_1
+				state[ self.br_1_state ], actuation[ self.br_1_actuation ], perturbation_01_1 + perturbation_12_1
 				)
 		state_derivative[ self.br_2_state ] = self.br_2(
-				state[ self.br_2_state ],
-				actuation[ self.br_2_actuation ],
-				perturbation_12_2 + perturbation_23_2
+				state[ self.br_2_state ], actuation[ self.br_2_actuation ], perturbation_12_2 + perturbation_23_2
 				)
 		state_derivative[ self.br_3_state ] = self.br_3(
 				state[ self.br_3_state ], actuation[ self.br_3_actuation ], perturbation_23_3
@@ -231,8 +227,7 @@ def chain_of_4_constraints( self: MPC, candidate ):
 
 	# 3 constraints on cables (lowest points.z),
 	# 6 on inter robot_distance (3 horizontal, 2 3d),
-	# 3 on robot speed
-	n_constraints = 3 + 6 + 3
+	n_constraints = 3 + 6
 	constraints = zeros( (self.horizon, n_constraints) )
 
 	# horizontal distance between consecutive robots
@@ -257,11 +252,6 @@ def chain_of_4_constraints( self: MPC, candidate ):
 			prediction[ :, chain.br_3_position ] - prediction[ :, chain.br_2_position ], axis = 1
 			)
 
-	# speed
-	constraints[ :, 9 ] = norm( prediction[ :, chain.br_0_speed ], axis = 1 )
-	constraints[ :, 10 ] = norm( prediction[ :, chain.br_1_speed ], axis = 1 )
-	constraints[ :, 11 ] = norm( prediction[ :, chain.br_2_speed ], axis = 1 )
-
 	for i, state in enumerate( prediction ):
 		constraints[ i, 0 ] = chain.c_01.get_lowest_point(
 				state[ chain.br_0_position ], state[ chain.br_1_position ]
@@ -282,13 +272,10 @@ def chain_of_4_objective( self: MPC, prediction: ndarray, actuation: ndarray ):
 
 	objective = 0.
 
-	objective += norm( prediction[ :, 0, chain.br_0_linear_speed ], axis = 1 ).sum()
-	objective += norm( prediction[ :, 0, chain.br_1_linear_speed ], axis = 1 ).sum()
-	objective += norm( prediction[ :, 0, chain.br_2_linear_speed ], axis = 1 ).sum()
-	objective += norm( prediction[ :, 0, chain.br_3_linear_speed ], axis = 1 ).sum()
-
-	# bonus
-	objective += norm( prediction[ :, 0, chain.br_3_angular_speed ], axis = 1 ).sum()
+	objective += pow( norm( prediction[ :, 0, chain.br_0_speed ], axis = 1 ).sum(), 2 )
+	objective += pow( norm( prediction[ :, 0, chain.br_1_speed ], axis = 1 ).sum(), 2 )
+	objective += pow( norm( prediction[ :, 0, chain.br_2_speed ], axis = 1 ).sum(), 2 )
+	objective += pow( norm( prediction[ :, 0, chain.br_3_speed ], axis = 1 ).sum(), 2 )
 
 	objective += abs(
 			norm(
@@ -376,8 +363,8 @@ if __name__ == "__main__":
 	actuation_weight_matrix[ model.br_1_angular_actuation, model.br_1_angular_actuation ] *= 1.
 	actuation_weight_matrix[ model.br_2_linear_actuation, model.br_2_linear_actuation ] *= 1e-12
 	actuation_weight_matrix[ model.br_2_angular_actuation, model.br_2_angular_actuation ] *= 1.
-	actuation_weight_matrix[ model.br_3_linear_actuation, model.br_3_linear_actuation ] *= 1e-9
-	actuation_weight_matrix[ model.br_3_angular_actuation, model.br_3_angular_actuation ] *= 1e-9
+	actuation_weight_matrix[ model.br_3_linear_actuation, model.br_3_linear_actuation ] *= 1e-12
+	actuation_weight_matrix[ model.br_3_angular_actuation, model.br_3_angular_actuation ] *= 1e-12
 
 	final_cost_weight = 0.
 	objective_weight = .2
@@ -420,13 +407,13 @@ if __name__ == "__main__":
 	dp_ub = 2.8
 	dr_lb = -inf
 	dr_ub = 2.8
-	v_lb = -inf
-	v_ub = 1.5
+	# v_lb = -inf
+	# v_ub = 1.5
 
-	if v_ub < max_required_speed and 'y' == input(
-			f'the trajectory requires {max_required_speed} but the speed limit is {v_ub}, upgrade ? (y/n)'
-			):
-		v_ub = int( max_required_speed ) + 1.
+	# if v_ub < max_required_speed and 'y' == input(
+	# 		f'the trajectory requires {max_required_speed} but the speed limit is {v_ub}, upgrade ? (y/n)'
+	# 		):
+	# 	v_ub = int( max_required_speed ) + 1.
 
 	# bounds_lb_base = [ du_l_lb, du_l_lb, du_l_lb, du_a_lb, du_a_lb, du_a_lb ]
 	# bounds_ub_base = [ du_l_ub, du_l_ub, du_l_ub, du_a_ub, du_a_ub, du_a_ub ]
@@ -438,12 +425,10 @@ if __name__ == "__main__":
 
 	constraints_labels = [ '$z_0+H_{01}$', '$z_1+H_{12}$', '$z_2+H_{2fe}$', '$|P_0^{x,y}-P_1^{x,y}|$',
 												 '$|P_1^{x,y}-P_2^{x,y}|$', '$|P_2^{x,y}-P_fe^{x,y}|$', '$|P_0^{x,y,z}-P_1^{x,y,z}|$',
-												 '$|P_1^{x,y,z}-P_2^{x,y,z}|$', '$|P_2^{x,y,z}-P_fe^{x,y,z}|$', '$|V_0|$', '$|V_1|$',
-												 '$|V_2|$' ]
+												 '$|P_1^{x,y,z}-P_2^{x,y,z}|$', '$|P_2^{x,y,z}-P_fe^{x,y,z}|$' ]
 
-	constraint_lb_base = [ -inf, -inf, -inf, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb, v_lb, v_lb, v_lb ]
-	constraint_ub_base = [ floor_depth, floor_depth, floor_depth, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub, v_ub, v_ub,
-												 v_ub ]
+	constraint_lb_base = [ -inf, -inf, -inf, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
+	constraint_ub_base = [ floor_depth, floor_depth, floor_depth, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
 
 	assert (len( constraint_lb_base ) == len( constraints_labels )) and (
 			len( constraint_ub_base ) == len( constraints_labels ))
@@ -508,7 +493,7 @@ if __name__ == "__main__":
 			logger.log( f'keeping tolerance: {chain_mpc.tolerance:.0e}' )
 
 		constraints_values = chain_mpc.constraints_function( chain_mpc.raw_result.x )
-		logger.log( f'constraints: {constraints_values[ :12 ]}' )
+		logger.log( f'constraints: {constraints_values[ :9 ]}' )
 
 		logger.lognl( '' )
 		logger.save_at( folder )
