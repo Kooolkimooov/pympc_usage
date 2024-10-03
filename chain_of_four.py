@@ -78,8 +78,8 @@ class ChainOf4:
 
 		self.br_0_actuation_start = 0
 		self.br_0_actuation = slice( 0, 6 )
-		self.br_0_linear_actuation = slice( 0, 6 )
-		self.br_0_angular_actuation = slice( 0, 0 )
+		self.br_0_linear_actuation = slice( 0, 3 )
+		self.br_0_angular_actuation = slice( 3, 6 )
 
 		self.br_1_actuation_start = 6
 		self.br_1_actuation = slice( 6, 12 )

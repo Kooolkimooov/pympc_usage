@@ -1,4 +1,4 @@
-from numpy import arccosh, arcsinh, array, cosh, mean, ndarray, quantile, sinh, sqrt, std, zeros
+from numpy import arccosh, arcsinh, array, cosh, isnan, mean, nan, ndarray, quantile, sinh, sqrt, std, zeros, any
 from numpy.linalg import norm
 from scipy.optimize import brentq
 
@@ -16,10 +16,9 @@ class Catenary:
 
 		self.get_parameters = self._get_parameters_optimization
 		self.optimization_function = self._optimization_function_1
-		self.get_parameters = self._get_parameters_optimization
 
 	def __call__( self, p1: ndarray, p2: ndarray ):
-		'''
+		"""
 		get all relevant data on the catenary of length self.length, linear mass self.linear_mass, and the given
 		attachment points
 		:param p1: first attachment point
@@ -35,7 +34,7 @@ class Catenary:
 		- the lowest point (x, y, z) of the catenary;
 		- the perturbations force on the two points in the form (perturbation_p1, perturbation_p2);
 		- array of points for plotting (x, y, z) are on the second dimension of the array.
-		'''
+		"""
 		C, H, dH, D, dD = self.get_parameters( p1, p2 )
 		lowest_point = self._get_lowest_point( p1, p2, C, H, dH, D, dD )
 		perturbations = self._get_perturbations( p1, p2, C, D, dD )
@@ -44,33 +43,33 @@ class Catenary:
 		return (C, H, dH, D, dD), lowest_point, perturbations, points
 
 	def get_lowest_point( self, p1: ndarray, p2: ndarray ) -> ndarray:
-		'''
+		"""
 		get the catenary's lowest point
 		:param p1: one end of the catenary
 		:param p2: second end of the catenary
 		:return: the lowest point (x, y, z) of the catenary
-		'''
+		"""
 		C, H, dH, D, dD = self.get_parameters( p1, p2 )
 		return self._get_lowest_point( p1, p2, C, H, dH, D, dD )
 
 	def get_perturbations( self, p1: ndarray, p2: ndarray ):
-		'''
+		"""
 		get the perturbations of the two points
 		:param p1: one end of the catenary
 		:param p2: second end of the catenary
 		:return: tuple containing the perturbations force on the two points in the form (perturbation_p1, perturbation_p2)
-		'''
+		"""
 		C, H, dH, D, dD = self.get_parameters( p1, p2 )
 		return self._get_perturbations( p1, p2, C, D, dD )
 
 	def discretize( self, p1: ndarray, p2: ndarray, n: int = 100 ) -> ndarray:
-		'''
+		"""
 		discretize the catenary, if the optimization fails, the catenary is approximated by a straight line
 		:param p1: one end of the catenary
 		:param p2: second end of the catenary
 		:param n: number of point to discretize
 		:return: array of points of the catenary points are on the second dimension of the array
-		'''
+		"""
 		C, H, dH, D, dD = self.get_parameters( p1, p2 )
 		return self._discretize( p1, p2, C, H, D, dD, n )
 
@@ -92,15 +91,15 @@ class Catenary:
 		raise NotImplementedError( 'get_parameters method should have been implemented in __init__' )
 
 	def _get_parameters_optimization( self, p1: ndarray, p2: ndarray ) -> tuple[ float, float, float, float, float ]:
-		'''
+		"""
 		implementation of get_parameters using optimization
-		'''
+		"""
 
 		dH = p2[ 2 ] - p1[ 2 ]
 		two_D_plus_dD = norm( p2[ :2 ] - p1[ :2 ] )
 
-		if norm( p2 - p1 ) > 0.99 * self.length:
-			return None, None, None, None, None
+		if norm( p2 - p1 ) > 0.99 * self.length or any( isnan( p1 ) ) or any( isnan( p2 ) ):
+			return None, None, dH, None, None
 		elif norm( p2[ :2 ] - p1[ :2 ] ) < .01 * self.length:
 			return None, (self.length - dH) / 2, dH, two_D_plus_dD / 2, 0.
 
@@ -199,9 +198,9 @@ class Catenary:
 
 
 def test_1():
-	'''
+	"""
 	to figure out the regions where the optimization over C fails and avoid them
-	'''
+	"""
 	from numpy import linspace
 	import matplotlib.pyplot as plt
 	from tqdm import tqdm
@@ -292,9 +291,9 @@ def test_1():
 
 
 def test_2():
-	'''
+	"""
 	to test good derivation of the catenary
-	'''
+	"""
 	from numpy import linspace
 	import matplotlib.pyplot as plt
 	from warnings import simplefilter
