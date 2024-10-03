@@ -29,16 +29,10 @@ def rungeKutta4(
 
 	k1 = function( current_state, *args, **kwargs )
 	k2 = function( current_state + a21 * k1 * time_step, *args, **kwargs )
-	k3 = function( current_state + a31 * k1 * time_step + a32 * k2 * time_step, *args, **kwargs )
-	k4 = function(
-			current_state + a41 * k1 * time_step + a42 * k2 * time_step + a43 * k3 * time_step,
-			*args,
-			**kwargs
-			)
+	k3 = function( current_state + (a31 * k1 + a32 * k2) * time_step, *args, **kwargs )
+	k4 = function( current_state + (a41 * k1 + a42 * k2 + a43 * k3) * time_step, *args, **kwargs )
 
-	new_state = (
-			current_state + b1 * k1 * time_step + b2 * k2 * time_step + b3 * k3 * time_step + b4 * k4 *
-			time_step)
+	new_state = current_state + (b1 * k1 + b2 * k2 + b3 * k3 + b4 * k4) * time_step
 
 	return new_state
 

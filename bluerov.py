@@ -36,9 +36,7 @@ class Bluerov:
 		self.added_mass_coefficients = [ 5.5, 12.7, 14.57, .12, .12, .12 ]
 
 		self.inertial_matrix = self.build_inertial_matrix(
-				self.mass,
-				self.center_of_mass,
-				self.inertial_coefficients
+				self.mass, self.center_of_mass, self.inertial_coefficients
 				) + diag( self.added_mass_coefficients )
 
 		self.inverse_inertial_matrix = inv( self.inertial_matrix )
@@ -60,9 +58,8 @@ class Bluerov:
 		# 		1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )
 		# )
 
-		buoyancy = self.buoyancy_norm * array( [ 0., 0., 1. ] ) * (-.5 - .5 / (
-				1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )
-		))
+		buoyancy = self.buoyancy_norm * array( [ 0., 0., 1. ] ) * (
+					-.5 - .5 / (1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )))
 
 		hydrostatic_forces = zeros( 6 )
 		hydrostatic_forces[ :3 ] = transform_matrix[ :3, :3 ].T @ (self.weight + buoyancy)

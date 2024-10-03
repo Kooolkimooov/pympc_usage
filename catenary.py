@@ -1,4 +1,4 @@
-from numpy import arccosh, arcsinh, array, cosh, isnan, mean, nan, ndarray, quantile, sinh, sqrt, std, zeros, any
+from numpy import any, arccosh, arcsinh, array, cosh, isnan, mean, ndarray, quantile, sinh, sqrt, std, zeros
 from numpy.linalg import norm
 from scipy.optimize import brentq
 
