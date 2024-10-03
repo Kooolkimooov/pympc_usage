@@ -284,20 +284,24 @@ def chain_of_4_objective( self: MPC, prediction: ndarray, actuation: ndarray ):
 	objective += norm( prediction[ :, 0, chain.br_0_linear_speed ], axis = 1 ).sum()
 	objective += norm( prediction[ :, 0, chain.br_1_linear_speed ], axis = 1 ).sum()
 	objective += norm( prediction[ :, 0, chain.br_2_linear_speed ], axis = 1 ).sum()
+	objective += norm( prediction[ :, 0, chain.br_3_linear_speed ], axis = 1 ).sum()
+
+	# bonus
+	objective += norm( prediction[ :, 0, chain.br_3_angular_speed ], axis = 1 ).sum()
 
 	objective += abs(
 			norm(
-					prediction[ :, 0, chain.br_0_xy ] - prediction[ :, 0, chain.br_1_xy ], axis = 1
+					prediction[ :, 0, chain.br_0_position ] - prediction[ :, 0, chain.br_1_position ], axis = 1
 					) - 1.5
 			).sum()
 	objective += abs(
 			norm(
-					prediction[ :, 0, chain.br_1_xy ] - prediction[ :, 0, chain.br_2_xy ], axis = 1
+					prediction[ :, 0, chain.br_1_position ] - prediction[ :, 0, chain.br_2_position ], axis = 1
 					) - 1.5
 			).sum()
 	objective += abs(
 			norm(
-					prediction[ :, 0, chain.br_2_xy ] - prediction[ :, 0, chain.br_3_xy ], axis = 1
+					prediction[ :, 0, chain.br_2_position ] - prediction[ :, 0, chain.br_3_position ], axis = 1
 					) - 1.5
 			).sum()
 
@@ -324,13 +328,14 @@ if __name__ == "__main__":
 	initial_state[ model.br_2_position ][ 0 ] = 3.
 	initial_state[ model.br_2_position ][ 2 ] = 1.
 	initial_state[ model.br_3_position ][ 0 ] = 3.5
+	initial_state[ model.br_3_orientation ][ 2 ] = pi / 2
 
 	initial_actuation = zeros( (model.actuation_size,) )
 
 	horizon = 5
 	time_steps_per_actuation = 5
 
-	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (.5, [ -3., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
+	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (.5, [ -5., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
 								 (1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18) ]
 
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
@@ -370,11 +375,11 @@ if __name__ == "__main__":
 	actuation_weight_matrix[ model.br_1_angular_actuation, model.br_1_angular_actuation ] *= 1.
 	actuation_weight_matrix[ model.br_2_linear_actuation, model.br_2_linear_actuation ] *= 1e-12
 	actuation_weight_matrix[ model.br_2_angular_actuation, model.br_2_angular_actuation ] *= 1.
-	actuation_weight_matrix[ model.br_3_linear_actuation, model.br_3_linear_actuation ] *= 1e-3
-	actuation_weight_matrix[ model.br_3_angular_actuation, model.br_3_angular_actuation ] *= 1.
+	actuation_weight_matrix[ model.br_3_linear_actuation, model.br_3_linear_actuation ] *= 1e-9
+	actuation_weight_matrix[ model.br_3_angular_actuation, model.br_3_angular_actuation ] *= 1e-9
 
 	final_cost_weight = 0.
-	objective_weight = .1
+	objective_weight = .2
 
 	chain_model = Model(
 			model, time_step, initial_state, initial_actuation, record = True
@@ -469,7 +474,7 @@ if __name__ == "__main__":
 
 	with open( f'{folder}/config.json' ) as f:
 		config = load( f )
-		print_dict( config )
+		print_dict( config, max_list_size = 100 )
 
 	if 'y' != input( 'continue ? (y/n) ' ):
 		exit()
@@ -486,7 +491,6 @@ if __name__ == "__main__":
 
 		logger.log( f'ends at t={perf_counter() - ti:.2f}' )
 
-		logger.log( f'{chain_mpc.raw_result.success}' )
 		logger.log( f'{chain_mpc.raw_result.message}' )
 
 		# try to recover if the optimization failed
