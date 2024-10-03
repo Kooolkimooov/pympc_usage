@@ -1,4 +1,5 @@
 from json import dump, load
+from os.path import join, split
 from time import perf_counter, time
 from warnings import simplefilter
 
@@ -462,7 +463,9 @@ if __name__ == "__main__":
 	previous_H12_record = [ 0. ]
 	previous_H23_record = [ 0. ]
 
-	folder = f'./export/{__file__.split( '\\' )[ -1 ].split( '.' )[ 0 ]}_{int( time() )}'
+	folder = join(
+			split( __file__ )[ 0 ], 'export', split( __file__ )[ 1 ].split( '.' )[ 0 ] + '_' + str( int( time() ) )
+			)
 
 	if check( folder ) + check( f'{folder}/data' ):
 		exit()
