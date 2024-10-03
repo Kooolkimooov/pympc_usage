@@ -51,9 +51,13 @@ class Bluerov:
 		transform_matrix = self.build_transformation_matrix( *state[ 3:6 ] )
 
 		# sigmoid the buoyancy to smooth out the discontinuity
-		buoyancy = self.buoyancy_norm * array( [ 0., 0., -1. ] ) / (
+		# buoyancy = self.buoyancy_norm * array( [ 0., 0., -1. ] ) / (
+		# 		1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )
+		# )
+
+		buoyancy = self.buoyancy_norm * array( [ 0., 0., 1. ] ) * (-.5 - .5 / (
 				1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )
-		)
+		))
 
 		hydrostatic_forces = zeros( 6 )
 		hydrostatic_forces[ :3 ] = transform_matrix[ :3, :3 ].T @ (self.weight + buoyancy)
