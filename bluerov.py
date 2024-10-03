@@ -1,4 +1,4 @@
-from numpy import array, cos, cross, diag, exp, eye, ndarray, sin, tan, zeros
+from numpy import array, concat, cos, cross, diag, exp, eye, ndarray, sin, tan, zeros
 from numpy.linalg import inv
 
 
@@ -23,8 +23,13 @@ class Bluerov:
 		self.water_surface_z = water_surface_z
 
 		# water speed should be on [3:6]
-		self.water_current = zeros( (6,) ) if water_current is None else water_current
-		assert self.water_current.shape == (6,)
+		water_current = zeros( (6,) ) if water_current is None else water_current
+		if water_current.shape == (3,):
+			water_current = concat( (water_current, array( [ 0., 0., 0. ] )) )
+
+		assert water_current.shape == (6,)
+
+		self.water_current = water_current
 
 		self.inertial_coefficients = [ .16, .16, .16, 0., 0., 0. ]
 		self.hydrodynamic_coefficients = [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ]
