@@ -1,8 +1,8 @@
-from json import dump
+from json import dump, load
 from time import perf_counter, time
 from warnings import simplefilter
 
-from numpy import array, cos, diff, dot, eye, inf, linspace, ndarray, pi, r_, zeros
+from numpy import array, cos, diff, dot, eye, inf, linspace, ndarray, pi, r_, set_printoptions, zeros
 from numpy.linalg import norm
 from scipy.optimize import NonlinearConstraint
 
@@ -10,7 +10,7 @@ from bluerov import Bluerov, USV
 from catenary import Catenary
 from model import Model
 from mpc import MPC
-from utils import check, generate_trajectory, Logger, serialize_others
+from utils import check, generate_trajectory, get_computer_info, Logger, print_dict, serialize_others
 
 simplefilter( 'ignore', RuntimeWarning )
 
@@ -285,17 +285,17 @@ def chain_of_4_objective( self: MPC, prediction: ndarray, actuation: ndarray ):
 
 	objective += abs(
 			norm(
-					prediction[ :, 0, chain.br_0_position ] - prediction[ :, 0, chain.br_1_position ], axis = 1
+					prediction[ :, 0, chain.br_0_xy ] - prediction[ :, 0, chain.br_1_xy ], axis = 1
 					) - 1.5
 			).sum()
 	objective += abs(
 			norm(
-					prediction[ :, 0, chain.br_1_position ] - prediction[ :, 0, chain.br_2_position ], axis = 1
+					prediction[ :, 0, chain.br_1_xy ] - prediction[ :, 0, chain.br_2_xy ], axis = 1
 					) - 1.5
 			).sum()
 	objective += abs(
 			norm(
-					prediction[ :, 0, chain.br_2_position ] - prediction[ :, 0, chain.br_3_position ], axis = 1
+					prediction[ :, 0, chain.br_2_xy ] - prediction[ :, 0, chain.br_3_xy ], axis = 1
 					) - 1.5
 			).sum()
 
@@ -303,6 +303,7 @@ def chain_of_4_objective( self: MPC, prediction: ndarray, actuation: ndarray ):
 
 
 if __name__ == "__main__":
+	set_printoptions( precision = 2, linewidth = 10000, suppress = True )
 
 	ti = perf_counter()
 
@@ -462,36 +463,47 @@ if __name__ == "__main__":
 	logger = Logger()
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( chain_mpc.__dict__, f, default = serialize_others )
+		dump( chain_mpc.__dict__ | get_computer_info(), f, default = serialize_others )
+
+	with open( f'{folder}/config.json' ) as f:
+		config = load( f )
+		print_dict( config )
+
+	if 'y' != input( 'continue ? (y/n) ' ):
+		exit()
 
 	for frame in range( n_frames ):
 
-		logger.log( f'frame {frame + 1}/{n_frames} starts at {perf_counter() - ti}' )
-
 		chain_mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
-		# chain_model.state[ model.br_3_pose ] = trajectory[ frame, 0, model.br_3_pose ]
-		# chain_model.state[ model.br_3_speed ] = trajectory_derivative[ frame, 0, model.br_3_pose ]
+
+		logger.log( f'frame {frame + 1}/{n_frames} starts at t={perf_counter() - ti:.2f}' )
 
 		chain_mpc.compute_actuation()
 		chain_mpc.apply_result()
 		chain_model.step()
 
-		# try to recover if the optimization failed
-		if (not chain_mpc.raw_result.success and chain_mpc.tolerance < 1):
-			chain_mpc.tolerance *= 10
-			logger.log( f'increasing tolerance: {chain_mpc.tolerance}' )
-		elif (chain_mpc.raw_result.success and chain_mpc.tolerance > 2 * tolerance):  # *2
-			# because of floating point error
-			chain_mpc.tolerance /= 10
-			logger.log( f'decreasing tolerance: {chain_mpc.tolerance}' )
-		else:
-			logger.log( f'keeping tolerance: {chain_mpc.tolerance}' )
+		logger.log( f'ends at t={perf_counter() - ti:.2f}' )
 
-		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
-			dump( chain_mpc.__dict__, f, default = serialize_others )
-
-		logger.log( f'ends at {perf_counter() - ti}' )
 		logger.log( f'{chain_mpc.raw_result.success}' )
 		logger.log( f'{chain_mpc.raw_result.message}' )
+
+		# try to recover if the optimization failed
+		if not chain_mpc.raw_result.success and chain_mpc.tolerance < 1:
+			chain_mpc.tolerance *= 10
+			logger.log( f'increasing tolerance: {chain_mpc.tolerance:.0e}' )
+		elif chain_mpc.raw_result.success and chain_mpc.tolerance > 2 * tolerance:
+			# *2 because of floating point error
+			chain_mpc.tolerance /= 10
+			logger.log( f'decreasing tolerance: {chain_mpc.tolerance:.0e}' )
+		else:
+			logger.log( f'keeping tolerance: {chain_mpc.tolerance:.0e}' )
+
+		constraints_values = chain_mpc.constraints_function( chain_mpc.raw_result.x )
+		logger.log( f'constraints: {constraints_values[ :12 ]}' )
+
 		logger.lognl( '' )
 		logger.save_at( folder )
+
+		# save simulation state
+		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
+			dump( chain_mpc.__dict__, f, default = serialize_others )

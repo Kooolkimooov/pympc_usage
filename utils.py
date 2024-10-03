@@ -1,7 +1,9 @@
 from glob import glob
 from inspect import isfunction, ismethod
 from os import mkdir, path, remove
+from platform import release, system, version
 
+from cpuinfo import get_cpu_info
 from numpy import array, ndarray, zeros
 from PIL import Image
 
@@ -14,31 +16,31 @@ class Logger:
 		self.print_to_terminal = print_to_terminal
 
 	def log( self, log: str ):
-		'''
+		"""
 		:param log: text to be printed and saved. ends with a tabulation
 		:return: None
-		'''
+		"""
 		self.logs += log
 		self.logs += '\t'
 		if self.print_to_terminal:
 			print( log, end = '\t' )
 
 	def lognl( self, log: str ):
-		'''
+		"""
 		:param log: text to be printed and saved. ends with a new line
 		:return: None
-		'''
+		"""
 		self.logs += log
 		self.logs += '\n'
 		if self.print_to_terminal:
 			print( log )
 
 	def logrl( self, log: str ):
-		'''
+		"""
 		:param log: text to be printed and saved. ends with a return to the beginning of the line,
 		the saved text goes to a new line
 		:return: None
-		'''
+		"""
 		self.logs += log
 		self.logs += '\n'
 		if self.print_to_terminal:
@@ -96,13 +98,13 @@ def cubic_interpolation_function( f_0: float, f_1: float, f_0p: float, f_1p: flo
 
 
 def check( folder: str, recursive = False ) -> int:
-	'''
+	"""
 	counts the number of objects in a folder and removes them if the user agrees
 	if the folder does not exist, it creates it
 	:param folder:
 	:param recursive:
 	:return: number of objects in the folder
-	'''
+	"""
 	n = 0
 	if path.exists( folder ):
 		objects_in_dir = glob( f'{folder}/*' )
@@ -113,8 +115,12 @@ def check( folder: str, recursive = False ) -> int:
 					if path.isdir( object ) and recursive:
 						n += check( object )
 					else:
-						print( f'removing {object}' )
-						remove( object )
+						print( f'removing {object}', end = '\t' )
+						try:
+							remove( object )
+							print( 'success.' )
+						except:
+							print( 'failed ...' )
 						n -= 1
 	else:
 		mkdir( folder )
@@ -166,7 +172,7 @@ def get_all_bases( obj: any ):
 	return bases
 
 
-def print_dict( d: dict, prefix: str = '' ):
+def print_dict( d: dict, max_list_size: int = 10, prefix: str = '' ):
 	for k, v in d.items():
 
 		if k[ 0 ] == '_':
@@ -174,17 +180,27 @@ def print_dict( d: dict, prefix: str = '' ):
 
 		if isinstance( v, dict ):
 			print( prefix + k + ':' )
-			print_dict( v, prefix + '\t' )
+			print_dict( v, max_list_size, prefix + '\t' )
 			continue
 
 		if isinstance( v, list ):
 			if len( v ) > 0 and isinstance( v[ 0 ], dict ):
 				print( prefix + k + ':' )
-				print_dict( { str( i ): e for i, e in enumerate( v ) }, prefix + '\t' )
+				print_dict( { str( i ): e for i, e in enumerate( v ) }, max_list_size, prefix + '\t' )
 				continue
 
 			l = array( v ).shape
-			print( prefix + k + ':', v if sum( l ) < 10 else l )
+			print( prefix + k + ':', v if sum( l ) < max_list_size else l )
 			continue
 
 		print( prefix + k + ':', v )
+
+
+def get_computer_info():
+	info = { }
+	info[ 'os' ] = system()
+	info[ 'os_release' ] = release()
+	info[ 'os_version' ] = version()
+	info[ 'cpu' ] = get_cpu_info()
+
+	return info
