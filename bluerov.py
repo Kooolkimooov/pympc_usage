@@ -1,4 +1,4 @@
-from numpy import array, cos, cross, diag, eye, ndarray, sin, tan, zeros
+from numpy import array, cos, cross, diag, exp, eye, ndarray, sin, tan, zeros
 from numpy.linalg import inv
 
 
@@ -12,7 +12,7 @@ class Bluerov:
 	state_size = 12
 	actuation_size = 6
 
-	def __init__( self ):
+	def __init__( self, water_surface_z: float = 0., water_current: ndarray = None ):
 
 		self.mass = 11.5
 		self.center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
@@ -20,12 +20,22 @@ class Bluerov:
 
 		self.buoyancy_norm = 120.
 		self.center_of_volume = array( [ 0.0, 0.0, -0.02 ] )
-		self.water_surface_z = 0.
+		self.water_surface_z = water_surface_z
+
+		# water speed should be on [3:6]
+		self.water_current = zeros( (6,) ) if water_current is None else water_current
+		assert self.water_current.shape == (6,)
 
 		self.inertial_coefficients = [ .16, .16, .16, 0., 0., 0. ]
 		self.hydrodynamic_coefficients = [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ]
+		self.added_mass_coefficients = [ 5.5, 12.7, 14.57, .12, .12, .12 ]
 
-		self.inertial_matrix = self.build_inertial_matrix( self.mass, self.center_of_mass, self.inertial_coefficients )
+		self.inertial_matrix = self.build_inertial_matrix(
+				self.mass,
+				self.center_of_mass,
+				self.inertial_coefficients
+				) + diag( self.added_mass_coefficients )
+
 		self.inverse_inertial_matrix = inv( self.inertial_matrix )
 
 		self.hydrodynamic_matrix = diag( self.hydrodynamic_coefficients )
@@ -40,7 +50,10 @@ class Bluerov:
 
 		transform_matrix = self.build_transformation_matrix( *state[ 3:6 ] )
 
-		buoyancy = array( [ 0, 0, -1 ] ) * (self.buoyancy_norm if state[ 3 ] >= self.water_surface_z else 0.)
+		# sigmoid the buoyancy to smooth out the discontinuity
+		buoyancy = self.buoyancy_norm * array( [ 0., 0., -1. ] ) / (
+				1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )
+		)
 
 		hydrostatic_forces = zeros( 6 )
 		hydrostatic_forces[ :3 ] = transform_matrix[ :3, :3 ].T @ (self.weight + buoyancy)
@@ -53,7 +66,7 @@ class Bluerov:
 		xdot = zeros( state.shape )
 		xdot[ :6 ] = transform_matrix @ state[ 6: ]
 		xdot[ 6: ] = self.inverse_inertial_matrix @ (
-				self.hydrodynamic_matrix @ state[ 6: ] + hydrostatic_forces + actuation + perturbation)
+				self.hydrodynamic_matrix @ (state[ 6: ] - self.water_current) + hydrostatic_forces + actuation + perturbation)
 
 		return xdot
 
@@ -123,8 +136,8 @@ class BluerovNoAngularActuation( Bluerov ):
 class USV( Bluerov ):
 	actuation_size = 2
 
-	def __init__( self ):
-		super().__init__()
+	def __init__( self, water_surface_z: float = 0. ):
+		super().__init__( water_surface_z )
 
 	def __call__( self, state, actuation, perturbation ):
 		six_dof_actuation = zeros( (6,) )

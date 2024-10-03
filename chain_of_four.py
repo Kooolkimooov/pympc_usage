@@ -20,16 +20,21 @@ class ChainOf4:
 	state_size = 4 * Bluerov.state_size
 	actuation_size = 3 * Bluerov.actuation_size + USV.actuation_size
 
-	def __init__( self ):
-		self.br_0 = Bluerov()
-		self.c_01 = Catenary()
-		self.br_1 = Bluerov()
-		self.c_12 = Catenary()
-		self.br_2 = Bluerov()
-		self.c_23 = Catenary()
-		self.br_3 = USV()
+	def __init__(
+			self,
+			water_surface_z: float = 0.,
+			water_current: ndarray = None,
+			cables_lenght: float = 3.,
+			cables_linear_mass: float = 0.
+			):
 
-		self.water_current_force = array( [ 0, 0, 0, 0, 0, 0 ] )
+		self.br_0 = Bluerov( water_surface_z, water_current )
+		self.c_01 = Catenary( cables_lenght, cables_linear_mass )
+		self.br_1 = Bluerov( water_surface_z, water_current )
+		self.c_12 = Catenary( cables_lenght, cables_linear_mass )
+		self.br_2 = Bluerov( water_surface_z, water_current )
+		self.c_23 = Catenary( cables_lenght, cables_linear_mass )
+		self.br_3 = USV( water_surface_z )
 
 		self.br_0_pose = slice( 0, 6 )
 		self.br_0_position = slice( 0, 3 )
@@ -134,20 +139,20 @@ class ChainOf4:
 		perturbation_23_3.resize( (Bluerov.actuation_size,) )
 
 		state_derivative[ self.br_0_state ] = self.br_0(
-				state[ self.br_0_state ], actuation[ self.br_0_actuation ], perturbation_01_0 + self.water_current_force
+				state[ self.br_0_state ], actuation[ self.br_0_actuation ], perturbation_01_0
 				)
 		state_derivative[ self.br_1_state ] = self.br_1(
 				state[ self.br_1_state ],
 				actuation[ self.br_1_actuation ],
-				perturbation_01_1 + perturbation_12_1 + self.water_current_force
+				perturbation_01_1 + perturbation_12_1
 				)
 		state_derivative[ self.br_2_state ] = self.br_2(
 				state[ self.br_2_state ],
 				actuation[ self.br_2_actuation ],
-				perturbation_12_2 + perturbation_23_2 + self.water_current_force
+				perturbation_12_2 + perturbation_23_2
 				)
 		state_derivative[ self.br_3_state ] = self.br_3(
-				state[ self.br_3_state ], actuation[ self.br_3_actuation ], perturbation_23_3 + self.water_current_force
+				state[ self.br_3_state ], actuation[ self.br_3_actuation ], perturbation_23_3
 				)
 
 		return state_derivative
@@ -306,7 +311,7 @@ if __name__ == "__main__":
 	max_number_of_iteration = 100
 	time_step = 0.1
 
-	model = ChainOf4()
+	model = ChainOf4( water_current = array( [ .5, .5, 0. ] ) )
 
 	initial_state = zeros( (model.state_size,) )
 	initial_state[ model.br_0_position ][ 0 ] = 2.
