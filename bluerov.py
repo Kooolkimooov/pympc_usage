@@ -72,7 +72,7 @@ class Bluerov:
 		xdot = zeros( state.shape )
 		xdot[ :6 ] = transform_matrix @ state[ 6: ]
 		xdot[ 6: ] = self.inverse_inertial_matrix @ (
-				self.hydrodynamic_matrix @ (state[ 6: ] - self.water_current) + hydrostatic_forces + actuation + perturbation)
+				-self.hydrodynamic_matrix @ (state[ 6: ] - self.water_current) + hydrostatic_forces + actuation + perturbation)
 
 		return xdot
 
