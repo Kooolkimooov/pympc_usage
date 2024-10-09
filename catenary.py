@@ -1,4 +1,4 @@
-from numpy import any, arccosh, arcsinh, array, cosh, isnan, mean, ndarray, quantile, sinh, sqrt, std, zeros
+from numpy import arccosh, arcsinh, array, cosh, isnan, ndarray, sinh, sqrt, zeros
 from numpy.linalg import norm
 from scipy.optimize import brentq
 
@@ -37,7 +37,7 @@ class Catenary:
 		"""
 		C, H, dH, D, dD = self.get_parameters( p1, p2 )
 		lowest_point = self._get_lowest_point( p1, p2, C, H, dH, D, dD )
-		perturbations = self._get_perturbations( p1, p2, C, D, dD )
+		perturbations = self._get_perturbations( p1, p2, C, H, dH, D, dD )
 		points = self._discretize( p1, p2, C, H, D, dD )
 
 		return (C, H, dH, D, dD), lowest_point, perturbations, points
@@ -60,7 +60,7 @@ class Catenary:
 		:return: tuple containing the perturbations force on the two points in the form (perturbation_p1, perturbation_p2)
 		"""
 		C, H, dH, D, dD = self.get_parameters( p1, p2 )
-		return self._get_perturbations( p1, p2, C, D, dD )
+		return self._get_perturbations( p1, p2, C, H, dH, D, dD )
 
 	def discretize( self, p1: ndarray, p2: ndarray, n: int = 100 ) -> ndarray:
 		"""
@@ -121,9 +121,9 @@ class Catenary:
 
 	def _get_lowest_point( self, p1: ndarray, p2: ndarray, C: float, H: float, dH: float, D: float, dD: float ):
 
-		# case where ΔH is too small
+		# case where horizontal distance is too small
 		if (C is None) and (H is not None):
-			return p1 + array( [ 0, 0, self.length / 2 ] )
+			return p1 + array( [ 0, 0, H + dH ] )
 		# case where cable is taunt
 		elif C is None:
 			return p1 if p1[ 2 ] >= p2[ 2 ] else p2
@@ -133,14 +133,16 @@ class Catenary:
 		lowest_point[ 2 ] = p1[ 2 ] + H + dH
 		return lowest_point
 
-	def _get_perturbations( self, p1: ndarray, p2: ndarray, C: float, D: float, dD: float ) -> tuple[ ndarray, ndarray ]:
+	def _get_perturbations(
+			self, p1: ndarray, p2: ndarray, C: float, H: float, dH: float, D: float, dD: float
+			) -> tuple[ ndarray, ndarray ]:
 
-		# case where ΔH is too small
+		# case where horizontal distance is too small
 		if (C is None) and (D is not None):
 			return array(
-					[ 0., 0., self.linear_mass * self.length * G / 2 ]
+					[ 0., 0., -self.linear_mass * G * (H + dH) ]
 					), array(
-					[ 0., 0., self.linear_mass * self.length * G / 2 ]
+					[ 0., 0., -self.linear_mass * G * H ]
 					)
 		# case where cable is taunt
 		elif C is None:
@@ -201,7 +203,7 @@ def test_1():
 	"""
 	to figure out the regions where the optimization over C fails and avoid them
 	"""
-	from numpy import linspace
+	from numpy import linspace, nanmean, nanstd, nanquantile, nan
 	import matplotlib.pyplot as plt
 	from tqdm import tqdm
 	from warnings import simplefilter
@@ -212,7 +214,7 @@ def test_1():
 	cat = Catenary()
 	# cat.optimization_function = cat._optimization_function_1 # μ=0.0004014649499549705 σ=0.0002544858910793164
 	# cat.optimization_function = cat._optimization_function_2  # μ=0.00039219858003561965 σ=0.00023520437741971333
-	lengths = linspace( 1., 10., 10 )
+	lengths = linspace( 3., 10., 1 )
 
 	xlpisp = [ ]
 	zlpisp = [ ]
@@ -226,7 +228,8 @@ def test_1():
 
 	for l in lengths:
 		X = linspace( 0., l, 200 )
-		Z = linspace( -l, l, 400 )
+		# Z = linspace( -l, l, 400 )
+		Z = linspace( 0, 0, 1 )
 		cat.length = l
 		with tqdm( X, desc = f'test 1 {l=:.2f}' ) as X:
 			for x in X:
@@ -236,9 +239,10 @@ def test_1():
 					p2 = array( [ x, 0, z ] )
 					try:
 						ti = perf_counter()
+						# (C, H, dH, D, dD), lowest_point, perturbations, points
 						(c, _, _, _, _), lp, _, _ = cat( p1, p2 )
 						ts += [ perf_counter() - ti ]
-						cs += [ c ]
+						cs += [ c ] if c is not None else [ nan ]
 						xs += [ x / l ]
 						zs += [ z / l ]
 						if norm( lp - p1 ) < 1e-3 or norm( lp - p2 ) < 1e-3:
@@ -250,11 +254,11 @@ def test_1():
 						zoverl += [ z / l ]
 
 	print( 'times' )
-	print( mean( ts ), std( ts ) )
-	print( quantile( ts, [ 0.01, 0.25, 0.50, 0.75, 0.99 ] ) )
+	print( nanmean( ts ), nanstd( ts ) )
+	print( nanquantile( ts, [ 0.01, 0.25, 0.50, 0.75, 0.99 ] ) )
 	print( 'C' )
-	print( mean( cs ), std( cs ) )
-	print( quantile( cs, [ 0.01, 0.25, 0.50, 0.75, 0.99 ] ) )
+	print( nanmean( cs ), nanstd( cs ) )
+	print( nanquantile( cs, [ 0.01, 0.25, 0.50, 0.75, 0.99 ] ) )
 
 	plt.figure()
 	plt.scatter( xs, cs, s = .1 )
@@ -263,6 +267,11 @@ def test_1():
 
 	plt.figure()
 	plt.scatter( zs, cs, s = .1 )
+	plt.xlabel( r'$\Delta H / L$' )
+	plt.ylabel( r'$C$' )
+
+	plt.figure()
+	plt.scatter( [ sqrt( pow( x, 2 ) + pow( z, 2 ) ) for x, z in zip( xs, zs ) ], cs, s = .1 )
 	plt.xlabel( r'$\Delta H / L$' )
 	plt.ylabel( r'$C$' )
 
@@ -300,9 +309,9 @@ def test_2():
 
 	simplefilter( 'ignore', RuntimeWarning )
 
-	cat = Catenary( linear_mass = 1. / 3. )
-	X = linspace( 0., cat.length, 20 )
-	Z = linspace( -cat.length, cat.length, 4 )
+	cat = Catenary( linear_mass = 1. )
+	X = linspace( -cat.length, cat.length, 7 )
+	Z = linspace( 0, 0, 1 )
 
 	for z in Z:
 		for x in X:
@@ -354,9 +363,61 @@ def test_2():
 				pass
 
 
+def test_3():
+	from numpy import linspace, logspace, array
+	from warnings import simplefilter
+	import matplotlib.pyplot as plt
+	from tqdm import tqdm
+
+	simplefilter( 'ignore', RuntimeWarning )
+
+	cat = Catenary()
+
+	ds = [ ]
+	t1s, t2s = [ ], [ ]
+
+	z_offset = 1.
+
+	distances = linspace( 0., cat.length, 2000 )
+	weights = logspace( -1, 1, 10 )
+	legends = [ ]
+
+	_, (ax1, ax2) = plt.subplots( 2, 1 )
+
+	for weight in weights:
+		cat.linear_mass = weight / cat.length
+		legends += [ f'{weight=:.3f}' ]
+		for distance in tqdm( distances, desc = f'{weight=:.3f}' ):
+			p1 = array( [ 0, 0, 0 ] )
+			p2 = array( [ distance, 0, z_offset ] )
+			t1, t2 = cat.get_perturbations( p1, p2 )
+			if t1 is not None:
+				t1, t2 = norm( t1 ), norm( t2 )
+				t1s += [ t1 ]
+				t2s += [ t2 ]
+				ds += [ distance ]
+
+		ax1.plot( ds, t1s )
+		ax2.plot( ds, t2s )
+		ds.clear()
+		t1s.clear()
+		t2s.clear()
+	ax1.set_yscale( 'log' )
+	ax1.set_xlabel( 'distance [m]' )
+	ax1.set_ylabel( 'norme de la tension p1 [N]' )
+	ax1.legend( legends )
+	ax2.set_yscale( 'log' )
+	ax2.set_xlabel( 'distance [m]' )
+	ax2.set_ylabel( 'norme de la tension p2 [N]' )
+	ax2.legend( legends )
+	ax1.set_title( f'{z_offset=} for p2' )
+	plt.show()
+
+
 if __name__ == '__main__':
 	test_1()
 	# test_2()
+	# test_3()
 	pass
 
-del test_1, test_2
+del test_1, test_2, test_3
