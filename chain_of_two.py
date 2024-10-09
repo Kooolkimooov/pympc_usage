@@ -1,9 +1,11 @@
+from copy import deepcopy
 from time import perf_counter
 from warnings import simplefilter
 
 from matplotlib import pyplot as plt
-from numpy import dot, ndarray, r_, set_printoptions, zeros
+from numpy import dot, isnan, linspace, ndarray, r_, set_printoptions, zeros, any
 from numpy.linalg import norm
+from tqdm import tqdm
 
 from bluerov import Bluerov
 from catenary import Catenary
@@ -143,48 +145,57 @@ class ChainOf2:
 
 
 if __name__ == "__main__":
-	set_printoptions( precision = 2, linewidth = 10000, suppress = True )
+	set_printoptions( precision = 3, linewidth = 10000, suppress = True )
 
 	ti = perf_counter()
 
-	n_frames = 2000
+	n_frames = 10000
 	time_step = 0.01
 
-	dynamics = ChainOf2( cables_linear_mass = 1. )
+	dynamics = ChainOf2( cables_linear_mass = .025 )
 
 	initial_state = zeros( (dynamics.state_size,) )
 	initial_actuation = zeros( (dynamics.actuation_size,) )
 
 	model = Model( dynamics, time_step, initial_state, initial_actuation )
 
-	_, (ax1, ax2) = plt.subplots( 2, 1 )
+	_, ((ax1, ax2), (ax3, ax4)) = plt.subplots( 2, 2 )
 
-	dynamics.c_01.linear_mass = .2
+	x0s = [ ]
+	x1s = [ ]
+
 	ds = [ ]
 	t1s = [ ]
 	t2s = [ ]
 
-	model.actuation[ dynamics.br_0_linear_actuation ][ 0 ] = 1.
-	for frame in range( n_frames ):
+	model.actuation[ dynamics.br_0_actuation ][ 0 ] = 1.
+	for frame in tqdm( range( n_frames ) ):
+		initial_state = deepcopy(model.state)
 		model.step()
+
+		if any(isnan(model.state)):
+			print(f'nan at {frame=}')
+			model.state = deepcopy(initial_state)
+			model.step()
+			break
 
 		t1, t2 = dynamics.c_01.get_perturbations(
 				model.state[ dynamics.br_0_position ], model.state[ dynamics.br_1_position ]
 				)
-
-		if t1 is not None:
-			t1, t2 = norm( t1 ), norm( t2 )
-		else:
+		if t1 is None:
 			t1, t2 = dynamics.get_taunt_cable_perturbations( model.state, model.actuation, 0 )
-			t1, t2 = norm( t1 ), norm( t2 )
 
 		ds += [ norm( model.state[ dynamics.br_1_position ] - model.state[ dynamics.br_0_position ] ) ]
-		t1s += [ t1 ]
-		t2s += [ t2 ]
+		t1s += [ t1[ 0 ] ]
+		t2s += [ t2[ 0 ] ]
 
-	sl = slice( 0, 1000 )
+		x0s += [ model.state[ dynamics.br_0_position ][ 0 ] ]
+		x1s += [ model.state[ dynamics.br_1_position ][ 0 ] ]
 
-	ax1.plot( ds[ sl ], t1s[ sl ] )
-	ax2.plot( ds[ sl ], t2s[ sl ] )
+	ax1.scatter( ds, t1s, c = linspace( 0., 1., len( ds ) ), cmap = 'summer' )
+	ax2.scatter( ds, t2s, c = linspace( 0., 1., len( ds ) ), cmap = 'summer' )
+
+	ax3.plot( x0s )
+	ax4.plot( x1s )
 
 	plt.show()
