@@ -10,7 +10,7 @@ class Catenary:
 	Catenary class with the NED convention meaning that the z axis is pointing downward
 	"""
 
-	def __init__( self, length = 3., linear_mass = 0. ):
+	def __init__( self, length = 3., linear_mass = 1. ):
 		self.length = length
 		self.linear_mass = linear_mass
 
