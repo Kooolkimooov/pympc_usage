@@ -59,7 +59,7 @@ class Bluerov:
 		# )
 
 		buoyancy = self.buoyancy_norm * array( [ 0., 0., 1. ] ) * (
-					-.5 - .5 / (1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )))
+				-.5 - .5 / (1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )))
 
 		hydrostatic_forces = zeros( 6 )
 		hydrostatic_forces[ :3 ] = transform_matrix[ :3, :3 ].T @ (self.weight + buoyancy)
@@ -125,7 +125,7 @@ class Bluerov:
 		return inertial_matrix
 
 
-class BluerovNoAngularActuation( Bluerov ):
+class BluerovXYZ( Bluerov ):
 
 	actuation_size = 3
 
@@ -135,6 +135,21 @@ class BluerovNoAngularActuation( Bluerov ):
 	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
 		six_dof_actuation = zeros( (6,) )
 		six_dof_actuation[ :3 ] = actuation
+
+		return Bluerov.__call__( self, state, six_dof_actuation, perturbation )
+
+
+class BluerovXYZPsi( Bluerov ):
+
+	actuation_size = 4
+
+	def __init__( self ):
+		super().__init__()
+
+	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
+		six_dof_actuation = zeros( (6,) )
+		six_dof_actuation[ :3 ] = actuation[ :3 ]
+		six_dof_actuation[ 5 ] = actuation[ 3 ]
 
 		return Bluerov.__call__( self, state, six_dof_actuation, perturbation )
 
