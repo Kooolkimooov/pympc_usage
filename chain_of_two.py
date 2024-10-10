@@ -24,11 +24,12 @@ class ChainOf2:
 			water_surface_z: float = 0.,
 			water_current: ndarray = None,
 			cables_lenght: float = 3.,
-			cables_linear_mass: float = 0.
+			cables_linear_mass: float = 0.,
+			get_cable_parameter_method = 'runtime'
 			):
 
 		self.br_0 = Bluerov( water_surface_z, water_current )
-		self.c_01 = Catenary( cables_lenght, cables_linear_mass )
+		self.c_01 = Catenary( cables_lenght, cables_linear_mass, get_cable_parameter_method )
 		self.br_1 = Bluerov( water_surface_z, water_current )
 
 		self.br_0_pose = slice( 0, 6 )
@@ -152,7 +153,7 @@ if __name__ == "__main__":
 	n_frames = 10000
 	time_step = 0.01
 
-	dynamics = ChainOf2( cables_linear_mass = .025 )
+	dynamics = ChainOf2( cables_linear_mass = .045, get_cable_parameter_method = 'precompute' )
 
 	initial_state = zeros( (dynamics.state_size,) )
 	initial_actuation = zeros( (dynamics.actuation_size,) )

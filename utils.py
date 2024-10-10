@@ -97,12 +97,13 @@ def cubic_interpolation_function( f_0: float, f_1: float, f_0p: float, f_1p: flo
 	return function
 
 
-def check( folder: str, recursive = False ) -> int:
+def check( folder: str, recursive = False, prompt = True ) -> int:
 	"""
 	counts the number of objects in a folder and removes them if the user agrees
 	if the folder does not exist, it creates it
 	:param folder:
 	:param recursive:
+	:param prompt:
 	:return: number of objects in the folder
 	"""
 	n = 0
@@ -110,7 +111,7 @@ def check( folder: str, recursive = False ) -> int:
 		objects_in_dir = glob( f'{folder}/*' )
 		n += len( objects_in_dir )
 		if n > 0:
-			if input( f"{folder} exists and contains data. Remove? (y/n) " ) == 'y':
+			if prompt and (input( f"{folder} exists and contains data. Remove? (y/n) " ) == 'y'):
 				for object in objects_in_dir:
 					if path.isdir( object ) and recursive:
 						n += check( object )

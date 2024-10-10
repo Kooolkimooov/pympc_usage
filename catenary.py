@@ -1,8 +1,14 @@
-from numpy import arccosh, arcsinh, array, cosh, isnan, ndarray, sinh, sqrt, zeros
+from json import dump, load
+from pathlib import Path
+
+from numpy import (
+	arccosh, arcsinh, array, cosh, isnan, linspace, log10, logspace, meshgrid, ndarray, sinh, sqrt, zeros,
+	)
 from numpy.linalg import norm
 from scipy.optimize import brentq
+from tqdm import tqdm
 
-from utils import G
+from utils import check, G
 
 
 class Catenary:
@@ -10,12 +16,24 @@ class Catenary:
 	Catenary class with the NED convention meaning that the z axis is pointing downward
 	"""
 
-	def __init__( self, length = 3., linear_mass = 1. ):
+	GET_PARAMETER_METHOD = [ 'runtime', 'precompute' ]
+
+	def __init__(
+			self, length = 3., linear_mass = 1., get_parameter_method: str = 'runtime'
+			):
+
 		self.length = length
 		self.linear_mass = linear_mass
-
-		self.get_parameters = self._get_parameters_optimization
 		self.optimization_function = self._optimization_function_1
+
+		match get_parameter_method:
+			case 'runtime':
+				self.get_parameters = self._get_parameters_optimization
+			case 'precompute':
+				self._precompute()
+				self.get_parameters = self._get_parameters_precompute
+			case _:
+				raise ValueError( f'get_parameter_method must be one of {self.GET_PARAMETER_METHOD}' )
 
 	def __call__( self, p1: ndarray, p2: ndarray ):
 		"""
@@ -100,12 +118,71 @@ class Catenary:
 
 		if norm( p2 - p1 ) > 0.99 * self.length or any( isnan( p1 ) ) or any( isnan( p2 ) ):
 			return None, None, dH, None, None
-		elif norm( p2[ :2 ] - p1[ :2 ] ) < .01 * self.length:
+		elif two_D_plus_dD < .01 * self.length:
 			return None, (self.length - dH) / 2, dH, two_D_plus_dD / 2, 0.
 
 		C = brentq(
 				self.optimization_function, -1e-2, 1e3, args = (self.length, dH, two_D_plus_dD), xtol = 1e-12
 				)
+
+		temp_var = pow( self.length, 2 ) - pow( dH, 2 )
+
+		a_eq = -4. * pow( C, 2 ) * temp_var
+		b_eq = -4. * C * dH * (C * temp_var - 2 * dH) - 8.0 * pow( self.length, 2 ) * C
+		c_eq = pow( C * temp_var - 2. * dH, 2 )
+
+		H = (-b_eq - sqrt( pow( b_eq, 2 ) - 4. * a_eq * c_eq )) / (2. * a_eq)
+		D = arccosh( C * H + 1.0 ) / C
+		dD = two_D_plus_dD - 2. * D
+
+		return C, H, dH, D, dD
+
+	def _precompute( self ):
+
+		self._dHs = linspace( 0., self.length, 1000 )
+		self._two_D_plus_dDs = self.length * logspace( -2, 0, 1000 )
+
+		check( Path( f'./cache' ), prompt = False )
+		check( Path( f'./cache/Catenary' ), prompt = False )
+		if len( list( Path( f'./cache/Catenary' ).glob( f'{self.length}*' ) ) ):
+			with open( Path( f'./cache/Catenary/{self.length}.json' ) ) as file:
+				self._Cs = array( load( file ) )
+				return
+
+		X, Z = meshgrid( self._two_D_plus_dDs, self._dHs )
+		self._Cs = zeros( X.shape )
+
+		for i, xr in enumerate( tqdm( X, desc = 'precomputing values of C' ) ):
+			for j, x in enumerate( xr ):
+				z = Z[ i, j ]
+				p1 = array( [ 0., 0., 0. ] )
+				p2 = array( [ x, 0., z ] )
+				self._Cs[ i, j ], _, _, _, _ = self._get_parameters_optimization( p1, p2 )
+
+		with open( Path( f'./cache/Catenary/{self.length}.json' ), 'w' ) as file:
+			dump( self._Cs.tolist(), file )
+
+	def _get_parameters_precompute( self, p1: ndarray, p2: ndarray ) -> tuple[ float, float, float, float, float ]:
+		"""
+		implementation of get_parameters using optimization
+		"""
+		dH = p2[ 2 ] - p1[ 2 ]
+		two_D_plus_dD = norm( p2[ :2 ] - p1[ :2 ] )
+
+		if norm( p2 - p1 ) > 0.99 * self.length or any( isnan( p1 ) ) or any( isnan( p2 ) ):
+			return None, None, dH, None, None
+		elif two_D_plus_dD < .01 * self.length:
+			return None, (self.length - dH) / 2, dH, two_D_plus_dD / 2, 0.
+
+		i = int( round( (1000 - 1) * abs( dH ) / self.length, 0 ) )
+		j = int( round( (1000 - 1) * (log10( abs( two_D_plus_dD ) / self.length ) - (-2)) / (0 - (-2)), 0 ) )
+		if (0 < i and not self._dHs[ i - 1 ] < dH) or (i < 999 and not dH < self._dHs[ i + 1 ]):
+			raise ValueError()
+		if (0 < j and not self._two_D_plus_dDs[ j - 1 ] < two_D_plus_dD) or (
+				j < 999 and not two_D_plus_dD < self._two_D_plus_dDs[ j + 1 ]):
+			raise ValueError()
+
+		C = self._Cs[ i, j ]
 
 		temp_var = pow( self.length, 2 ) - pow( dH, 2 )
 
@@ -414,10 +491,74 @@ def test_3():
 	plt.show()
 
 
+def test_4():
+	from numpy import linspace, meshgrid, logspace
+	from warnings import simplefilter
+	import matplotlib.pyplot as plt
+	from tqdm import tqdm
+
+	simplefilter( 'ignore', RuntimeWarning )
+
+	# strange case
+	dx = 2.781439881986825
+	dz = -2.480654570646834e-16
+	c = -1.2166747574150463e-08
+
+	cat = Catenary()
+	X = cat.length * logspace( -6, 0, 1000 )
+	Z = linspace( 0., cat.length, 1000 )
+	X, Z = meshgrid( X, Z )
+	C = zeros( X.shape )
+
+	for i, xr in enumerate( tqdm( X ) ):
+		for j, x in enumerate( xr ):
+			z = Z[ i, j ]
+			p1 = array( [ 0., 0., 0. ] )
+			p2 = array( [ x, 0., z ] )
+			c, _, _, _, _ = cat.get_parameters( p1, p2 )
+			C[ i, j ] = c
+
+	ax = plt.subplot( projection = '3d' )
+	ax.plot_surface( X, Z, C )
+	ax.set_xlabel( r'horizontal distance $2D+\Delta D$' )
+	ax.set_ylabel( r'vertical distance $\Delta H$' )
+	ax.set_zlabel( r'value of $C$' )
+	plt.show()
+
+
+def test_5():
+	L = 3.
+	e0 = -6
+	en = 0
+	n = 69
+
+	logvs = L * logspace( e0, en, n )
+	linvs = linspace( 0, L, n )
+
+	print( 'log' )
+	for i, v in enumerate( logvs ):
+		print( v, end = '\t' )
+		print( log10( v / L ), end = '\t' )
+		print( int( round( (n - 1) * (log10( v / L ) - e0) / (en - e0), 0 ) ), end = '\t' )
+		print( i, end = '\t' )
+		print( i == round( (n - 1) * (log10( v / L ) - e0) / (en - e0), 0 ), end = '\t' )
+		print()
+
+	print( 'lin' )
+	for i, v in enumerate( linvs ):
+		print( v, end = '\t' )
+		print( int( round( (n - 1) * abs( v ) / L, 0 ) ), end = '\t' )
+		print( i, end = '\t' )
+		print( i == int( round( (n - 1) * abs( v ) / L, 0 ) ), end = '\t' )
+		print()
+
+
 if __name__ == '__main__':
-	test_1()
+	# test_1()
 	# test_2()
 	# test_3()
+	test_4()
+	# test_5()
 	pass
 
-del test_1, test_2, test_3
+del test_1, test_2, test_3, test_4, test_5
