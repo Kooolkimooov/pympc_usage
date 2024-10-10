@@ -3,7 +3,7 @@ from time import perf_counter
 from warnings import simplefilter
 
 from matplotlib import pyplot as plt
-from numpy import dot, isnan, linspace, ndarray, r_, set_printoptions, zeros, any
+from numpy import any, dot, isnan, linspace, ndarray, r_, set_printoptions, zeros
 from numpy.linalg import norm
 from tqdm import tqdm
 
@@ -82,11 +82,11 @@ class ChainOf2:
 		# here we should consider any pair with a taunt cable as a single body
 		if perturbation_01_0 is None:
 			perturbation_01_0, perturbation_01_1 = self.get_taunt_cable_perturbations( state, actuation, 0 )
-			perturbation_01_0.resize( (Bluerov.actuation_size,) )
-			perturbation_01_1.resize( (Bluerov.actuation_size,) )
+			perturbation_01_0.resize( (Bluerov.actuation_size,), refcheck = False )
+			perturbation_01_1.resize( (Bluerov.actuation_size,), refcheck = False )
 		else:
-			perturbation_01_0.resize( (Bluerov.actuation_size,) )
-			perturbation_01_1.resize( (Bluerov.actuation_size,) )
+			perturbation_01_0.resize( (Bluerov.actuation_size,), refcheck = False )
+			perturbation_01_1.resize( (Bluerov.actuation_size,), refcheck = False )
 			br_0_transformation_matrix = self.br_0.build_transformation_matrix( *state[ self.br_0_orientation ] )
 			br_1_transformation_matrix = self.br_1.build_transformation_matrix( *state[ self.br_1_orientation ] )
 			perturbation_01_0 = br_0_transformation_matrix.T @ perturbation_01_0
@@ -146,7 +146,7 @@ class ChainOf2:
 
 
 if __name__ == "__main__":
-	set_printoptions( precision = 3, linewidth = 10000, suppress = True )
+	set_printoptions( precision = 5, linewidth = 10000, suppress = True )
 
 	ti = perf_counter()
 
@@ -169,15 +169,15 @@ if __name__ == "__main__":
 	t1s = [ ]
 	t2s = [ ]
 
-	model.actuation[ dynamics.br_0_actuation ][ 0 ] = 1.
+	model.actuation[ dynamics.br_0_actuation ][ 0 ] = 10.
 	for frame in tqdm( range( n_frames ) ):
-		initial_state = deepcopy(model.state)
+		initial_state = deepcopy( model.state )
 		model.step()
 
-		if any(isnan(model.state)):
-			print(f'nan at {frame=}')
-			model.state = deepcopy(initial_state)
-			model.step()
+		if any( isnan( model.state ) ):
+			print( f'nan at {frame=}' )
+			# model.state = deepcopy(initial_state)
+			# model.step()
 			break
 
 		t1, t2 = dynamics.c_01.get_perturbations(
@@ -197,6 +197,7 @@ if __name__ == "__main__":
 	ax2.scatter( ds, t2s, c = linspace( 0., 1., len( ds ) ), cmap = 'summer' )
 
 	ax3.plot( x0s )
-	ax4.plot( x1s )
+	ax3.plot( x1s )
+	ax4.plot( [ abs( x1 - x0 ) for x0, x1 in zip( x0s, x1s ) ] )
 
 	plt.show()
