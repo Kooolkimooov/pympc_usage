@@ -59,9 +59,6 @@ class MPC:
 		:param verbose: whether to print the optimization results
 		"""
 
-		assert model_type in self.MODEL_TYPE
-		assert optimize_on in self.OPTIMIZE_ON
-
 		match model_type:
 			case 'linear':
 				self.predict = self._predict_linear
