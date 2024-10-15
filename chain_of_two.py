@@ -177,9 +177,7 @@ if __name__ == "__main__":
 	t1s = [ ]
 	l = 2.5
 
-	model.actuation[ dynamics.br_0_actuation ][ 0 ] = 2.5
-	model.actuation[ dynamics.br_0_actuation ][ 1 ] = 2.5
-	model.actuation[ dynamics.br_0_actuation ][ 2 ] = 6.5
+	model.actuation[ dynamics.br_0_actuation ][ 0 ] = 50
 
 	for frame in tqdm( range( n_frames ) ):
 		initial_state = deepcopy( model.state )
@@ -205,25 +203,26 @@ if __name__ == "__main__":
 	x0s, x1s = array( x0s ), array( x1s )
 	T = [ i * time_step for i in range( len( x0s ) ) ]
 
-	_, ((ax1, ax3), (ax2, ax4)) = plt.subplots( 2, 2 )
+	fig, ((ax1, ax3), (ax2, ax4)) = plt.subplots( 2, 2, figsize = (16, 9) )
+	fig.suptitle( f'{model.actuation[ dynamics.br_0_linear_actuation ]=}' )
+	plt.subplots_adjust( hspace = 0 )
 
-	ax1.scatter( ds, t0s, c = linspace( 0., 1., len( ds ) ), cmap = 'summer' )
-	ax2.scatter( ds, t1s, c = linspace( 0., 1., len( ds ) ), cmap = 'summer' )
-	ax2.set_xlabel( 'distances entre br_0 et br_1 [m]' )
+	line = ax1.scatter( ds, t0s, c = linspace( 0., time_step * len( ds ), len( ds ) ), cmap = 'summer' )
+	plt.colorbar( line, location = 'top', label = 'time [s]' )
 	ax1.set_ylabel( 'force du câble sur br_0 [N]' )
-	ax2.set_ylabel( 'force du câble sur br_1 [N]' )
+	ax1.axvline( 3. )
 
-	ax3.plot( T, x0s[:, 0 ], color = 'r' )
-	ax3.plot( T, x1s[:, 0 ], color = 'b' )
-	ax3.plot( T, x0s[:, 1 ], color = 'r' )
-	ax3.plot( T, x1s[:, 1 ], color = 'b' )
-	ax3.plot( T, x0s[:, 2 ], color = 'r' )
-	ax3.plot( T, x1s[:, 2 ], color = 'b' )
-	ax3.set_xlabel( 'time [s]' )
+	ax2.scatter( ds, t1s, c = linspace( 0., time_step * len( ds ), len( ds ) ), cmap = 'summer' )
+	ax2.set_xlabel( 'distances entre br_0 et br_1 [m]' )
+	ax2.set_ylabel( 'force du câble sur br_1 [N]' )
+	ax2.axvline( 3. )
+
+	ax3.plot( T, x0s[ :, 0 ], color = 'r' )
+	ax3.plot( T, x1s[ :, 0 ], color = 'b' )
 	ax3.set_ylabel( 'position sur $x_w$' )
 	ax3.legend( [ 'br_0', 'br_1' ] )
 
-	ax4.plot(T, [ norm( x1 - x0 ) for x0, x1 in zip( x0s, x1s ) ] )
+	ax4.plot( T, [ norm( x1 - x0 ) for x0, x1 in zip( x0s, x1s ) ] )
 	ax4.axhline( 3. )
 	ax4.set_xlabel( 'time [s]' )
 	ax4.set_ylabel( 'distance entre br_0 et br_1' )
