@@ -176,10 +176,10 @@ class Catenary:
 
 		i = int( round( (1000 - 1) * abs( dH ) / self.length, 0 ) )
 		j = int( round( (1000 - 1) * (log10( abs( two_D_plus_dD ) / self.length ) - (-2)) / (0 - (-2)), 0 ) )
-		if (0 < i and not self._dHs[ i - 1 ] < dH) or (i < 999 and not dH < self._dHs[ i + 1 ]):
+		if (0 < i and not self._dHs[ i - 1 ] < abs(dH)) or (i < 999 and not abs(dH) < self._dHs[ i + 1 ]):
 			raise ValueError()
-		if (0 < j and not self._two_D_plus_dDs[ j - 1 ] < two_D_plus_dD) or (
-				j < 999 and not two_D_plus_dD < self._two_D_plus_dDs[ j + 1 ]):
+		if (0 < j and not self._two_D_plus_dDs[ j - 1 ] < abs(two_D_plus_dD)) or (
+				j < 999 and not abs(two_D_plus_dD) < self._two_D_plus_dDs[ j + 1 ]):
 			raise ValueError()
 
 		C = self._Cs[ i, j ]
