@@ -220,9 +220,9 @@ class Catenary:
 		# case where horizontal distance is too small
 		if (C is None) and (D is not None):
 			return array(
-					[ 0., 0., -self.linear_mass * G * (H + dH) ]
+					[ 0., 0., self.linear_mass * G * (H + dH) ]
 					), array(
-					[ 0., 0., -self.linear_mass * G * H ]
+					[ 0., 0., self.linear_mass * G * H ]
 					)
 		# case where cable is taunt
 		elif C is None:
@@ -410,8 +410,8 @@ def test_2():
 
 				plt.scatter( *lowest_point[ ::2 ], s = 50 )
 
-				plt.quiver( *p1[ ::2 ], *perturbations[ 0 ][ ::2 ], scale = 50 )
-				plt.quiver( *p2[ ::2 ], *perturbations[ 1 ][ ::2 ], scale = 50 )
+				plt.quiver( *p1[ ::2 ], *perturbations[ 0 ][ ::2 ], angles='xy', scale = 50 )
+				plt.quiver( *p2[ ::2 ], *perturbations[ 1 ][ ::2 ], angles='xy', scale = 50 )
 
 				plt.plot( points[ :, 0 ], points[ :, 2 ] )
 
