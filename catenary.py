@@ -184,6 +184,9 @@ class Catenary:
 
 		C = self._Cs[ i, j ]
 
+		if isnan( C ):
+			return None, None, dH, None, None
+
 		temp_var = pow( self.length, 2 ) - pow( dH, 2 )
 
 		a_eq = -4. * pow( C, 2 ) * temp_var
