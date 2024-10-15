@@ -1,4 +1,4 @@
-from numpy import array, concat, cos, cross, diag, exp, eye, ndarray, sin, tan, zeros
+from numpy import array, concatenate, cos, cross, diag, exp, eye, ndarray, sin, tan, zeros
 from numpy.linalg import inv
 
 
@@ -25,7 +25,7 @@ class Bluerov:
 		# water speed should be on [3:6]
 		water_current = zeros( (6,) ) if water_current is None else water_current
 		if water_current.shape == (3,):
-			water_current = concat( (water_current, array( [ 0., 0., 0. ] )) )
+			water_current = concatenate( (water_current, array( [ 0., 0., 0. ] )) )
 
 		assert water_current.shape == (6,)
 
