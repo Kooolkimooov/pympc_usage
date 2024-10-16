@@ -95,7 +95,8 @@ class MPC:
 		self.constraints = constraints
 
 		add_one = (1 if self.horizon % self.time_steps_per_actuation != 0 else 0)
-		self.result_shape = (self.horizon // self.time_steps_per_actuation + add_one, 1, self.model.actuation.shape[ 0 ])
+		self.result_shape = (self.horizon // self.time_steps_per_actuation + add_one, 1, self.model.actuation.shape[
+		0 ])
 
 		self.raw_result = None
 		self.result = zeros( self.model.actuation.shape )

@@ -25,17 +25,17 @@ class ChainOf4:
 			self,
 			water_surface_z: float = 0.,
 			water_current: ndarray = None,
-			cables_lenght: float = 3.,
+			cables_length: float = 3.,
 			cables_linear_mass: float = 0.,
 			get_cable_parameter_method = 'runtime'
 			):
 
 		self.br_0 = Bluerov( water_surface_z, water_current )
-		self.c_01 = Catenary( cables_lenght, cables_linear_mass, get_cable_parameter_method )
+		self.c_01 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
 		self.br_1 = Bluerov( water_surface_z, water_current )
-		self.c_12 = Catenary( cables_lenght, cables_linear_mass, get_cable_parameter_method )
+		self.c_12 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
 		self.br_2 = Bluerov( water_surface_z, water_current )
-		self.c_23 = Catenary( cables_lenght, cables_linear_mass, get_cable_parameter_method )
+		self.c_23 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
 		self.br_3 = USV( water_surface_z )
 
 		self.last_perturbation_01_0 = zeros( (Bluerov.state_size // 2,) )
@@ -112,7 +112,7 @@ class ChainOf4:
 
 	def __call__( self, state: ndarray, actuation: ndarray ) -> ndarray:
 		"""
-		evalutes the dynamics of each robot of the chain
+		evaluates the dynamics of each robot of the chain
 		:param state: current state of the system
 		:param actuation: current actuation of the system
 		:return: state derivative of the system
@@ -468,8 +468,8 @@ if __name__ == "__main__":
 	constraints_values_labels = [ 'depth_c_01', 'depth_c_12', 'depth_c_23', 'br_0_br_1_horizontal_distance',
 																'br_1_br_2_horizontal_distance', 'br_2_br_3_horizontal_distance', 'br_0_br_1_distance',
 																'br_1_br_2_distance', 'br_2_br_3_distance' ]
-	constraints_labels = [ 'seafloor', 'seafloor', 'seafloor', 'cable_lenght', 'cable_lenght', 'cable_lenght',
-												 'cable_lenght', 'cable_lenght', 'cable_lenght' ]
+	constraints_labels = [ 'seafloor', 'seafloor', 'seafloor', 'cable_length', 'cable_length', 'cable_length',
+												 'cable_length', 'cable_length', 'cable_length' ]
 
 	constraint_lb_base = [ -inf, -inf, -inf, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
 	constraint_ub_base = [ floor_depth, floor_depth, floor_depth, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]

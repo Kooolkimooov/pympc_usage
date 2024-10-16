@@ -5,7 +5,7 @@ from numpy.linalg import inv
 class Bluerov:
 	"""
 	Bluerov model, based on the BlueROV model from Blue Robotics
-	paramters of the model are based on the BlueROV2 Heavy configuration
+	parameters of the model are based on the BlueROV2 Heavy configuration
 	and are stored in the class as class variables
 	"""
 
@@ -45,7 +45,7 @@ class Bluerov:
 
 	def __call__( self, state: ndarray, actuation: ndarray, perturbation: ndarray ) -> ndarray:
 		"""
-		evalutes the dynamics of the Bluerov model
+		evaluates the dynamics of the Bluerov model
 		:param state: current state of the system
 		:param actuation: current actuation of the system
 		:return: state derivative of the system

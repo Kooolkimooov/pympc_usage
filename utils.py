@@ -1,10 +1,10 @@
 from glob import glob
 from inspect import isfunction, ismethod
-from os import mkdir, path, remove
 from platform import release, system, version
 
 from cpuinfo import get_cpu_info
 from numpy import array, ndarray, zeros
+from os import mkdir, path, remove
 from PIL import Image
 
 G: float = 9.80665

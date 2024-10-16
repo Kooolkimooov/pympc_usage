@@ -1,6 +1,6 @@
-from json import dump, load
 from pathlib import Path
 
+from json import dump, load
 from numpy import (
 	arccosh,
 	arcsinh,
@@ -88,7 +88,8 @@ class Catenary:
 		get the perturbations of the two points
 		:param p0: one end of the catenary
 		:param p1: second end of the catenary
-		:return: tuple containing the perturbations force on the two points in the form (perturbation_p1, perturbation_p2)
+		:return: tuple containing the perturbations force on the two points in the form (perturbation_p1,
+		perturbation_p2)
 		"""
 		C, H, dH, D, dD = self.get_parameters( p0, p1 )
 		return self._get_perturbations( p0, p1, C, H, dH, D, dD )
@@ -189,10 +190,10 @@ class Catenary:
 
 		i = int( round( (1000 - 1) * abs( dH ) / self.length, 0 ) )
 		j = int( round( (1000 - 1) * (log10( abs( two_D_plus_dD ) / self.length ) - (-2)) / (0 - (-2)), 0 ) )
-		if (0 < i and not self._dHs[ i - 1 ] < abs(dH)) or (i < 999 and not abs(dH) < self._dHs[ i + 1 ]):
+		if (0 < i and not self._dHs[ i - 1 ] < abs( dH )) or (i < 999 and not abs( dH ) < self._dHs[ i + 1 ]):
 			raise ValueError()
-		if (0 < j and not self._two_D_plus_dDs[ j - 1 ] < abs(two_D_plus_dD)) or (
-				j < 999 and not abs(two_D_plus_dD) < self._two_D_plus_dDs[ j + 1 ]):
+		if (0 < j and not self._two_D_plus_dDs[ j - 1 ] < abs( two_D_plus_dD )) or (
+				j < 999 and not abs( two_D_plus_dD ) < self._two_D_plus_dDs[ j + 1 ]):
 			raise ValueError()
 
 		C = self._Cs[ i, j ]
@@ -420,16 +421,16 @@ def test_2():
 				points = out[ 3 ]
 
 				plt.figure()
-				plt.gca().set_xlim([-3, 3])
-				plt.gca().set_ylim([-3, 3])
+				plt.gca().set_xlim( [ -3, 3 ] )
+				plt.gca().set_ylim( [ -3, 3 ] )
 				plt.gca().invert_yaxis()
 
 				plt.scatter( *p1[ ::2 ], s = 50 )
 				plt.scatter( *p2[ ::2 ], s = 50 )
 				plt.scatter( *lowest_point[ ::2 ], s = 50 )
 
-				plt.quiver( *p1[ ::2 ], *perturbations[ 0 ][ ::2 ], angles='xy', scale = 50 )
-				plt.quiver( *p2[ ::2 ], *perturbations[ 1 ][ ::2 ], angles='xy', scale = 50 )
+				plt.quiver( *p1[ ::2 ], *perturbations[ 0 ][ ::2 ], angles = 'xy', scale = 50 )
+				plt.quiver( *p2[ ::2 ], *perturbations[ 1 ][ ::2 ], angles = 'xy', scale = 50 )
 
 				plt.plot( points[ :, 0 ], points[ :, 2 ] )
 

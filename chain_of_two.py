@@ -23,13 +23,13 @@ class ChainOf2:
 			self,
 			water_surface_z: float = 0.,
 			water_current: ndarray = None,
-			cables_lenght: float = 3.,
+			cables_length: float = 3.,
 			cables_linear_mass: float = 0.,
 			get_cable_parameter_method = 'runtime'
 			):
 
 		self.br_0 = Bluerov( water_surface_z, water_current )
-		self.c_01 = Catenary( cables_lenght, cables_linear_mass, get_cable_parameter_method )
+		self.c_01 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
 		self.br_1 = Bluerov( water_surface_z, water_current )
 
 		self.last_perturbation_0 = zeros( (Bluerov.state_size // 2,) )
@@ -70,7 +70,7 @@ class ChainOf2:
 
 	def __call__( self, state: ndarray, actuation: ndarray ) -> ndarray:
 		"""
-		evalutes the dynamics of each robot of the chain
+		evaluates the dynamics of each robot of the chain
 		:param state: current state of the system
 		:param actuation: current actuation of the system
 		:return: state derivative of the system
