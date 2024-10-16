@@ -41,7 +41,7 @@ class Catenary:
 
 		match get_parameter_method:
 			case 'runtime':
-				self.get_parameters = self._get_parameters_optimization
+				self.get_parameters = self._get_parameters_runtime
 			case 'precompute':
 				self._precompute()
 				self.get_parameters = self._get_parameters_precompute
@@ -121,7 +121,7 @@ class Catenary:
 		"""
 		raise NotImplementedError( 'get_parameters method should have been implemented in __init__' )
 
-	def _get_parameters_optimization( self, p0: ndarray, p1: ndarray ) -> tuple[ float, float, float, float, float ]:
+	def _get_parameters_runtime( self, p0: ndarray, p1: ndarray ) -> tuple[ float, float, float, float, float ]:
 		"""
 		implementation of get_parameters using optimization
 		"""
@@ -170,7 +170,7 @@ class Catenary:
 				z = Z[ i, j ]
 				p1 = array( [ 0., 0., 0. ] )
 				p2 = array( [ x, 0., z ] )
-				self._Cs[ i, j ], _, _, _, _ = self._get_parameters_optimization( p1, p2 )
+				self._Cs[ i, j ], _, _, _, _ = self._get_parameters_runtime( p1, p2 )
 
 		with open( Path( f'./cache/Catenary/{self.length}.json' ), 'w' ) as file:
 			dump( self._Cs.tolist(), file )
