@@ -19,7 +19,7 @@ simplefilter( 'ignore', RuntimeWarning )
 class ChainOf4:
 
 	state_size = 4 * Bluerov.state_size
-	actuation_size = 4 * Bluerov.actuation_size
+	actuation_size = 3 * Bluerov.actuation_size + USV.actuation_size
 
 	def __init__(
 			self,
