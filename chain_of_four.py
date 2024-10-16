@@ -19,23 +19,31 @@ simplefilter( 'ignore', RuntimeWarning )
 class ChainOf4:
 
 	state_size = 4 * Bluerov.state_size
-	actuation_size = 3 * Bluerov.actuation_size + USV.actuation_size
+	actuation_size = 4 * Bluerov.actuation_size
 
 	def __init__(
 			self,
 			water_surface_z: float = 0.,
 			water_current: ndarray = None,
 			cables_lenght: float = 3.,
-			cables_linear_mass: float = 0.
+			cables_linear_mass: float = 0.,
+			get_cable_parameter_method = 'runtime'
 			):
 
 		self.br_0 = Bluerov( water_surface_z, water_current )
-		self.c_01 = Catenary( cables_lenght, cables_linear_mass )
+		self.c_01 = Catenary( cables_lenght, cables_linear_mass, get_cable_parameter_method )
 		self.br_1 = Bluerov( water_surface_z, water_current )
-		self.c_12 = Catenary( cables_lenght, cables_linear_mass )
+		self.c_12 = Catenary( cables_lenght, cables_linear_mass, get_cable_parameter_method )
 		self.br_2 = Bluerov( water_surface_z, water_current )
-		self.c_23 = Catenary( cables_lenght, cables_linear_mass )
+		self.c_23 = Catenary( cables_lenght, cables_linear_mass, get_cable_parameter_method )
 		self.br_3 = USV( water_surface_z )
+
+		self.last_perturbation_01_0 = zeros( (Bluerov.state_size // 2,) )
+		self.last_perturbation_01_1 = zeros( (Bluerov.state_size // 2,) )
+		self.last_perturbation_12_1 = zeros( (Bluerov.state_size // 2,) )
+		self.last_perturbation_12_2 = zeros( (Bluerov.state_size // 2,) )
+		self.last_perturbation_23_2 = zeros( (Bluerov.state_size // 2,) )
+		self.last_perturbation_23_3 = zeros( (Bluerov.state_size // 2,) )
 
 		self.br_0_pose = slice( 0, 6 )
 		self.br_0_position = slice( 0, 3 )
@@ -123,21 +131,43 @@ class ChainOf4:
 
 		# if the cable is taunt the perturbation is None
 		# here we should consider any pair with a taunt cable as a single body
-		if perturbation_01_0 is None:
+		if perturbation_01_0 is not None:
+			self.last_perturbation_01_0[ :3 ] = perturbation_01_0
+			self.last_perturbation_01_1[ :3 ] = perturbation_01_1
+		else:
 			perturbation_01_0, perturbation_01_1 = self.get_taunt_cable_perturbations( state, actuation, 0 )
 
-		if perturbation_12_1 is None:
+		if perturbation_12_1 is not None:
+			self.last_perturbation_12_1[ :3 ] = perturbation_12_1
+			self.last_perturbation_12_2[ :3 ] = perturbation_12_2
+		else:
 			perturbation_12_1, perturbation_12_2 = self.get_taunt_cable_perturbations( state, actuation, 1 )
 
-		if perturbation_23_2 is None:
+		if perturbation_23_2 is not None:
+			self.last_perturbation_23_2[ :3 ] = perturbation_23_2
+			self.last_perturbation_23_3[ :3 ] = perturbation_23_3
+		else:
 			perturbation_23_2, perturbation_23_3 = self.get_taunt_cable_perturbations( state, actuation, 2 )
 
-		perturbation_01_0.resize( (Bluerov.actuation_size,) )
-		perturbation_01_1.resize( (Bluerov.actuation_size,) )
-		perturbation_12_1.resize( (Bluerov.actuation_size,) )
-		perturbation_12_2.resize( (Bluerov.actuation_size,) )
-		perturbation_23_2.resize( (Bluerov.actuation_size,) )
-		perturbation_23_3.resize( (Bluerov.actuation_size,) )
+		perturbation_01_0.resize( (Bluerov.actuation_size,), refcheck = False )
+		perturbation_01_1.resize( (Bluerov.actuation_size,), refcheck = False )
+		perturbation_12_1.resize( (Bluerov.actuation_size,), refcheck = False )
+		perturbation_12_2.resize( (Bluerov.actuation_size,), refcheck = False )
+		perturbation_23_2.resize( (Bluerov.actuation_size,), refcheck = False )
+		perturbation_23_3.resize( (Bluerov.actuation_size,), refcheck = False )
+
+		# perturbation is in world frame, should be applied robot frame instead
+		br_0_transformation_matrix = self.br_0.build_transformation_matrix( *state[ self.br_0_orientation ] )
+		br_1_transformation_matrix = self.br_1.build_transformation_matrix( *state[ self.br_1_orientation ] )
+		br_2_transformation_matrix = self.br_2.build_transformation_matrix( *state[ self.br_2_orientation ] )
+		br_3_transformation_matrix = self.br_3.build_transformation_matrix( *state[ self.br_3_orientation ] )
+
+		perturbation_01_0 = br_0_transformation_matrix.T @ perturbation_01_0
+		perturbation_01_1 = br_1_transformation_matrix.T @ perturbation_01_1
+		perturbation_12_1 = br_1_transformation_matrix.T @ perturbation_12_1
+		perturbation_12_2 = br_2_transformation_matrix.T @ perturbation_12_2
+		perturbation_23_2 = br_2_transformation_matrix.T @ perturbation_23_2
+		perturbation_23_3 = br_3_transformation_matrix.T @ perturbation_23_3
 
 		state_derivative[ self.br_0_state ] = self.br_0(
 				state[ self.br_0_state ], actuation[ self.br_0_actuation ], perturbation_01_0
@@ -154,8 +184,9 @@ class ChainOf4:
 
 		return state_derivative
 
-	def get_taunt_cable_perturbations( self, state: ndarray, actuation: ndarray, pair: int ) -> tuple[ ndarray,
-	ndarray ]:
+	def get_taunt_cable_perturbations(
+			self, state: ndarray, actuation: ndarray, pair: int
+			) -> tuple[ ndarray, ndarray ]:
 		match pair:
 			case 0:
 				br_0 = self.br_0
@@ -164,10 +195,12 @@ class ChainOf4:
 				br_0_position = self.br_0_position
 				br_0_orientation = self.br_0_orientation
 				br_0_actuation = self.br_0_actuation
+				br_0_perturbation = self.last_perturbation_01_0
 				br_1_state = self.br_1_state
 				br_1_position = self.br_1_position
 				br_1_orientation = self.br_1_orientation
 				br_1_actuation = self.br_1_actuation
+				br_1_perturbation = self.last_perturbation_01_1
 			case 1:
 				br_0 = self.br_1
 				br_1 = self.br_2
@@ -175,10 +208,12 @@ class ChainOf4:
 				br_0_position = self.br_1_position
 				br_0_orientation = self.br_1_orientation
 				br_0_actuation = self.br_1_actuation
+				br_0_perturbation = self.last_perturbation_12_1
 				br_1_state = self.br_2_state
 				br_1_position = self.br_2_position
 				br_1_orientation = self.br_2_orientation
 				br_1_actuation = self.br_2_actuation
+				br_1_perturbation = self.last_perturbation_12_2
 			case 2:
 				br_0 = self.br_2
 				br_1 = self.br_3
@@ -186,34 +221,40 @@ class ChainOf4:
 				br_0_position = self.br_2_position
 				br_0_orientation = self.br_2_orientation
 				br_0_actuation = self.br_2_actuation
+				br_0_perturbation = self.last_perturbation_23_2
 				br_1_state = self.br_3_state
 				br_1_position = self.br_3_position
 				br_1_orientation = self.br_3_orientation
 				br_1_actuation = self.br_3_actuation
+				br_1_perturbation = self.last_perturbation_23_3
 			case _:
 				raise RuntimeError( f'unknown {pair=}' )
 
+		# from br_0 to br_1
 		direction = state[ br_1_position ] - state[ br_0_position ]
 		direction /= norm( direction )
 
-		null_perturbation = zeros( (br_0.state_size // 2,) )
+		null = zeros( (br_0.state_size // 2,) )
 
 		br_0_transformation_matrix = br_0.build_transformation_matrix( *state[ br_0_orientation ] )
 		br_1_transformation_matrix = br_1.build_transformation_matrix( *state[ br_1_orientation ] )
 
-		br_0_acceleration = br_0( state[ br_0_state ], state[ br_0_actuation ], null_perturbation )[ 6: ]
-		br_1_acceleration = br_1( state[ br_1_state ], state[ br_1_actuation ], null_perturbation )[ 6: ]
-		br_0_forces = (br_0.inertial_matrix @ br_0_acceleration)[ :3 ]
-		br_1_forces = (br_1.inertial_matrix @ br_1_acceleration)[ :3 ]
+		# in robot frame
+		br_0_acceleration = br_0( state[ br_0_state ], actuation[ br_0_actuation ], null )[ 6: ]
+		br_0_forces = (br_0.inertial_matrix[ :3, :3 ] @ br_0_acceleration[ :3 ])
 
-		perturbation_01_0 = br_0_transformation_matrix[ :3, :3 ] @ (direction * dot(
-				br_1_transformation_matrix[ :3, :3 ] @ br_1_forces, direction
-				))
-		perturbation_01_1 = br_1_transformation_matrix[ :3, :3 ] @ (direction * dot(
-				br_0_transformation_matrix[ :3, :3 ] @ br_0_forces, direction
-				))
+		br_1_acceleration = br_1( state[ br_1_state ], actuation[ br_1_actuation ], null )[ 6: ]
+		br_1_forces = (br_1.inertial_matrix[ :3, :3 ] @ br_1_acceleration[ :3 ])
 
-		return perturbation_01_0, perturbation_01_1
+		all_forces = dot( br_0_transformation_matrix[ :3, :3 ] @ br_0_forces, -direction )
+		all_forces += dot( br_1_transformation_matrix[ :3, :3 ] @ br_1_forces, direction )
+		all_forces += dot( br_0_perturbation[ :3 ], direction )
+		all_forces += dot( br_1_perturbation[ :3 ], -direction )
+
+		perturbation = direction * all_forces
+
+		# in world frame
+		return perturbation, -perturbation
 
 
 def chain_of_4_constraints( self: MPC, candidate ):
@@ -306,19 +347,19 @@ if __name__ == "__main__":
 	max_number_of_iteration = 100
 	time_step = 0.1
 
-	model = ChainOf4( water_current = array( [ .5, .5, 0. ] ) )
+	dynamics = ChainOf4( water_current = array( [ .5, .5, 0. ] ), get_cable_parameter_method = 'precompute' )
 
-	initial_state = zeros( (model.state_size,) )
-	initial_state[ model.br_0_position ][ 0 ] = 2.
-	initial_state[ model.br_0_position ][ 2 ] = 1.
-	initial_state[ model.br_1_position ][ 0 ] = 2.5
-	initial_state[ model.br_1_position ][ 2 ] = 1.
-	initial_state[ model.br_2_position ][ 0 ] = 3.
-	initial_state[ model.br_2_position ][ 2 ] = 1.
-	initial_state[ model.br_3_position ][ 0 ] = 3.5
-	initial_state[ model.br_3_orientation ][ 2 ] = pi / 2
+	initial_state = zeros( (dynamics.state_size,) )
+	initial_state[ dynamics.br_0_position ][ 0 ] = 2.
+	initial_state[ dynamics.br_0_position ][ 2 ] = 1.
+	initial_state[ dynamics.br_1_position ][ 0 ] = 2.5
+	initial_state[ dynamics.br_1_position ][ 2 ] = 1.
+	initial_state[ dynamics.br_2_position ][ 0 ] = 3.
+	initial_state[ dynamics.br_2_position ][ 2 ] = 1.
+	initial_state[ dynamics.br_3_position ][ 0 ] = 3.5
+	initial_state[ dynamics.br_3_orientation ][ 2 ] = pi / 2
 
-	initial_actuation = zeros( (model.actuation_size,) )
+	initial_actuation = zeros( (dynamics.actuation_size,) )
 
 	horizon = 5
 	time_steps_per_actuation = 5
@@ -328,8 +369,8 @@ if __name__ == "__main__":
 
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
 	times = linspace( 0, trajectory.shape[ 0 ] * time_step, trajectory.shape[ 0 ] )
-	trajectory[ :, 0, model.br_0_z ] = 1.5 * cos(
-			1.25 * (trajectory[ :, 0, model.br_0_position ][ :, 0 ] - 2) + pi
+	trajectory[ :, 0, dynamics.br_0_z ] = 1.5 * cos(
+			1.25 * (trajectory[ :, 0, dynamics.br_0_position ][ :, 0 ] - 2) + pi
 			) + 2.5
 	# trajectory[ :, 0, model.br_3_z ] += -2.5 * sin( times / 6 )
 	# trajectory[ :, 0, model.br_3_z ] += + .2 * sin( times )
@@ -347,39 +388,40 @@ if __name__ == "__main__":
 	# exit()
 
 	pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
-	pose_weight_matrix[ model.br_0_position, model.br_0_position ] *= 10.
-	pose_weight_matrix[ model.br_0_orientation, model.br_0_orientation ] *= 1.
-	pose_weight_matrix[ model.br_1_position, model.br_1_position ] *= 0.
-	pose_weight_matrix[ model.br_1_orientation, model.br_1_orientation ] *= 1.
-	pose_weight_matrix[ model.br_2_position, model.br_2_position ] *= 0.
-	pose_weight_matrix[ model.br_2_orientation, model.br_2_orientation ] *= 1.
-	pose_weight_matrix[ model.br_3_position, model.br_3_position ] *= 0.
-	pose_weight_matrix[ model.br_3_orientation, model.br_3_orientation ] *= 0.
+	pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
+	pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
+	pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
+	pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
+	pose_weight_matrix[ dynamics.br_2_position, dynamics.br_2_position ] *= 0.
+	pose_weight_matrix[ dynamics.br_2_orientation, dynamics.br_2_orientation ] *= 1.
+	pose_weight_matrix[ dynamics.br_3_position, dynamics.br_3_position ] *= 0.
+	pose_weight_matrix[ dynamics.br_3_orientation, dynamics.br_3_orientation ] *= 0.
 
 	actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
-	actuation_weight_matrix[ model.br_0_linear_actuation, model.br_0_linear_actuation ] *= 1e-12
-	actuation_weight_matrix[ model.br_0_angular_actuation, model.br_0_angular_actuation ] *= 1.
-	actuation_weight_matrix[ model.br_1_linear_actuation, model.br_1_linear_actuation ] *= 1e-12
-	actuation_weight_matrix[ model.br_1_angular_actuation, model.br_1_angular_actuation ] *= 1.
-	actuation_weight_matrix[ model.br_2_linear_actuation, model.br_2_linear_actuation ] *= 1e-12
-	actuation_weight_matrix[ model.br_2_angular_actuation, model.br_2_angular_actuation ] *= 1.
-	actuation_weight_matrix[ model.br_3_linear_actuation, model.br_3_linear_actuation ] *= 1e-12
-	actuation_weight_matrix[ model.br_3_angular_actuation, model.br_3_angular_actuation ] *= 1e-12
+	actuation_weight_matrix[ dynamics.br_0_linear_actuation, dynamics.br_0_linear_actuation ] *= 0.
+	actuation_weight_matrix[ dynamics.br_0_angular_actuation, dynamics.br_0_angular_actuation ] *= 1.
+	actuation_weight_matrix[ dynamics.br_1_linear_actuation, dynamics.br_1_linear_actuation ] *= 0.
+	actuation_weight_matrix[ dynamics.br_1_angular_actuation, dynamics.br_1_angular_actuation ] *= 1.
+	actuation_weight_matrix[ dynamics.br_2_linear_actuation, dynamics.br_2_linear_actuation ] *= 0.
+	actuation_weight_matrix[ dynamics.br_2_angular_actuation, dynamics.br_2_angular_actuation ] *= 1.
+	actuation_weight_matrix[ dynamics.br_3_linear_actuation, dynamics.br_3_linear_actuation ] *= 0.
+	actuation_weight_matrix[ dynamics.br_3_angular_actuation, dynamics.br_3_angular_actuation ] *= 0.
 
 	final_cost_weight = 0.
-	objective_weight = .2
+	objective_weight = .01
 
-	chain_model = Model(
-			model, time_step, initial_state, initial_actuation, record = True
+	model = Model(
+			dynamics, time_step, initial_state, initial_actuation, record = True
 			)
 
-	chain_mpc = MPC(
-			chain_model,
+	mpc = MPC(
+			model,
 			horizon,
 			trajectory,
 			optimize_on = 'actuation',
 			objective_weight = objective_weight,
 			tolerance = tolerance,
+			time_step = 2 * time_step,
 			max_iter = max_number_of_iteration,
 			time_steps_per_actuation = time_steps_per_actuation,
 			pose_weight_matrix = pose_weight_matrix,
@@ -390,12 +432,12 @@ if __name__ == "__main__":
 			)
 
 	# inject constraints and objective as member functions so that they may access self
-	chain_mpc.constraints_function = chain_of_4_constraints.__get__(
-			chain_mpc, MPC
+	mpc.constraints_function = chain_of_4_constraints.__get__(
+			mpc, MPC
 			)
 
-	chain_mpc.objective = chain_of_4_objective.__get__(
-			chain_mpc, MPC
+	mpc.objective = chain_of_4_objective.__get__(
+			mpc, MPC
 			)
 
 	floor_depth = 4.00001
@@ -423,25 +465,29 @@ if __name__ == "__main__":
 	# 		array( [ bounds_ub_base[ model.br0_actuation ] ] ).repeat( 3, axis = 0 ).flatten()
 	# 		)
 
-	constraints_labels = [ '$z_0+H_{01}$', '$z_1+H_{12}$', '$z_2+H_{2fe}$', '$|P_0^{x,y}-P_1^{x,y}|$',
-												 '$|P_1^{x,y}-P_2^{x,y}|$', '$|P_2^{x,y}-P_fe^{x,y}|$', '$|P_0^{x,y,z}-P_1^{x,y,z}|$',
-												 '$|P_1^{x,y,z}-P_2^{x,y,z}|$', '$|P_2^{x,y,z}-P_fe^{x,y,z}|$' ]
+	constraints_values_labels = [ 'depth_c_01', 'depth_c_12', 'depth_c_23', 'br_0_br_1_horizontal_distance',
+																'br_1_br_2_horizontal_distance', 'br_2_br_3_horizontal_distance', 'br_0_br_1_distance',
+																'br_1_br_2_distance', 'br_2_br_3_distance' ]
+	constraints_labels = [ 'seafloor', 'seafloor', 'seafloor', 'cable_lenght', 'cable_lenght', 'cable_lenght',
+												 'cable_lenght', 'cable_lenght', 'cable_lenght' ]
 
 	constraint_lb_base = [ -inf, -inf, -inf, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
 	constraint_ub_base = [ floor_depth, floor_depth, floor_depth, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
 
-	assert (len( constraint_lb_base ) == len( constraints_labels )) and (
-			len( constraint_ub_base ) == len( constraints_labels ))
+	assert (len( constraint_lb_base ) == len( constraints_values_labels )) and (
+			len( constraint_ub_base ) == len( constraints_values_labels ))
 
 	lb = [ constraint_lb_base ] * horizon
 	ub = [ constraint_ub_base ] * horizon
 
 	constraint = NonlinearConstraint(
-			chain_mpc.constraints_function, array( lb ).flatten(), array( ub ).flatten()
+			mpc.constraints_function, array( lb ).flatten(), array( ub ).flatten()
 			)
+
+	constraint.value_labels = constraints_values_labels
 	constraint.labels = constraints_labels
 
-	chain_mpc.constraints = (constraint,)
+	mpc.constraints = (constraint,)
 
 	previous_nfeval_record = [ 0 ]
 	previous_H01_record = [ 0. ]
@@ -458,7 +504,7 @@ if __name__ == "__main__":
 	logger = Logger()
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( chain_mpc.__dict__ | get_computer_info(), f, default = serialize_others )
+		dump( mpc.__dict__ | get_computer_info(), f, default = serialize_others )
 
 	with open( f'{folder}/config.json' ) as f:
 		config = load( f )
@@ -469,30 +515,30 @@ if __name__ == "__main__":
 
 	for frame in range( n_frames ):
 
-		chain_mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
+		mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
 
 		logger.log( f'frame {frame + 1}/{n_frames} starts at t={perf_counter() - ti:.2f}' )
 
-		chain_mpc.compute_actuation()
-		chain_mpc.apply_result()
-		chain_model.step()
+		mpc.compute_actuation()
+		mpc.apply_result()
+		model.step()
 
 		logger.log( f'ends at t={perf_counter() - ti:.2f}' )
 
-		logger.log( f'{chain_mpc.raw_result.message}' )
+		logger.log( f'{mpc.raw_result.message}' )
 
 		# try to recover if the optimization failed
-		if not chain_mpc.raw_result.success and chain_mpc.tolerance < 1:
-			chain_mpc.tolerance *= 10
-			logger.log( f'increasing tolerance: {chain_mpc.tolerance:.0e}' )
-		elif chain_mpc.raw_result.success and chain_mpc.tolerance > 2 * tolerance:
+		if not mpc.raw_result.success and mpc.tolerance < 1:
+			mpc.tolerance *= 10
+			logger.log( f'increasing tolerance: {mpc.tolerance:.0e}' )
+		elif mpc.raw_result.success and mpc.tolerance > 2 * tolerance:
 			# *2 because of floating point error
-			chain_mpc.tolerance /= 10
-			logger.log( f'decreasing tolerance: {chain_mpc.tolerance:.0e}' )
+			mpc.tolerance /= 10
+			logger.log( f'decreasing tolerance: {mpc.tolerance:.0e}' )
 		else:
-			logger.log( f'keeping tolerance: {chain_mpc.tolerance:.0e}' )
+			logger.log( f'keeping tolerance: {mpc.tolerance:.0e}' )
 
-		constraints_values = chain_mpc.constraints_function( chain_mpc.raw_result.x )
+		constraints_values = mpc.constraints_function( mpc.raw_result.x )
 		logger.log( f'constraints: {constraints_values[ :9 ]}' )
 
 		logger.lognl( '' )
@@ -500,4 +546,4 @@ if __name__ == "__main__":
 
 		# save simulation state
 		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
-			dump( chain_mpc.__dict__, f, default = serialize_others )
+			dump( mpc.__dict__, f, default = serialize_others )

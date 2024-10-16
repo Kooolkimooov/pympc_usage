@@ -107,8 +107,9 @@ class ChainOf2:
 
 		return state_derivative
 
-	def get_taunt_cable_perturbations( self, state: ndarray, actuation: ndarray, pair: int ) -> tuple[ ndarray,
-	ndarray ]:
+	def get_taunt_cable_perturbations(
+			self, state: ndarray, actuation: ndarray, pair: int
+			) -> tuple[ ndarray, ndarray ]:
 		match pair:
 			case 0:
 				br_0 = self.br_0
@@ -177,7 +178,7 @@ if __name__ == "__main__":
 	t1s = [ ]
 	l = 2.5
 
-	model.actuation[ dynamics.br_0_actuation ][ 0 ] = 50
+	model.actuation[ dynamics.br_0_actuation ][ 2 ] = 7.5
 
 	for frame in tqdm( range( n_frames ) ):
 		initial_state = deepcopy( model.state )
@@ -217,9 +218,9 @@ if __name__ == "__main__":
 	ax2.set_ylabel( 'force du câble sur br_1 [N]' )
 	ax2.axvline( 3. )
 
-	ax3.plot( T, x0s[ :, 0 ], color = 'r' )
-	ax3.plot( T, x1s[ :, 0 ], color = 'b' )
-	ax3.set_ylabel( 'position sur $x_w$' )
+	ax3.plot( T, x0s[ :, 2 ], color = 'r' )
+	ax3.plot( T, x1s[ :, 2 ], color = 'b' )
+	ax3.set_ylabel( 'position sur $z_w$' )
 	ax3.legend( [ 'br_0', 'br_1' ] )
 
 	ax4.plot( T, [ norm( x1 - x0 ) for x0, x1 in zip( x0s, x1s ) ] )
