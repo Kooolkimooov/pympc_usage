@@ -8,6 +8,7 @@ from os import mkdir, path, remove
 from PIL import Image
 
 G: float = 9.80665
+rho_eau: float = 997.
 
 
 class Logger:

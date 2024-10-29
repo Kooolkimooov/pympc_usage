@@ -1,6 +1,8 @@
 from numpy import array, concatenate, cos, cross, diag, exp, eye, ndarray, sin, tan, zeros
 from numpy.linalg import inv
 
+from utils import G, rho_eau
+
 
 class Bluerov:
 	"""
@@ -16,10 +18,12 @@ class Bluerov:
 
 		self.mass = 11.5
 		self.center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
-		self.weight = self.mass * array( [ 0., 0., 9.80665 ] )
+		self.weight = array( [ 0., 0., self.mass * G ] )
 
-		self.buoyancy_norm = 120.
-		self.center_of_volume = array( [ 0.0, 0.0, -0.02 ] )
+		self.volume = 0.0134
+		self.center_of_volume = array( [ 0.0, 0.0, -0.01 ] )
+		self.buoyancy = -array( [ 0., 0., rho_eau * G * self.volume ] )
+
 		self.water_surface_z = water_surface_z
 
 		# water speed should be on [3:6]
@@ -31,9 +35,9 @@ class Bluerov:
 
 		self.water_current = water_current
 
-		self.inertial_coefficients = [ .16, .16, .16, 0., 0., 0. ]
-		self.hydrodynamic_coefficients = [ 4.03, 6.22, 5.18, 0.07, 0.07, 0.07 ]
-		self.added_mass_coefficients = [ 5.5, 12.7, 14.57, .12, .12, .12 ]
+		self.inertial_coefficients = [ .26, .23, .37, 0., 0., 0. ]
+		self.hydrodynamic_coefficients = [ 13.7, 0., 33.0, 0., 0.8, 0. ]
+		self.added_mass_coefficients = [ 6.36, 7.12, 18.68, .189, .135, .222 ]
 
 		self.inertial_matrix = self.build_inertial_matrix(
 				self.mass, self.center_of_mass, self.inertial_coefficients
@@ -53,20 +57,16 @@ class Bluerov:
 
 		transform_matrix = self.build_transformation_matrix( *state[ 3:6 ] )
 
-		# sigmoid the buoyancy to smooth out the discontinuity
-		# buoyancy = self.buoyancy_norm * array( [ 0., 0., -1. ] ) / (
-		# 		1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )
-		# )
-
-		buoyancy = self.buoyancy_norm * array( [ 0., 0., 1. ] ) * (
-				-.5 - .5 / (1 + exp( 10. * (self.water_surface_z - state[ 2 ]) - 2. )))
+		self.buoyancy[ 2 ] = rho_eau * G * self.volume * (-.5 - .5 / (1 + exp(
+				10. * (self.water_surface_z - state[ 2 ]) + 1.
+				)))
 
 		hydrostatic_forces = zeros( 6 )
-		hydrostatic_forces[ :3 ] = transform_matrix[ :3, :3 ].T @ (self.weight + buoyancy)
+		hydrostatic_forces[ :3 ] = transform_matrix[ :3, :3 ].T @ (self.weight + self.buoyancy)
 		hydrostatic_forces[ 3: ] = cross(
 				self.center_of_mass, transform_matrix[ :3, :3 ].T @ self.weight
 				) + cross(
-				self.center_of_volume, transform_matrix[ :3, :3 ].T @ buoyancy
+				self.center_of_volume, transform_matrix[ :3, :3 ].T @ self.buoyancy
 				)
 
 		xdot = zeros( state.shape )
@@ -168,3 +168,13 @@ class USV( Bluerov ):
 		six_dof_actuation[ 5 ] = actuation[ 1 ]
 
 		return Bluerov.__call__( self, state, six_dof_actuation, perturbation )
+
+
+if __name__ == '__main__':
+	rov = Bluerov()
+	state = zeros( (rov.state_size,) )
+	actuation = zeros( (rov.actuation_size,) )
+	perturbation = zeros( (rov.actuation_size,) )
+	for _ in range( 1000 ):
+		state += rov( state, actuation, perturbation ) * 0.01
+		print( state[ :3 ] )
