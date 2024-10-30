@@ -21,16 +21,16 @@ class ChainOf2:
 
 	def __init__(
 			self,
-			water_surface_z: float = 0.,
+			water_surface_depth: float = 0.,
 			water_current: ndarray = None,
 			cables_length: float = 3.,
 			cables_linear_mass: float = 0.,
 			get_cable_parameter_method = 'runtime'
 			):
 
-		self.br_0 = Bluerov( water_surface_z, water_current )
+		self.br_0 = Bluerov( water_surface_depth, water_current )
 		self.c_01 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
-		self.br_1 = Bluerov( water_surface_z, water_current )
+		self.br_1 = Bluerov( water_surface_depth, water_current )
 
 		self.last_perturbation_0 = zeros( (Bluerov.state_size // 2,) )
 		self.last_perturbation_1 = zeros( (Bluerov.state_size // 2,) )

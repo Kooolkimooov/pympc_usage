@@ -14,7 +14,7 @@ class Bluerov:
 	state_size = 12
 	actuation_size = 6
 
-	def __init__( self, water_surface_z: float = 0., water_current: ndarray = None ):
+	def __init__( self, water_surface_depth: float = 0., water_current: ndarray = None ):
 
 		self.mass = 11.5
 		self.center_of_mass = array( [ 0.0, 0.0, 0.0 ] )
@@ -24,7 +24,7 @@ class Bluerov:
 		self.center_of_volume = array( [ 0.0, 0.0, -0.01 ] )
 		self.buoyancy = -array( [ 0., 0., rho_eau * G * self.volume ] )
 
-		self.water_surface_z = water_surface_z
+		self.water_surface_depth = water_surface_depth
 
 		# water speed should be on [3:6]
 		water_current = zeros( (6,) ) if water_current is None else water_current
@@ -58,7 +58,7 @@ class Bluerov:
 		transform_matrix = self.build_transformation_matrix( *state[ 3:6 ] )
 
 		self.buoyancy[ 2 ] = rho_eau * G * self.volume * (-.5 - .5 / (1 + exp(
-				10. * (self.water_surface_z - state[ 2 ]) + 1.
+				10. * (self.water_surface_depth - state[ 2 ]) + 1.
 				)))
 
 		hydrostatic_forces = zeros( 6 )
@@ -129,8 +129,8 @@ class BluerovXYZ( Bluerov ):
 
 	actuation_size = 3
 
-	def __init__( self ):
-		super().__init__()
+	def __init__( self, water_surface_depth: float = 0., water_current: ndarray = None ):
+		super().__init__( water_surface_depth, water_current )
 
 	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
 		six_dof_actuation = zeros( (6,) )
@@ -143,8 +143,8 @@ class BluerovXYZPsi( Bluerov ):
 
 	actuation_size = 4
 
-	def __init__( self ):
-		super().__init__()
+	def __init__( self, water_surface_depth: float = 0., water_current: ndarray = None ):
+		super().__init__(water_surface_depth, water_current)
 
 	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
 		six_dof_actuation = zeros( (6,) )
@@ -157,8 +157,8 @@ class BluerovXYZPsi( Bluerov ):
 class USV( Bluerov ):
 	actuation_size = 2
 
-	def __init__( self, water_surface_z: float = 0. ):
-		super().__init__( water_surface_z )
+	def __init__( self, water_surface_depth: float = 0. ):
+		super().__init__( water_surface_depth )
 
 	def __call__( self, state, actuation, perturbation ):
 		six_dof_actuation = zeros( (6,) )
