@@ -20,7 +20,7 @@ class MPC:
 			model_type: str = 'nonlinear',
 			optimize_on: str = 'actuation_derivative',
 			objective: callable = None,
-			time_step: float = None,
+			time_step_prediction_factor: int = 1,
 			time_steps_per_actuation: int = 1,
 			guess_from_last_solution: bool = True,
 			tolerance: float = 1e-6,
@@ -41,7 +41,7 @@ class MPC:
 		:param target_trajectory: target trajectory
 		:param objective: objective function, must have the following signature: f(trajectory,
 		actuation)
-		:param time_step: time step of the mpc prediction if None get the model simulation time step
+		:param time_step_prediction_factor: multiplicator for the prediction with regard to the simulation
 		:param time_steps_per_actuation: number of time steps per proposed actuation over the horizon
 		:param guess_from_last_solution: whether to use the last solution as the initial guess
 		:param tolerance: tolerance for the optimization algorithm
@@ -58,6 +58,8 @@ class MPC:
 		actuations
 		:param verbose: whether to print the optimization results
 		"""
+
+		assert time_step_prediction_factor >= 1
 
 		match model_type:
 			case 'linear':
@@ -82,10 +84,8 @@ class MPC:
 		self.target_trajectory = target_trajectory
 		self.objective = objective
 
-		if time_step is None:
-			self.time_step = self.model.time_step
-		else:
-			self.time_step = time_step
+		self.time_step_prediction_factor = time_step_prediction_factor
+		self.time_step = self.model.time_step
 
 		self.time_steps_per_actuation = time_steps_per_actuation
 		self.guess_from_last_solution = guess_from_last_solution
@@ -95,8 +95,7 @@ class MPC:
 		self.constraints = constraints
 
 		add_one = (1 if self.horizon % self.time_steps_per_actuation != 0 else 0)
-		self.result_shape = (self.horizon // self.time_steps_per_actuation + add_one, 1, self.model.actuation.shape[
-		0 ])
+		self.result_shape = (self.horizon // self.time_steps_per_actuation + add_one, 1, self.model.actuation.shape[ 0 ])
 
 		self.raw_result = None
 		self.result = zeros( self.model.actuation.shape )
@@ -180,7 +179,8 @@ class MPC:
 		prediction = self.predict( actuation )
 		predicted_trajectory = prediction[ :, :, :self.model.state.shape[ 0 ] // 2 ]
 
-		error = predicted_trajectory - self.target_trajectory
+		error = predicted_trajectory - self.target_trajectory[
+																	 :self.horizon * self.time_step_prediction_factor:self.time_step_prediction_factor ]
 		cost += (error @ self.pose_weight_matrix @ error.transpose( (0, 2, 1) )).sum()
 		cost += (actuation_derivatives @ self.actuation_derivative_weight_matrix @ actuation_derivatives.transpose(
 				(0, 2, 1)
@@ -218,7 +218,7 @@ class MPC:
 		predicted_trajectory = zeros( (self.horizon, 1, self.model.state.shape[ 0 ]) )
 
 		for i in range( self.horizon ):
-			p_state += self.model.dynamics( p_state, actuation[ i, 0 ] ) * self.time_step
+			p_state += self.model.dynamics( p_state, actuation[ i, 0 ] ) * self.time_step * self.time_step_prediction_factor
 			predicted_trajectory[ i ] = p_state
 
 		return predicted_trajectory
