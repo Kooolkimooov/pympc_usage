@@ -44,7 +44,6 @@ class Model:
 			time_step: float,
 			initial_state: ndarray,
 			initial_actuation: ndarray,
-			kwargs: dict = None,
 			record: bool = False
 			):
 		"""
@@ -57,30 +56,16 @@ class Model:
 		:param record: whether to record the states and actuations
 		"""
 
-		self.model_dynamics = dynamics
+		self.dynamics = dynamics
 		self.time_step = time_step
 
 		self.state = deepcopy( initial_state )
 		self.actuation = deepcopy( initial_actuation )
 
-		if kwargs is None:
-			self.kwargs = { }
-		else:
-			self.kwargs = kwargs
-
 		self.record = record
 		if self.record:
 			self.previous_states = [ deepcopy( self.state ) ]
 			self.previous_actuations = [ deepcopy( self.actuation ) ]
-
-	def dynamics( self, state: ndarray, actuation: ndarray ) -> ndarray:
-		"""
-		evaluates the dynamics of the system
-		:param state: current state of the system
-		:param actuation: current actuation of the system
-		:return: state derivative of the system
-		"""
-		return self.model_dynamics( state, actuation, **self.kwargs )
 
 	def step( self ):
 		"""
