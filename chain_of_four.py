@@ -3,7 +3,7 @@ from os.path import join, split
 from time import perf_counter, time
 from warnings import simplefilter
 
-from numpy import array, cos, diff, dot, eye, inf, linspace, ndarray, pi, r_, set_printoptions, zeros
+from numpy import array, cos, diff, dot, exp, eye, inf, ndarray, pi, r_, set_printoptions, sin, zeros
 from numpy.linalg import norm
 from scipy.optimize import NonlinearConstraint
 
@@ -11,6 +11,7 @@ from bluerov import Bluerov, USV
 from catenary import Catenary
 from model import Model
 from mpc import MPC
+from seafloor import Seafloor, SeafloorFromFunction
 from utils import check, generate_trajectory, get_computer_info, Logger, print_dict, serialize_others
 
 simplefilter( 'ignore', RuntimeWarning )
@@ -23,20 +24,23 @@ class ChainOf4:
 
 	def __init__(
 			self,
-			water_surface_z: float = 0.,
-			water_current: ndarray = None,
-			cables_length: float = 3.,
-			cables_linear_mass: float = 0.,
-			get_cable_parameter_method = 'runtime'
+			water_surface_depth: float,
+			water_current: ndarray,
+			seafloor: Seafloor,
+			cables_length: float,
+			cables_linear_mass: float,
+			get_cable_parameter_method
 			):
 
-		self.br_0 = Bluerov( water_surface_z, water_current )
+		self.br_0 = Bluerov( water_surface_depth, water_current )
 		self.c_01 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
-		self.br_1 = Bluerov( water_surface_z, water_current )
+		self.br_1 = Bluerov( water_surface_depth, water_current )
 		self.c_12 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
-		self.br_2 = Bluerov( water_surface_z, water_current )
+		self.br_2 = Bluerov( water_surface_depth, water_current )
 		self.c_23 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
-		self.br_3 = USV( water_surface_z )
+		self.br_3 = USV( water_surface_depth )
+
+		self.sf = seafloor
 
 		self.last_perturbation_01_0 = zeros( (Bluerov.state_size // 2,) )
 		self.last_perturbation_01_1 = zeros( (Bluerov.state_size // 2,) )
@@ -259,17 +263,34 @@ class ChainOf4:
 
 def chain_of_4_constraints( self: MPC, candidate ):
 
-	chain: ChainOf4 = self.model.model_dynamics
+	chain: ChainOf4 = self.model.dynamics
 
 	actuation, _ = self.get_actuation( candidate )
 
 	prediction = self.predict( actuation )
 	prediction = prediction[ :, 0 ]
 
-	# 3 constraints on cables (lowest points.z),
+	# 3 constraints on cables (lowest points to seafloor),
 	# 6 on inter robot_distance (3 horizontal, 2 3d),
 	n_constraints = 3 + 6
 	constraints = zeros( (self.horizon, n_constraints) )
+
+	for i, state in enumerate( prediction ):
+		constraints[ i, 0 ] = chain.sf.get_distance_to_seafloor(
+				chain.c_01.get_lowest_point(
+						state[ chain.br_0_position ], state[ chain.br_1_position ]
+						)
+				)
+		constraints[ i, 1 ] = chain.sf.get_distance_to_seafloor(
+				chain.c_12.get_lowest_point(
+						state[ chain.br_1_position ], state[ chain.br_2_position ]
+						)
+				)
+		constraints[ i, 2 ] = chain.sf.get_distance_to_seafloor(
+				chain.c_23.get_lowest_point(
+						state[ chain.br_2_position ], state[ chain.br_3_position ]
+						)
+				)
 
 	# horizontal distance between consecutive robots
 	constraints[ :, 3 ] = norm(
@@ -293,27 +314,17 @@ def chain_of_4_constraints( self: MPC, candidate ):
 			prediction[ :, chain.br_3_position ] - prediction[ :, chain.br_2_position ], axis = 1
 			)
 
-	for i, state in enumerate( prediction ):
-		constraints[ i, 0 ] = chain.c_01.get_lowest_point(
-				state[ chain.br_0_position ], state[ chain.br_1_position ]
-				)[ 2 ]
-		constraints[ i, 1 ] = chain.c_12.get_lowest_point(
-				state[ chain.br_1_position ], state[ chain.br_2_position ]
-				)[ 2 ]
-		constraints[ i, 2 ] = chain.c_23.get_lowest_point(
-				state[ chain.br_2_position ], state[ chain.br_3_position ]
-				)[ 2 ]
-
 	return constraints.flatten()
 
 
 def chain_of_4_objective( self: MPC, prediction: ndarray, actuation: ndarray ):
 
-	chain: ChainOf4 = self.model.model_dynamics
+	chain: ChainOf4 = self.model.dynamics
+	desired_distance = chain.c_01.length / 2
 
 	objective = 0.
 
-	objective += pow( norm( prediction[ :, 0, chain.br_0_speed ], axis = 1 ).sum(), 2 )
+	# objective += pow( norm( prediction[ :, 0, chain.br_0_speed ], axis = 1 ).sum(), 2 )
 	objective += pow( norm( prediction[ :, 0, chain.br_1_speed ], axis = 1 ).sum(), 2 )
 	objective += pow( norm( prediction[ :, 0, chain.br_2_speed ], axis = 1 ).sum(), 2 )
 	objective += pow( norm( prediction[ :, 0, chain.br_3_speed ], axis = 1 ).sum(), 2 )
@@ -321,20 +332,29 @@ def chain_of_4_objective( self: MPC, prediction: ndarray, actuation: ndarray ):
 	objective += abs(
 			norm(
 					prediction[ :, 0, chain.br_0_position ] - prediction[ :, 0, chain.br_1_position ], axis = 1
-					) - 1.5
+					) - desired_distance
 			).sum()
 	objective += abs(
 			norm(
 					prediction[ :, 0, chain.br_1_position ] - prediction[ :, 0, chain.br_2_position ], axis = 1
-					) - 1.5
+					) - desired_distance
 			).sum()
 	objective += abs(
 			norm(
 					prediction[ :, 0, chain.br_2_position ] - prediction[ :, 0, chain.br_3_position ], axis = 1
-					) - 1.5
+					) - desired_distance
 			).sum()
 
 	return objective
+
+
+def seafloor_function( x, y ):
+	z = 4.
+	z += 1. * sin( x / 4 )
+	z += 1. * sin( y / 3 )
+	z += .05 * sin( 3 * (x * y) )
+	z -= 2 * exp( - pow( (x - 4), 2 ) - pow( y, 2 ) )
+	return z
 
 
 if __name__ == "__main__":
@@ -347,7 +367,16 @@ if __name__ == "__main__":
 	max_number_of_iteration = 100
 	time_step = 0.1
 
-	dynamics = ChainOf4( water_current = array( [ .5, .5, 0. ] ), get_cable_parameter_method = 'precompute' )
+	seafloor = SeafloorFromFunction( seafloor_function )
+
+	dynamics = ChainOf4(
+			water_surface_depth = 0.,
+			water_current = array( [ .5, .5, 0. ] ),
+			seafloor = seafloor,
+			cables_length = 3.,
+			cables_linear_mass = 0.01,
+			get_cable_parameter_method = 'precompute'
+			)
 
 	initial_state = zeros( (dynamics.state_size,) )
 	initial_state[ dynamics.br_0_position ][ 0 ] = 2.
@@ -363,29 +392,18 @@ if __name__ == "__main__":
 
 	horizon = 5
 	time_steps_per_actuation = 5
+	time_step_prediction_factor = 2
+	assert time_step_prediction_factor * horizon < n_frames
 
 	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (.5, [ -5., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
 								 (1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18) ]
 
 	trajectory = generate_trajectory( key_frames, 2 * n_frames )
-	times = linspace( 0, trajectory.shape[ 0 ] * time_step, trajectory.shape[ 0 ] )
 	trajectory[ :, 0, dynamics.br_0_z ] = 1.5 * cos(
 			1.25 * (trajectory[ :, 0, dynamics.br_0_position ][ :, 0 ] - 2) + pi
 			) + 2.5
-	# trajectory[ :, 0, model.br_3_z ] += -2.5 * sin( times / 6 )
-	# trajectory[ :, 0, model.br_3_z ] += + .2 * sin( times )
-	# trajectory[ :, 0, model.br_3_z ] += + .1 * sin( 3.3 * times )
-	# trajectory[ :, 0, model.br_3_position ][ :, 0 ] = 3.5
-
-	trajectory_derivative = diff( trajectory, append = trajectory[ :1, :, : ], axis = 0 ) / time_step
 
 	max_required_speed = (max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
-
-	# import matplotlib.pyplot as plt
-	# plt.plot( trajectory[:, 0, model.br_3_z] )
-	# # plt.plot( norm(diff(trajectory[:, 0, :3], axis=0), axis=1) / time_step )
-	# plt.show()
-	# exit()
 
 	pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
 	pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
@@ -411,18 +429,22 @@ if __name__ == "__main__":
 	objective_weight = .01
 
 	model = Model(
-			dynamics, time_step, initial_state, initial_actuation, record = True
+			dynamics = dynamics,
+			time_step = time_step,
+			initial_state = initial_state,
+			initial_actuation = initial_actuation,
+			record = True
 			)
 
 	mpc = MPC(
-			model,
-			horizon,
-			trajectory,
+			model = model,
+			horizon = horizon,
+			target_trajectory = trajectory,
 			optimize_on = 'actuation',
 			objective_weight = objective_weight,
+			time_step_prediction_factor = time_step_prediction_factor,
 			tolerance = tolerance,
-			time_step = 2 * time_step,
-			max_iter = max_number_of_iteration,
+			max_number_of_iteration = max_number_of_iteration,
 			time_steps_per_actuation = time_steps_per_actuation,
 			pose_weight_matrix = pose_weight_matrix,
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
@@ -440,39 +462,22 @@ if __name__ == "__main__":
 			mpc, MPC
 			)
 
-	floor_depth = 4.00001
-	# du_l_ub = 2000.
-	# du_l_lb = -2000.
-	# du_a_ub = .1
-	# du_a_lb = -.1
-	dp_lb = 0.4
+	sf_lb = 0.2
+	sf_ub = inf
+	dp_lb = 0.2
 	dp_ub = 2.8
 	dr_lb = -inf
 	dr_ub = 2.8
-	# v_lb = -inf
-	# v_ub = 1.5
 
-	# if v_ub < max_required_speed and 'y' == input(
-	# 		f'the trajectory requires {max_required_speed} but the speed limit is {v_ub}, upgrade ? (y/n)'
-	# 		):
-	# 	v_ub = int( max_required_speed ) + 1.
-
-	# bounds_lb_base = [ du_l_lb, du_l_lb, du_l_lb, du_a_lb, du_a_lb, du_a_lb ]
-	# bounds_ub_base = [ du_l_ub, du_l_ub, du_l_ub, du_a_ub, du_a_ub, du_a_ub ]
-
-	# three_bluerov_chain_with_fixed_end_mpc.bounds = Bounds(
-	# 		array( [ bounds_lb_base[ model.br0_actuation ] ] ).repeat( 3, axis = 0 ).flatten(),
-	# 		array( [ bounds_ub_base[ model.br0_actuation ] ] ).repeat( 3, axis = 0 ).flatten()
-	# 		)
-
-	constraints_values_labels = [ 'depth_c_01', 'depth_c_12', 'depth_c_23', 'br_0_br_1_horizontal_distance',
-																'br_1_br_2_horizontal_distance', 'br_2_br_3_horizontal_distance', 'br_0_br_1_distance',
-																'br_1_br_2_distance', 'br_2_br_3_distance' ]
+	constraints_values_labels = [ 'c_01_distance_to_seafloor', 'c_12_distance_to_seafloor', 'c_23_distance_to_seafloor',
+																'br_0_br_1_horizontal_distance', 'br_1_br_2_horizontal_distance',
+																'br_2_br_3_horizontal_distance', 'br_0_br_1_distance', 'br_1_br_2_distance',
+																'br_2_br_3_distance' ]
 	constraints_labels = [ 'seafloor', 'seafloor', 'seafloor', 'cable_length', 'cable_length', 'cable_length',
 												 'cable_length', 'cable_length', 'cable_length' ]
 
-	constraint_lb_base = [ -inf, -inf, -inf, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
-	constraint_ub_base = [ floor_depth, floor_depth, floor_depth, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
+	constraint_lb_base = [ sf_lb, sf_lb, sf_lb, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
+	constraint_ub_base = [ sf_ub, sf_ub, sf_ub, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
 
 	assert (len( constraint_lb_base ) == len( constraints_values_labels )) and (
 			len( constraint_ub_base ) == len( constraints_values_labels ))
@@ -508,14 +513,14 @@ if __name__ == "__main__":
 
 	with open( f'{folder}/config.json' ) as f:
 		config = load( f )
-		print_dict( config, max_list_size = 100 )
+		print_dict( config )
 
 	if 'y' != input( 'continue ? (y/n) ' ):
 		exit()
 
 	for frame in range( n_frames ):
 
-		mpc.target_trajectory = trajectory[ frame + 1:frame + horizon + 1 ]
+		mpc.target_trajectory = trajectory[ frame + 1: ]
 
 		logger.log( f'frame {frame + 1}/{n_frames} starts at t={perf_counter() - ti:.2f}' )
 
@@ -524,7 +529,6 @@ if __name__ == "__main__":
 		model.step()
 
 		logger.log( f'ends at t={perf_counter() - ti:.2f}' )
-
 		logger.log( f'{mpc.raw_result.message}' )
 
 		# try to recover if the optimization failed
@@ -537,6 +541,9 @@ if __name__ == "__main__":
 			logger.log( f'decreasing tolerance: {mpc.tolerance:.0e}' )
 		else:
 			logger.log( f'keeping tolerance: {mpc.tolerance:.0e}' )
+
+		objective_value = mpc.get_objective()
+		logger.log( f'objective: {objective_value:.2f}' )
 
 		constraints_values = mpc.constraints_function( mpc.raw_result.x )
 		logger.log( f'constraints: {constraints_values[ :9 ]}' )
