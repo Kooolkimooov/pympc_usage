@@ -24,7 +24,7 @@ class MPC:
 			time_steps_per_actuation: int = 1,
 			guess_from_last_solution: bool = True,
 			tolerance: float = 1e-6,
-			max_iter: int = 1000,
+			max_number_of_iteration: int = 1000,
 			bounds: tuple[ Bounds ] = None,
 			constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None,
 			pose_weight_matrix: ndarray = None,
@@ -45,7 +45,7 @@ class MPC:
 		:param time_steps_per_actuation: number of time steps per proposed actuation over the horizon
 		:param guess_from_last_solution: whether to use the last solution as the initial guess
 		:param tolerance: tolerance for the optimization algorithm
-		:param max_iter: maximum number of iterations for the optimization algorithm
+		:param max_number_of_iteration: maximum number of iterations for the optimization algorithm
 		:param bounds: bounds for the optimization variables
 		:param constraints: constraints for the optimization variables
 		:param pose_weight_matrix: weight matrix for the pose error; shape: (state_dim//2,
@@ -90,7 +90,7 @@ class MPC:
 		self.time_steps_per_actuation = time_steps_per_actuation
 		self.guess_from_last_solution = guess_from_last_solution
 		self.tolerance = tolerance
-		self.max_iter = max_iter
+		self.max_number_of_iteration = max_number_of_iteration
 		self.bounds = bounds
 		self.constraints = constraints
 
@@ -146,7 +146,7 @@ class MPC:
 				bounds = self.bounds,
 				constraints = self.constraints,
 				options = {
-						'maxiter': self.max_iter, 'disp': self.verbose
+						'maxiter': self.max_number_of_iteration, 'disp': self.verbose
 						}
 				)
 
@@ -211,6 +211,11 @@ class MPC:
 
 	def get_actuation( self, candidate: ndarray ) -> tuple[ ndarray, ndarray ]:
 		raise NotImplementedError( 'predict method should have been implemented in __init__' )
+
+	def get_objective( self ):
+		actuation, _ = self.get_actuation( self.raw_result.x )
+		prediction = self.predict( actuation )
+		return self.objective( prediction, actuation )
 
 	def _predict_non_linear( self, actuation: ndarray ) -> ndarray:
 
