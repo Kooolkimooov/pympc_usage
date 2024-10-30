@@ -1,10 +1,10 @@
 from glob import glob
-from inspect import isfunction, ismethod
+from inspect import getsource, isfunction, ismethod
+from os import mkdir, path, remove
 from platform import release, system, version
 
 from cpuinfo import get_cpu_info
 from numpy import array, ndarray, zeros
-from os import mkdir, path, remove
 from PIL import Image
 
 G: float = 9.80665
@@ -144,7 +144,7 @@ def gif_from_pngs( folder: str, duration: float = None ):
 
 def serialize_others( obj: any ):
 	if isfunction( obj ) or ismethod( obj ):
-		return obj.__name__
+		return getsource( obj )
 	if isinstance( obj, ndarray ):
 		return obj.tolist()
 	if isinstance( obj, slice ):
@@ -157,8 +157,9 @@ def serialize_others( obj: any ):
 		# we reverse the __bases__ list to get the correct order
 		for base in reversed( get_all_bases( obj.__class__ ) ):
 			output |= base.__dict__
-		output |= obj.__class__.__dict__
 		output |= obj.__dict__
+		output |= obj.__class__.__dict__
+		output['instance_of'] = obj.__class__.__name__
 
 		return output
 	except:
@@ -166,10 +167,11 @@ def serialize_others( obj: any ):
 
 
 def get_all_bases( obj: any ):
-	bases = obj.__bases__
-	for base in bases:
+	bases = tuple()
+	for base in obj.__bases__:
 		if base.__name__ == 'object':
 			continue
+		bases += (base,)
 		bases += get_all_bases( base )
 	return bases
 
@@ -193,6 +195,10 @@ def print_dict( d: dict, max_list_size: int = 10, prefix: str = '' ):
 
 			l = array( v ).shape
 			print( prefix + k + ':', v if sum( l ) < max_list_size else l )
+			continue
+
+		if isinstance( v, str ) and len( v ) > max_list_size:
+			print( prefix + k + ':', v[ :max_list_size ], '...' )
 			continue
 
 		print( prefix + k + ':', v )
