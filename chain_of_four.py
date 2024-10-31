@@ -286,47 +286,63 @@ def chain_of_4_constraints( self: MPC, candidate ):
 	prediction = self.predict( actuation )
 	prediction = prediction[ :, 0 ]
 
-	# 3 constraints on cables (lowest points to seafloor),
-	# 6 on inter robot_distance (3 horizontal, 2 3d),
-	n_constraints = 3 + 6
+	# 3 constraints on cables (distance of lowest point to seafloor)
+	# 4 constraints on robots (distance of lowest point to seafloor)
+	# 6 on inter robot_distance (3 horizontal, 2 3d)
+	n_constraints = 3 + 4 + 6
 	constraints = zeros( (self.horizon, n_constraints) )
 
 	for i, state in enumerate( prediction ):
-		constraints[ i, 0 ] = chain.sf.get_distance_to_seafloor(
-				chain.c_01.get_lowest_point(
-						state[ chain.br_0_position ], state[ chain.br_1_position ]
-						)
-				)
-		constraints[ i, 1 ] = chain.sf.get_distance_to_seafloor(
-				chain.c_12.get_lowest_point(
-						state[ chain.br_1_position ], state[ chain.br_2_position ]
-						)
-				)
-		constraints[ i, 2 ] = chain.sf.get_distance_to_seafloor(
-				chain.c_23.get_lowest_point(
-						state[ chain.br_2_position ], state[ chain.br_3_position ]
-						)
-				)
+		lp01 = chain.c_01.get_lowest_point( state[ chain.br_0_position ], state[ chain.br_1_position ] )
+		lp12 = chain.c_12.get_lowest_point( state[ chain.br_1_position ], state[ chain.br_2_position ] )
+		lp23 = chain.c_23.get_lowest_point( state[ chain.br_2_position ], state[ chain.br_3_position ] )
 
-	# horizontal distance between consecutive robots
-	constraints[ :, 3 ] = norm(
+		# cables distance from seafloor [0, 3[
+		constraints[ i, 0 ] = chain.sf.get_distance_to_seafloor( lp01 )
+		constraints[ i, 1 ] = chain.sf.get_distance_to_seafloor( lp12 )
+		constraints[ i, 2 ] = chain.sf.get_distance_to_seafloor( lp23 )
+
+		lp0 = zeros( (3,) )
+		lp0[ :2 ] = state[ chain.br_0_xy ]
+		lp0[ 2 ] = max( lp01[ 2 ], state[ chain.br_0_z ] )
+
+		lp1 = zeros( (3,) )
+		lp1[ :2 ] = state[ chain.br_1_xy ]
+		lp1[ 2 ] = max( lp01[ 2 ], lp12[ 2 ], state[ chain.br_1_z ] )
+
+		lp2 = zeros( (3,) )
+		lp2[ :2 ] = state[ chain.br_2_xy ]
+		lp2[ 2 ] = max( lp12[ 2 ], lp23[ 2 ], state[ chain.br_2_z ] )
+
+		lp3 = zeros( (3,) )
+		lp3[ :2 ] = state[ chain.br_3_xy ]
+		lp3[ 2 ] = max( lp23[ 2 ], state[ chain.br_3_z ] )
+
+		# robot distance from seafloor, taking into accout the cables [3, 7[
+		constraints[ i, 3 ] = chain.sf.get_distance_to_seafloor( lp0 )
+		constraints[ i, 4 ] = chain.sf.get_distance_to_seafloor( lp1 )
+		constraints[ i, 5 ] = chain.sf.get_distance_to_seafloor( lp2 )
+		constraints[ i, 6 ] = chain.sf.get_distance_to_seafloor( lp3 )
+
+	# horizontal distance between consecutive robots [7, 10[
+	constraints[ :, 7 ] = norm(
 			prediction[ :, chain.br_1_xy ] - prediction[ :, chain.br_0_xy ], axis = 1
 			)
-	constraints[ :, 4 ] = norm(
+	constraints[ :, 8 ] = norm(
 			prediction[ :, chain.br_2_xy ] - prediction[ :, chain.br_1_xy ], axis = 1
 			)
-	constraints[ :, 5 ] = norm(
+	constraints[ :, 9 ] = norm(
 			prediction[ :, chain.br_3_xy ] - prediction[ :, chain.br_2_xy ], axis = 1
 			)
 
-	# distance between consecutive robots
-	constraints[ :, 6 ] = norm(
+	# distance between consecutive robots [10, 13[
+	constraints[ :, 10 ] = norm(
 			prediction[ :, chain.br_1_position ] - prediction[ :, chain.br_0_position ], axis = 1
 			)
-	constraints[ :, 7 ] = norm(
+	constraints[ :, 11 ] = norm(
 			prediction[ :, chain.br_2_position ] - prediction[ :, chain.br_1_position ], axis = 1
 			)
-	constraints[ :, 8 ] = norm(
+	constraints[ :, 12 ] = norm(
 			prediction[ :, chain.br_3_position ] - prediction[ :, chain.br_2_position ], axis = 1
 			)
 
@@ -365,11 +381,12 @@ def chain_of_4_objective( self: MPC, prediction: ndarray, actuation: ndarray ):
 
 
 def seafloor_function( x, y ):
-	z = 4.
-	z += 1. * sin( x / 4 )
-	z += 1. * sin( y / 3 )
-	z += .05 * sin( 3 * (x * y) )
-	z -= 2 * exp( - pow( (x - 4), 2 ) - pow( y, 2 ) )
+	from numpy import sin, exp
+	z = 4.5
+	z += 1. * sin( y / 4 )
+	z += .5 * sin( x / 3 )
+	# peak at (-3, 0)
+	z -= 2.5 * exp( -8 * (pow( (x - (-3)), 2 ) + pow( (y - 0), 2 )) )
 	return z
 
 
@@ -406,8 +423,8 @@ if __name__ == "__main__":
 
 	initial_actuation = zeros( (dynamics.actuation_size,) )
 
-	horizon = 5
-	time_steps_per_actuation = 5
+	horizon = 10
+	time_steps_per_actuation = 10
 	time_step_prediction_factor = 2
 	assert time_step_prediction_factor * horizon < n_frames
 
@@ -485,18 +502,44 @@ if __name__ == "__main__":
 	dr_lb = -inf
 	dr_ub = 2.8
 
-	constraints_values_labels = [ 'c_01_distance_to_seafloor', 'c_12_distance_to_seafloor', 'c_23_distance_to_seafloor',
-																'br_0_br_1_horizontal_distance', 'br_1_br_2_horizontal_distance',
-																'br_2_br_3_horizontal_distance', 'br_0_br_1_distance', 'br_1_br_2_distance',
-																'br_2_br_3_distance' ]
-	constraints_labels = [ 'seafloor', 'seafloor', 'seafloor', 'cable_length', 'cable_length', 'cable_length',
-												 'cable_length', 'cable_length', 'cable_length' ]
+	#@formatter:off
+	constraints_values_labels = [
+			'c_01_distance_to_seafloor',
+			'c_12_distance_to_seafloor',
+			'c_23_distance_to_seafloor',
+			'br_0_distance_to_seafloor',
+			'br_1_distance_to_seafloor',
+			'br_2_distance_to_seafloor',
+			'br_3_distance_to_seafloor',
+			'br_0_br_1_horizontal_distance',
+			'br_1_br_2_horizontal_distance',
+			'br_2_br_3_horizontal_distance',
+			'br_0_br_1_distance',
+			'br_1_br_2_distance',
+			'br_2_br_3_distance'
+			]
+	constraints_reason_labels = [
+			'seafloor',
+			'seafloor',
+			'seafloor',
+			'seafloor',
+			'seafloor',
+			'seafloor',
+			'seafloor',
+			'cable_length',
+			'cable_length',
+			'cable_length',
+			'cable_length',
+			'cable_length',
+			'cable_length'
+			]
+	# @formatter:on
 
-	constraint_lb_base = [ sf_lb, sf_lb, sf_lb, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
-	constraint_ub_base = [ sf_ub, sf_ub, sf_ub, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
+	constraint_lb_base = [ sf_lb, sf_lb, sf_lb, sf_lb, sf_lb, sf_lb, sf_lb, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
+	constraint_ub_base = [ sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
 
 	assert (len( constraint_lb_base ) == len( constraints_values_labels )) and (
-			len( constraint_ub_base ) == len( constraints_values_labels ))
+			len( constraint_ub_base ) == len( constraints_reason_labels ))
 
 	lb = [ constraint_lb_base ] * horizon
 	ub = [ constraint_ub_base ] * horizon
@@ -506,7 +549,7 @@ if __name__ == "__main__":
 			)
 
 	constraint.value_labels = constraints_values_labels
-	constraint.labels = constraints_labels
+	constraint.labels = constraints_reason_labels
 
 	mpc.constraints = (constraint,)
 
@@ -562,7 +605,7 @@ if __name__ == "__main__":
 		logger.log( f'objective: {objective_value:.2f}' )
 
 		constraints_values = mpc.constraints_function( mpc.raw_result.x )
-		logger.log( f'constraints: {constraints_values[ :9 ]}' )
+		logger.log( f'constraints: {constraints_values[ :len( constraint_lb_base ) ]}' )
 
 		logger.lognl( '' )
 		logger.save_at( folder )
