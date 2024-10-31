@@ -32,8 +32,8 @@ class ChainOf2:
 		self.c_01 = Catenary( cables_length, cables_linear_mass, get_cable_parameter_method )
 		self.br_1 = Bluerov( water_surface_depth, water_current )
 
-		self.last_perturbation_0 = zeros( (Bluerov.state_size // 2,) )
-		self.last_perturbation_1 = zeros( (Bluerov.state_size // 2,) )
+		self.last_perturbation_0 = zeros( (Bluerov.pose_size,) )
+		self.last_perturbation_1 = zeros( (Bluerov.pose_size,) )
 
 		self.br_0_pose = slice( 0, 6 )
 		self.br_0_position = slice( 0, 3 )
@@ -132,7 +132,7 @@ class ChainOf2:
 		direction = state[ br_1_position ] - state[ br_0_position ]
 		direction /= norm( direction )
 
-		null = zeros( (br_0.state_size // 2,) )
+		null = zeros( (br_0.pose_size,) )
 
 		br_0_transformation_matrix = br_0.build_transformation_matrix( *state[ br_0_orientation ] )
 		br_1_transformation_matrix = br_1.build_transformation_matrix( *state[ br_1_orientation ] )

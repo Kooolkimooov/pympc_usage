@@ -12,7 +12,9 @@ class Bluerov:
 	"""
 
 	state_size = 12
+	pose_size = 6
 	actuation_size = 6
+	linear_actuation_size = 3
 
 	def __init__( self, water_surface_depth: float = 0., water_current: ndarray = None ):
 
@@ -128,6 +130,7 @@ class Bluerov:
 class BluerovXYZ( Bluerov ):
 
 	actuation_size = 3
+	linear_actuation_size = 3
 
 	def __init__( self, water_surface_depth: float = 0., water_current: ndarray = None ):
 		super().__init__( water_surface_depth, water_current )
@@ -142,9 +145,10 @@ class BluerovXYZ( Bluerov ):
 class BluerovXYZPsi( Bluerov ):
 
 	actuation_size = 4
+	linear_actuation_size = 3
 
 	def __init__( self, water_surface_depth: float = 0., water_current: ndarray = None ):
-		super().__init__(water_surface_depth, water_current)
+		super().__init__( water_surface_depth, water_current )
 
 	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
 		six_dof_actuation = zeros( (6,) )
@@ -155,7 +159,9 @@ class BluerovXYZPsi( Bluerov ):
 
 
 class USV( Bluerov ):
+
 	actuation_size = 2
+	linear_actuation_size = 1
 
 	def __init__( self, water_surface_depth: float = 0. ):
 		super().__init__( water_surface_depth )

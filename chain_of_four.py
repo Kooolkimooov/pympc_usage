@@ -3,11 +3,11 @@ from os.path import join, split
 from time import perf_counter, time
 from warnings import simplefilter
 
-from numpy import array, cos, diff, dot, exp, eye, inf, ndarray, pi, r_, set_printoptions, sin, zeros
+from numpy import array, cos, diff, dot, eye, inf, ndarray, pi, r_, set_printoptions, zeros
 from numpy.linalg import norm
 from scipy.optimize import NonlinearConstraint
 
-from bluerov import Bluerov, USV
+from bluerov import BluerovXYZPsi as Bluerov, USV
 from catenary import Catenary
 from model import Model
 from mpc import MPC
@@ -42,12 +42,12 @@ class ChainOf4:
 
 		self.sf = seafloor
 
-		self.last_perturbation_01_0 = zeros( (Bluerov.state_size // 2,) )
-		self.last_perturbation_01_1 = zeros( (Bluerov.state_size // 2,) )
-		self.last_perturbation_12_1 = zeros( (Bluerov.state_size // 2,) )
-		self.last_perturbation_12_2 = zeros( (Bluerov.state_size // 2,) )
-		self.last_perturbation_23_2 = zeros( (Bluerov.state_size // 2,) )
-		self.last_perturbation_23_3 = zeros( (Bluerov.state_size // 2,) )
+		self.last_perturbation_01_0 = zeros( (Bluerov.pose_size,) )
+		self.last_perturbation_01_1 = zeros( (Bluerov.pose_size,) )
+		self.last_perturbation_12_1 = zeros( (Bluerov.pose_size,) )
+		self.last_perturbation_12_2 = zeros( (Bluerov.pose_size,) )
+		self.last_perturbation_23_2 = zeros( (Bluerov.pose_size,) )
+		self.last_perturbation_23_3 = zeros( (Bluerov.pose_size,) )
 
 		self.br_0_pose = slice( 0, 6 )
 		self.br_0_position = slice( 0, 3 )
@@ -90,24 +90,40 @@ class ChainOf4:
 		self.br_3_angular_speed = slice( 45, 48 )
 
 		self.br_0_actuation_start = 0
-		self.br_0_actuation = slice( 0, 6 )
-		self.br_0_linear_actuation = slice( 0, 3 )
-		self.br_0_angular_actuation = slice( 3, 6 )
+		self.br_0_actuation = slice( self.br_0_actuation_start, self.br_0_actuation_start + Bluerov.actuation_size )
+		self.br_0_linear_actuation = slice(
+				self.br_0_actuation_start, self.br_0_actuation_start + Bluerov.linear_actuation_size
+				)
+		self.br_0_angular_actuation = slice(
+				self.br_0_actuation_start + Bluerov.linear_actuation_size, self.br_0_actuation_start + Bluerov.actuation_size
+				)
 
-		self.br_1_actuation_start = 6
-		self.br_1_actuation = slice( 6, 12 )
-		self.br_1_linear_actuation = slice( 6, 9 )
-		self.br_1_angular_actuation = slice( 9, 12 )
+		self.br_1_actuation_start = Bluerov.actuation_size
+		self.br_1_actuation = slice( self.br_1_actuation_start, self.br_1_actuation_start + Bluerov.actuation_size )
+		self.br_1_linear_actuation = slice(
+				self.br_1_actuation_start, self.br_1_actuation_start + Bluerov.linear_actuation_size
+				)
+		self.br_1_angular_actuation = slice(
+				self.br_1_actuation_start + Bluerov.linear_actuation_size, self.br_1_actuation_start + Bluerov.actuation_size
+				)
 
-		self.br_2_actuation = slice( 12, 18 )
-		self.br_2_actuation_start = 12
-		self.br_2_linear_actuation = slice( 12, 15 )
-		self.br_2_angular_actuation = slice( 15, 18 )
+		self.br_2_actuation_start = 2 * Bluerov.actuation_size
+		self.br_2_actuation = slice( self.br_2_actuation_start, self.br_2_actuation_start + Bluerov.actuation_size )
+		self.br_2_linear_actuation = slice(
+				self.br_2_actuation_start, self.br_2_actuation_start + Bluerov.linear_actuation_size
+				)
+		self.br_2_angular_actuation = slice(
+				self.br_2_actuation_start + Bluerov.linear_actuation_size, self.br_2_actuation_start + Bluerov.actuation_size
+				)
 
-		self.br_3_actuation = slice( 18, 20 )
-		self.br_3_actuation_start = 18
-		self.br_3_linear_actuation = 18
-		self.br_3_angular_actuation = 19
+		self.br_3_actuation_start = 3 * Bluerov.actuation_size
+		self.br_3_actuation = slice( self.br_3_actuation_start, self.br_3_actuation_start + USV.actuation_size )
+		self.br_3_linear_actuation = slice(
+				self.br_3_actuation_start, self.br_3_actuation_start + USV.linear_actuation_size
+				)
+		self.br_3_angular_actuation = slice(
+				self.br_3_actuation_start + USV.linear_actuation_size, self.br_3_actuation_start + USV.actuation_size
+				)
 
 		self.br_0_state = r_[ self.br_0_pose, self.br_0_speed ]
 		self.br_1_state = r_[ self.br_1_pose, self.br_1_speed ]
@@ -153,12 +169,12 @@ class ChainOf4:
 		else:
 			perturbation_23_2, perturbation_23_3 = self.get_taunt_cable_perturbations( state, actuation, 2 )
 
-		perturbation_01_0.resize( (Bluerov.actuation_size,), refcheck = False )
-		perturbation_01_1.resize( (Bluerov.actuation_size,), refcheck = False )
-		perturbation_12_1.resize( (Bluerov.actuation_size,), refcheck = False )
-		perturbation_12_2.resize( (Bluerov.actuation_size,), refcheck = False )
-		perturbation_23_2.resize( (Bluerov.actuation_size,), refcheck = False )
-		perturbation_23_3.resize( (Bluerov.actuation_size,), refcheck = False )
+		perturbation_01_0.resize( (Bluerov.pose_size,), refcheck = False )
+		perturbation_01_1.resize( (Bluerov.pose_size,), refcheck = False )
+		perturbation_12_1.resize( (Bluerov.pose_size,), refcheck = False )
+		perturbation_12_2.resize( (Bluerov.pose_size,), refcheck = False )
+		perturbation_23_2.resize( (Bluerov.pose_size,), refcheck = False )
+		perturbation_23_3.resize( (Bluerov.pose_size,), refcheck = False )
 
 		# perturbation is in world frame, should be applied robot frame instead
 		br_0_transformation_matrix = self.br_0.build_transformation_matrix( *state[ self.br_0_orientation ] )
@@ -238,7 +254,7 @@ class ChainOf4:
 		direction = state[ br_1_position ] - state[ br_0_position ]
 		direction /= norm( direction )
 
-		null = zeros( (br_0.state_size // 2,) )
+		null = zeros( (br_0.pose_size,) )
 
 		br_0_transformation_matrix = br_0.build_transformation_matrix( *state[ br_0_orientation ] )
 		br_1_transformation_matrix = br_1.build_transformation_matrix( *state[ br_1_orientation ] )
