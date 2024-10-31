@@ -1,7 +1,6 @@
 from inspect import signature
 
 from numpy import array, ndarray
-from numpy.linalg import norm
 
 
 class Seafloor:
@@ -15,33 +14,36 @@ class SeafloorFromFunction( Seafloor ):
 		self.seafloor_function = function
 
 	def get_distance_to_seafloor( self, point: ndarray ) -> float:
-		return norm(point[2] - self.seafloor_function( *(point[ :2 ]) ))
+		return self.seafloor_function( *(point[ :2 ]) ) - point[ 2 ]
 
 
 if __name__ == '__main__':
-	from numpy import sin, linspace, meshgrid, zeros, exp
+	from numpy import linspace, meshgrid, zeros, ones
 	import matplotlib.pyplot as plt
 
-	point = array( [ 1, 2, 3 ] )
+	point = array( [ -4, 0, 0 ] )
+
 
 	def seafloor_function( x, y ):
-		z = 4.
-		z += 1. * sin( x / 4 )
-		z += 1. * sin( y / 3 )
-		z += .05 * sin( 3 * (x * y) )
-		z -= 2 * exp( - pow( (x - 4), 2 ) - pow( y, 2 ) )
+		from numpy import sin, exp
+		z = 4.5
+		z += 1. * sin( y / 4 )
+		z += .5 * sin( x / 3 )
+		# peak at (-3, 0)
+		z -= 2.5 * exp( -8 * (pow( (x - (-3)), 2 ) + pow( (y - 0), 2 )) )
 		return z
 
-
-	X = linspace( -5, 5, 1000 )
-	Y = linspace( -5, 5, 1000 )
+	X = linspace( -6.5, 4.5, 1000 )
+	Y = linspace( -6.5, 4.5, 1000 )
 
 	Xm, Ym = meshgrid( X, Y )
-	Zm = zeros( Xm.shape )
-	WS = zeros( Xm.shape )
-	for i, x in enumerate( X ):
-		for j, y in enumerate( Y ):
-			Zm[ i, j ] = seafloor_function( x, y )
+	Zws = zeros( Xm.shape )
+	Zcsf = ones( Xm.shape ) * 4.
+	Zsf = zeros( Xm.shape )
+
+	for i, y in enumerate(Y):
+		for j, x in enumerate(X):
+			Zsf[i,j] = seafloor_function(x, y)
 
 	ax = plt.subplot( projection = '3d' )
 	ax.set_xlabel( r"$\mathbf{x}_w$-axis" )
@@ -49,9 +51,10 @@ if __name__ == '__main__':
 	ax.set_zlabel( r"$\mathbf{z}_w$-axis" )
 	ax.invert_yaxis()
 	ax.invert_zaxis()
-	ax.plot_surface( Xm, Ym, Zm )
-	ax.plot_surface( Xm, Ym, WS )
-	ax.scatter(*point)
+	ax.plot_surface( Xm, Ym, Zws )
+	ax.plot_surface( Xm, Ym, Zcsf )
+	ax.plot_surface( Xm, Ym, Zsf )
+	ax.scatter( *point )
 	plt.show()
 
 	seafloor: Seafloor = SeafloorFromFunction( seafloor_function )
