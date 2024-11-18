@@ -88,16 +88,24 @@ class Bluerov:
 		cPsi, sPsi = cos( psi ), sin( psi )
 
 		matrix = zeros( (6, 6) )
-		matrix[ 0, :3 ] = array(
-				[ cPsi * cTheta, -sPsi * cPhi + cPsi * sTheta * sPhi, sPsi * sPhi + cPsi * sTheta * cPhi ]
-				)
-		matrix[ 1, :3 ] = array(
-				[ sPsi * cTheta, cPsi * cPhi + sPsi * sTheta * sPhi, -cPsi * sPhi + sPsi * sTheta * cPhi ]
-				)
-		matrix[ 2, :3 ] = array( [ -sTheta, cTheta * sPhi, cTheta * cPhi ] )
-		matrix[ 3, 3: ] = array( [ 1, sPhi * tTheta, cPhi * tTheta ] )
-		matrix[ 4, 3: ] = array( [ 0, cPhi, -sPhi ] )
-		matrix[ 5, 3: ] = array( [ 0, sPhi / cTheta, cPhi / cTheta ] )
+		matrix[ 0, 0 ] = cPsi * cTheta
+		matrix[ 0, 1 ] = -sPsi * cPhi + cPsi * sTheta * sPhi
+		matrix[ 0, 2 ] = sPsi * sPhi + cPsi * sTheta * cPhi
+		matrix[ 1, 0 ] = sPsi * cTheta
+		matrix[ 1, 1 ] = cPsi * cPhi + sPsi * sTheta * sPhi
+		matrix[ 1, 2 ] = -cPsi * sPhi + sPsi * sTheta * cPhi
+		matrix[ 2, 0 ] = -sTheta
+		matrix[ 2, 1 ] = cTheta * sPhi
+		matrix[ 2, 2 ] = cTheta * cPhi
+		matrix[ 3, 0 ] = 1
+		matrix[ 3, 1 ] = sPhi * tTheta
+		matrix[ 3, 2 ] = cPhi * tTheta
+		matrix[ 4, 0 ] = 0
+		matrix[ 4, 1 ] = cPhi
+		matrix[ 4, 2 ] = -sPhi
+		matrix[ 5, 0 ] = 0
+		matrix[ 5, 1 ] = sPhi / cTheta
+		matrix[ 5, 2 ] = cPhi / cTheta
 		return matrix
 
 	@staticmethod
@@ -187,3 +195,5 @@ if __name__ == '__main__':
 	for _ in range( 1000 ):
 		state += rov( state, actuation, perturbation ) * 0.01
 		print( state[ :3 ] )
+
+
