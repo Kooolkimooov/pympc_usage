@@ -1,9 +1,9 @@
 from copy import deepcopy
 from time import perf_counter
 
-from numpy import array, diff, eye, ndarray, zeros
-from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint
-
+from numpy import diff, eye, inf, ndarray, zeros
+from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint, OptimizeResult
+from optimparallel import minimize_parallel
 from model import Model
 
 
@@ -26,7 +26,7 @@ class MPC:
 			tolerance: float = 1e-6,
 			max_number_of_iteration: int = 1000,
 			bounds: tuple[ Bounds ] = None,
-			constraints: tuple[ NonlinearConstraint ] | tuple[ LinearConstraint ] = None,
+			constraints: tuple[ NonlinearConstraint | LinearConstraint] = None,
 			pose_weight_matrix: ndarray = None,
 			actuation_derivative_weight_matrix: ndarray = None,
 			objective_weight: float = 0.,
@@ -97,14 +97,14 @@ class MPC:
 		add_one = (1 if self.horizon % self.time_steps_per_actuation != 0 else 0)
 		self.result_shape = (self.horizon // self.time_steps_per_actuation + add_one, 1, self.model.actuation.shape[ 0 ])
 
-		self.raw_result = None
+		self.raw_result = OptimizeResult( x = zeros( self.result_shape, ) )
 		self.result = zeros( self.model.actuation.shape )
 
 		self.pose_weight_matrix: ndarray = zeros(
 				(self.horizon, self.model.state.shape[ 0 ] // 2, self.model.state.shape[ 0 ] // 2)
 				)
 		self.actuation_derivative_weight_matrix: ndarray = zeros(
-				(self.result_shape[ 0 ], self.result_shape[ 2 ], self.result_shape[ 2 ])
+				(self.horizon, self.result_shape[ 2 ], self.result_shape[ 2 ])
 				)
 
 		if pose_weight_matrix is None:
@@ -119,6 +119,9 @@ class MPC:
 
 		self.objective_weight = objective_weight
 		self.final_weight = final_weight
+
+		self.best_cost = inf
+		self.best_candidate = zeros(self.result_shape)
 
 		self.record = record
 		if self.record:
@@ -141,7 +144,7 @@ class MPC:
 
 		self.raw_result = minimize(
 				fun = self.cost,
-				x0 = self.result.flatten(),
+				x0 = self.raw_result.x.flatten(),
 				tol = self.tolerance,
 				bounds = self.bounds,
 				constraints = self.constraints,
@@ -155,15 +158,14 @@ class MPC:
 
 		if self.raw_result.success:
 			self.get_result()
+		elif self.best_cost < inf:
+			self.raw_result.x = self.best_candidate
+			self.get_result()
+
+		return self.result
 
 	def get_result( self ):
 		raise NotImplementedError( 'predict method should have been implemented in __init__' )
-
-	def apply_result( self ):
-		"""
-		applies the first actuation derivative of the current result to the model
-		"""
-		self.model.actuation = self.result
 
 	def cost( self, candidate: ndarray ) -> float:
 		"""
@@ -191,11 +193,14 @@ class MPC:
 
 		cost /= self.horizon
 
-		cost += self.final_weight * (error[ -1 ] @ self.pose_weight_matrix[ -1 ] @ error[ -1 ].T)
+		cost += self.final_weight * (error[ -1 ] @ self.pose_weight_matrix[ -1 ] @ error[ -1 ].T).sum()
 
 		if self.record:
 			self.predicted_trajectories.append( predicted_trajectory )
 			self.candidate_actuations.append( actuation )
+
+		if cost < self.best_cost:
+			self.best_candidate = candidate.copy()
 
 		return cost
 
@@ -254,12 +259,30 @@ class MPC:
 		self.result = self.raw_result.x.reshape( self.result_shape )[ 0, 0 ]
 
 
-if __name__ == '__main__':
-	model = Model( lambda x: x, 0.1, array( [ 0 ] ), array( [ 0 ] ) )
+def test_1():
+	from bluerov import Bluerov
+	model = Model( Bluerov(), 0.1, zeros( (Bluerov.state_size,) ), zeros( (Bluerov.actuation_size,) ) )
 	for m in MPC.MODEL_TYPE:
 		for o in MPC.OPTIMIZE_ON:
 			print( m, o )
-			mpc = MPC( model, 10, zeros( (10, 1, 1) ), model_type = m, optimize_on = o )
+			mpc = MPC( model, 10, zeros( (10, 1, 6) ), model_type = m, optimize_on = o )
 			print( '\t', mpc.predict.__name__ )
 			print( '\t', mpc.get_actuation.__name__ )
 			print( '\t', mpc.get_result.__name__ )
+
+
+def test_2():
+	from bluerov import Bluerov
+	model = Model( Bluerov(), 0.1, zeros( (Bluerov.state_size,) ), zeros( (Bluerov.actuation_size,) ) )
+	mpc = MPC( model, 10, zeros( (10, 6) ), verbose = True )
+
+	for i in range( 5 ):
+		model.actuation = mpc.compute_actuation()
+		model.step()
+
+
+if __name__ == '__main__':
+	# test_1()
+	test_2()
+
+del test_1, test_2
