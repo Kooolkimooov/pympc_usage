@@ -7,6 +7,9 @@ class Seafloor:
 	def get_distance_to_seafloor( self, point: ndarray ) -> float:
 		raise NotImplementedError()
 
+	def get_seafloor_depth( self, point: ndarray ) -> float:
+		raise NotImplementedError()
+
 
 class SeafloorFromFunction( Seafloor ):
 	def __init__( self, function: callable ):
@@ -15,6 +18,14 @@ class SeafloorFromFunction( Seafloor ):
 
 	def get_distance_to_seafloor( self, point: ndarray ) -> float:
 		return self.seafloor_function( *(point[ :2 ]) ) - point[ 2 ]
+
+	def get_seafloor_depth( self, point: ndarray ) -> float:
+		return self.seafloor_function( *(point[ :2 ]) )
+
+
+class SeafloorFromArray( Seafloor ):
+	def __init__( self, seafloor: ndarray ):
+		raise NotImplementedError()
 
 
 if __name__ == '__main__':
@@ -33,6 +44,7 @@ if __name__ == '__main__':
 		z -= 2.5 * exp( -8 * (pow( (x - (-3)), 2 ) + pow( (y - 0), 2 )) )
 		return z
 
+
 	X = linspace( -6.5, 4.5, 1000 )
 	Y = linspace( -6.5, 4.5, 1000 )
 
@@ -41,9 +53,9 @@ if __name__ == '__main__':
 	Zcsf = ones( Xm.shape ) * 4.
 	Zsf = zeros( Xm.shape )
 
-	for i, y in enumerate(Y):
-		for j, x in enumerate(X):
-			Zsf[i,j] = seafloor_function(x, y)
+	for i, y in enumerate( Y ):
+		for j, x in enumerate( X ):
+			Zsf[ i, j ] = seafloor_function( x, y )
 
 	ax = plt.subplot( projection = '3d' )
 	ax.set_xlabel( r"$\mathbf{x}_w$-axis" )
