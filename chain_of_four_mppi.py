@@ -10,7 +10,7 @@ from scipy.optimize import NonlinearConstraint
 from bluerov import BluerovXYZPsi as Bluerov, USV
 from catenary import Catenary
 from model import Model
-from mpc import MPC
+from mppi import MPPI
 from seafloor import Seafloor, SeafloorFromFunction
 from utils import check, generate_trajectory, get_computer_info, Logger, print_dict, serialize_others
 
@@ -277,7 +277,7 @@ class ChainOf4:
 		return perturbation, -perturbation
 
 
-def chain_of_4_constraints( self: MPC, candidate ):
+def chain_of_4_constraints( self: MPPI, candidate ):
 
 	chain: ChainOf4 = self.model.dynamics
 
@@ -349,7 +349,7 @@ def chain_of_4_constraints( self: MPC, candidate ):
 	return constraints.flatten()
 
 
-def chain_of_4_objective( self: MPC, prediction: ndarray, actuation: ndarray ):
+def chain_of_4_objective( self: MPPI, prediction: ndarray, actuation: ndarray ):
 
 	chain: ChainOf4 = self.model.dynamics
 	desired_distance = chain.c_01.length / 2
@@ -396,8 +396,9 @@ if __name__ == "__main__":
 	ti = perf_counter()
 
 	n_frames = 200
-	tolerance = 1e-6
-	max_number_of_iteration = 100
+	sampling_factor = 1e-3
+	number_of_rolls = 250
+	noise_covariance = [5., 5., 5., .001] * 3 + [5., .001]
 	time_step = 0.1
 
 	seafloor = SeafloorFromFunction( seafloor_function )
@@ -422,10 +423,13 @@ if __name__ == "__main__":
 	initial_state[ dynamics.br_3_orientation ][ 2 ] = pi / 2
 
 	initial_actuation = zeros( (dynamics.actuation_size,) )
+	initial_actuation[dynamics.br_0_actuation][2] = 20
+	initial_actuation[dynamics.br_1_actuation][2] = 20
+	initial_actuation[dynamics.br_2_actuation][2] = 20
 
-	horizon = 5
+	horizon = 10
 	time_steps_per_actuation = 5
-	time_step_prediction_factor = 2
+	time_step_prediction_factor = 1
 	assert time_step_prediction_factor * horizon < n_frames
 
 	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (.5, [ -5., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
@@ -469,15 +473,15 @@ if __name__ == "__main__":
 			record = True
 			)
 
-	mpc = MPC(
+	mppi = MPPI(
 			model = model,
 			horizon = horizon,
 			target_trajectory = trajectory,
-			optimize_on = 'actuation',
 			objective_weight = objective_weight,
 			time_step_prediction_factor = time_step_prediction_factor,
-			tolerance = tolerance,
-			max_number_of_iteration = max_number_of_iteration,
+			sampling_factor = sampling_factor,
+			noise_covariance = noise_covariance,
+			number_of_rolls = number_of_rolls,
 			time_steps_per_actuation = time_steps_per_actuation,
 			pose_weight_matrix = pose_weight_matrix,
 			actuation_derivative_weight_matrix = actuation_weight_matrix,
@@ -487,12 +491,12 @@ if __name__ == "__main__":
 			)
 
 	# inject constraints and objective as member functions so that they may access self
-	mpc.constraints_function = chain_of_4_constraints.__get__(
-			mpc, MPC
+	mppi.constraints_function = chain_of_4_constraints.__get__(
+			mppi, MPPI
 			)
 
-	mpc.objective = chain_of_4_objective.__get__(
-			mpc, MPC
+	mppi.objective = chain_of_4_objective.__get__(
+			mppi, MPPI
 			)
 
 	sf_lb = 0.2
@@ -545,13 +549,13 @@ if __name__ == "__main__":
 	ub = [ constraint_ub_base ] * horizon
 
 	constraint = NonlinearConstraint(
-			mpc.constraints_function, array( lb ).flatten(), array( ub ).flatten()
+			mppi.constraints_function, array( lb ).flatten(), array( ub ).flatten()
 			)
 
 	constraint.value_labels = constraints_values_labels
 	constraint.labels = constraints_reason_labels
 
-	mpc.constraints = (constraint,)
+	mppi.add_constraint( constraint )
 
 	previous_nfeval_record = [ 0 ]
 	previous_H01_record = [ 0. ]
@@ -568,7 +572,7 @@ if __name__ == "__main__":
 	logger = Logger()
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( mpc.__dict__ | get_computer_info(), f, default = serialize_others )
+		dump( mppi.__dict__ | get_computer_info(), f, default = serialize_others )
 
 	with open( f'{folder}/config.json' ) as f:
 		config = load( f )
@@ -579,32 +583,19 @@ if __name__ == "__main__":
 
 	for frame in range( n_frames ):
 
-		mpc.target_trajectory = trajectory[ frame + 1: ]
+		mppi.target_trajectory = trajectory[ frame + 1: ]
 
 		logger.log( f'frame {frame + 1}/{n_frames} starts at t={perf_counter() - ti:.2f}' )
 
-		model.actuation = mpc.compute_actuation()
+		model.actuation = mppi.compute_actuation()
 		model.step()
 
 		logger.log( f'ends at t={perf_counter() - ti:.2f}' )
-		logger.log( f'{mpc.raw_result.message}' )
-		logger.log( f'{mpc.raw_result.nit} iterations' )
 
-		# try to recover if the optimization failed
-		if not mpc.raw_result.success and mpc.tolerance < 1:
-			mpc.tolerance *= 10
-			logger.log( f'increasing tolerance: {mpc.tolerance:.0e}' )
-		elif mpc.raw_result.success and mpc.tolerance > 2 * tolerance:
-			# *2 because of floating point error
-			mpc.tolerance /= 10
-			logger.log( f'decreasing tolerance: {mpc.tolerance:.0e}' )
-		else:
-			logger.log( f'keeping tolerance: {mpc.tolerance:.0e}' )
-
-		objective_value = mpc.get_objective()
+		objective_value = mppi.get_objective()
 		logger.log( f'objective: {objective_value:.2f}' )
 
-		constraints_values = mpc.constraints_function( mpc.raw_result.x )
+		constraints_values = mppi.constraints_function( mppi.raw_result )
 		logger.log( f'constraints: {constraints_values[ :len( constraint_lb_base ) ]}' )
 
 		logger.lognl( '' )
@@ -612,4 +603,4 @@ if __name__ == "__main__":
 
 		# save simulation state
 		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
-			dump( mpc.__dict__, f, default = serialize_others )
+			dump( mppi.__dict__, f, default = serialize_others )
