@@ -143,7 +143,7 @@ def gif_from_pngs( folder: str, duration: float = None ):
 
 
 def serialize_others( obj: any ):
-	if isfunction( obj ) or ismethod( obj ):
+	if isfunction( obj ) or ismethod( obj ) or isinstance( obj, staticmethod ):
 		return getsource( obj )
 	if isinstance( obj, ndarray ):
 		return obj.tolist()
@@ -159,11 +159,11 @@ def serialize_others( obj: any ):
 			output |= base.__dict__
 		output |= obj.__dict__
 		output |= obj.__class__.__dict__
-		output['instance_of'] = obj.__class__.__name__
+		output[ 'instance_of' ] = obj.__class__.__name__
 
 		return output
 	except:
-		return 'unable to process'
+		pass
 
 
 def get_all_bases( obj: any ):
@@ -183,25 +183,97 @@ def print_dict( d: dict, max_list_size: int = 10, prefix: str = '' ):
 			continue
 
 		if isinstance( v, dict ):
-			print( prefix + k + ':' )
+			print( prefix + k, type( v ), ':', flush = True )
 			print_dict( v, max_list_size, prefix + '\t' )
 			continue
 
 		if isinstance( v, list ):
 			if len( v ) > 0 and isinstance( v[ 0 ], dict ):
-				print( prefix + k + ':' )
+				print( prefix + k, type( v ), ':', flush = True )
 				print_dict( { str( i ): e for i, e in enumerate( v ) }, max_list_size, prefix + '\t' )
 				continue
 
 			l = array( v ).shape
-			print( prefix + k + ':', v if sum( l ) < max_list_size else l )
+			print( prefix + k, type( v ), ':', v if sum( l ) < max_list_size else l, flush = True )
 			continue
 
 		if isinstance( v, str ) and len( v ) > max_list_size:
-			print( prefix + k + ':', v[ :max_list_size ], '...' )
+			print( prefix + k, type( v ), ':', v[ :max_list_size ], '...', flush = True )
 			continue
 
-		print( prefix + k + ':', v )
+		print( prefix + k, type( v ), ':', v, flush = True )
+
+
+def compare_dict( d0: dict, d1: dict, max_list_size: int = 10, prefix: str = '' ):
+	keys = set( list( d0.keys() ) + list( d1.keys() ) )
+
+	for k in keys:
+
+		if k[ 0 ] == '_':
+			continue
+
+		v0 = d0.get( k )
+		v1 = d1.get( k )
+
+		equal = v0 == v1
+
+		v = v0 if v0 is not None else v1
+
+		if v0 is None:
+			v0 = v1.__class__()
+		if v1 is None:
+			v1 = v0.__class__()
+
+		color_prefix = '\033[1;42m' if equal else '\033[1;41m'
+		color_suffix = '\033[0m'
+
+		if type(v0) != type(v1):
+			print( prefix + color_prefix + k, type( v0 ), '!=', type(v1), color_suffix, flush = True )
+			continue
+
+		if isinstance( v, dict ):
+			print( prefix + color_prefix + k, type( v ), color_suffix + ':', flush = True )
+			compare_dict(
+					d0 = v0, d1 = v1, max_list_size = max_list_size, prefix = prefix + '\t'
+					)
+			continue
+
+		if isinstance( v, list ):
+			if len( v ) > 0 and isinstance( v[ 0 ], dict ):
+				print( prefix + color_prefix + k, type( v ), color_suffix + ':', flush = True )
+				compare_dict(
+						d0 = { str( i ): e for i, e in enumerate( v0 ) },
+						d1 = { str( i ): e for i, e in enumerate( v1 ) },
+						max_list_size = max_list_size,
+						prefix = prefix + '\t'
+						)
+				continue
+
+			l = array( v ).shape
+			if sum( l ) < max_list_size:
+				print(
+						prefix + color_prefix + k, type( v ), color_suffix + ':', v0, v1, flush = True
+						)
+			else:
+				print(
+						prefix + color_prefix + k, type( v ), color_suffix + ':', len( v0 ), len( v1 ), flush = True
+						)
+			continue
+
+		if isinstance( v, str ) and len( v ) > max_list_size:
+			print(
+					prefix + color_prefix + k,
+					type( v ),
+					color_suffix + ':',
+					v0[ :max_list_size ],
+					v1[ :max_list_size ],
+					flush = True
+					)
+			continue
+
+		print(
+				prefix + color_prefix + k, type( v ), color_suffix + ':', v0, v1, flush = True
+				)
 
 
 def get_computer_info():
