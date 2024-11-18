@@ -49,7 +49,7 @@ class Bluerov:
 
 		self.hydrodynamic_matrix = diag( self.hydrodynamic_coefficients )
 
-	def __call__( self, state: ndarray, actuation: ndarray, perturbation: ndarray ) -> ndarray:
+	def __call__( self, state: ndarray, actuation: ndarray, perturbation: ndarray = None ) -> ndarray:
 		"""
 		evaluates the dynamics of the Bluerov model
 		:param state: current state of the system
@@ -58,6 +58,9 @@ class Bluerov:
 		"""
 
 		transform_matrix = self.build_transformation_matrix( *state[ 3:6 ] )
+
+		if perturbation is None:
+			perturbation = zeros( (6,) )
 
 		self.buoyancy[ 2 ] = rho_eau * G * self.volume * (-.5 - .5 / (1 + exp(
 				10. * (self.water_surface_depth - state[ 2 ]) + 1.
@@ -135,7 +138,7 @@ class BluerovXYZ( Bluerov ):
 	def __init__( self, water_surface_depth: float = 0., water_current: ndarray = None ):
 		super().__init__( water_surface_depth, water_current )
 
-	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
+	def __call__( self, state: ndarray, actuation: ndarray, perturbation = None ) -> ndarray:
 		six_dof_actuation = zeros( (6,) )
 		six_dof_actuation[ :3 ] = actuation
 
@@ -150,7 +153,7 @@ class BluerovXYZPsi( Bluerov ):
 	def __init__( self, water_surface_depth: float = 0., water_current: ndarray = None ):
 		super().__init__( water_surface_depth, water_current )
 
-	def __call__( self, state: ndarray, actuation: ndarray, perturbation ) -> ndarray:
+	def __call__( self, state: ndarray, actuation: ndarray, perturbation = None ) -> ndarray:
 		six_dof_actuation = zeros( (6,) )
 		six_dof_actuation[ :3 ] = actuation[ :3 ]
 		six_dof_actuation[ 5 ] = actuation[ 3 ]
@@ -166,7 +169,7 @@ class USV( Bluerov ):
 	def __init__( self, water_surface_depth: float = 0. ):
 		super().__init__( water_surface_depth )
 
-	def __call__( self, state, actuation, perturbation ):
+	def __call__( self, state, actuation, perturbation = None ):
 		six_dof_actuation = zeros( (6,) )
 		# linear actuation on x
 		six_dof_actuation[ 0 ] = actuation[ 0 ]
