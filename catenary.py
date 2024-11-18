@@ -26,13 +26,14 @@ from utils import check, G
 
 class Catenary:
 	"""
-	Catenary class with the NED convention meaning that the z axis is pointing downward
+	Catenary class with the NED or ENU convention
 	"""
 
 	GET_PARAMETER_METHOD = [ 'runtime', 'precompute' ]
+	REFERENCE_FRAME = ['NED', 'ENU']
 
 	def __init__(
-			self, length = 3., linear_mass = 1., get_parameter_method: str = 'runtime'
+			self, length = 3., linear_mass = 1., get_parameter_method: str = 'runtime', reference_frame: str = 'NED'
 			):
 
 		self.length = length
@@ -47,6 +48,14 @@ class Catenary:
 				self.get_parameters = self._get_parameters_precompute
 			case _:
 				raise ValueError( f'get_parameter_method must be one of {self.GET_PARAMETER_METHOD}' )
+
+		match reference_frame:
+			case 'NED':
+				self.vertical_multiplier = -1.
+			case 'ENU':
+				self.vertical_multiplier = 1.
+			case _:
+				raise ValueError( f'reference_frame must be one of {self.REFERENCE_FRAME}' )
 
 	def __call__( self, p0: ndarray, p1: ndarray ):
 		"""
@@ -85,7 +94,7 @@ class Catenary:
 
 	def get_perturbations( self, p0: ndarray, p1: ndarray ):
 		"""
-		get the perturbations of the two points
+		get the perturbations of the catenary on the two points
 		:param p0: one end of the catenary
 		:param p1: second end of the catenary
 		:return: tuple containing the perturbations force on the two points in the form (perturbation_p1,
@@ -127,7 +136,7 @@ class Catenary:
 		implementation of get_parameters using optimization
 		"""
 
-		dH = p1[ 2 ] - p0[ 2 ]
+		dH = self.vertical_multiplier * (p0[ 2 ] - p1[ 2 ])
 		two_D_plus_dD = norm( p1[ :2 ] - p0[ :2 ] )
 
 		if norm( p1 - p0 ) > 0.99 * self.length or any( isnan( p0 ) ) or any( isnan( p1 ) ):
@@ -178,9 +187,9 @@ class Catenary:
 
 	def _get_parameters_precompute( self, p0: ndarray, p1: ndarray ) -> tuple[ float, float, float, float, float ]:
 		"""
-		implementation of get_parameters using optimization
+		implementation of get_parameters using precomputed values
 		"""
-		dH = p1[ 2 ] - p0[ 2 ]
+		dH = self.vertical_multiplier * (p0[ 2 ] - p1[ 2 ])
 		two_D_plus_dD = norm( p1[ :2 ] - p0[ :2 ] )
 
 		if norm( p1 - p0 ) > 0.99 * self.length or any( isnan( p0 ) ) or any( isnan( p1 ) ):
@@ -224,7 +233,7 @@ class Catenary:
 
 		lowest_point = zeros( (3,) )
 		lowest_point[ :2 ] = p0[ :2 ] + (D + dD) * (p1[ :2 ] - p0[ :2 ]) / norm( p1[ :2 ] - p0[ :2 ] )
-		lowest_point[ 2 ] = p0[ 2 ] + H + dH
+		lowest_point[ 2 ] = p0[ 2 ] - self.vertical_multiplier * (H + dH)
 		return lowest_point
 
 	def _get_perturbations(
@@ -250,9 +259,9 @@ class Catenary:
 
 		perturbation_p0, perturbation_p1 = zeros( (3,) ), zeros( (3,) )
 		perturbation_p0[ :2 ] = direction * horizontal_perturbation
-		perturbation_p0[ 2 ] = -vertical_perturbation_0
+		perturbation_p0[ 2 ] = self.vertical_multiplier * vertical_perturbation_0
 		perturbation_p1[ :2 ] = -direction * horizontal_perturbation
-		perturbation_p1[ 2 ] = vertical_perturbation_1
+		perturbation_p1[ 2 ] = - self.vertical_multiplier * vertical_perturbation_1
 
 		return perturbation_p0, perturbation_p1
 
@@ -277,7 +286,7 @@ class Catenary:
 			z = 1. / C * (sqrt( 1. + pow( inter, 2 ) ) - 1.) - H
 			points[ i, 0 ] = p1[ 0 ] - x * (p1[ 0 ] - p0[ 0 ]) / (2. * D + dD)
 			points[ i, 1 ] = p1[ 1 ] - x * (p1[ 1 ] - p0[ 1 ]) / (2. * D + dD)
-			points[ i, 2 ] = p1[ 2 ] - z
+			points[ i, 2 ] = p1[ 2 ] + self.vertical_multiplier * z
 			s += ds
 
 		points[ -1 ] = p0
@@ -395,17 +404,19 @@ def test_1():
 
 def test_2():
 	"""
-	to test good derivation of the catenary
+	to test good derivation of the catenary with NED
 	"""
 	from numpy import linspace
 	import matplotlib.pyplot as plt
 	from warnings import simplefilter
 
 	simplefilter( 'ignore', RuntimeWarning )
+ 
+	print('testing derivation with NED')
 
 	cat = Catenary( linear_mass = 1. )
-	X = linspace( -cat.length, cat.length, 7 )
-	Z = linspace( 0, 0, 1 )
+	X = linspace( 0, cat.length*.9, 4 )
+	Z = linspace( -cat.length*.9, cat.length*.9, 4 )
 
 	for z in Z:
 		for x in X:
@@ -433,24 +444,6 @@ def test_2():
 				plt.quiver( *p2[ ::2 ], *perturbations[ 1 ][ ::2 ], angles = 'xy', scale = 50 )
 
 				plt.plot( points[ :, 0 ], points[ :, 2 ] )
-
-				plt.plot( [ 0, dD ], [ 0, 0 ] )
-				plt.plot( [ 0, 0 ], [ 0, dH ] )
-				plt.plot( [ dD, dD ], [ 0, dH ] )
-				plt.plot( [ 0, dD ], [ dH, dH ] )
-				plt.plot( [ 0, dD ], [ 0, dH ], ':', linewidth = 5 )
-
-				plt.plot( [ dD, dD ], [ dH, H + dH ] )
-				plt.plot( [ dD, D + dD ], [ dH, dH ] )
-				plt.plot( [ D + dD, D + dD ], [ H + dH, dH ] )
-				plt.plot( [ dD, D + dD ], [ H + dH, H + dH ] )
-				plt.plot( [ dD, D + dD ], [ dH, H + dH ], ':', linewidth = 5 )
-
-				plt.plot( [ D + dD, 2 * D + dD ], [ dH, dH ] )
-				plt.plot( [ D + dD, 2 * D + dD ], [ H + dH, H + dH ] )
-				plt.plot( [ 2 * D + dD, 2 * D + dD ], [ dH, H + dH ] )
-
-				plt.plot( [ D + dD, 2 * D + dD ], [ H + dH, dH ], ':', linewidth = 5 )
 
 				plt.title( f'{p2=}' )
 				print( perturbations )
@@ -557,6 +550,57 @@ def test_5():
 		print( i == int( round( (n - 1) * abs( v ) / L, 0 ) ), end = '\t' )
 		print()
 
+def test_6():
+	"""
+	to test good derivation of the catenary with ENU
+	"""
+	from numpy import linspace
+	import matplotlib.pyplot as plt
+	from warnings import simplefilter
+
+	simplefilter( 'ignore', RuntimeWarning )
+ 
+	print('testing derivation with ENU')
+
+	cat = Catenary( linear_mass = 1., reference_frame='ENU' )
+	X = linspace( 0, cat.length*.9, 4 )
+	Z = linspace( -cat.length*.9, cat.length*.9, 4 )
+
+	for z in Z:
+		for x in X:
+			try:
+				p1 = array( [ 0, 0, 0 ] )
+				p2 = array( [ x, 0, z ] )
+
+				out = cat( p1, p2 )
+
+				C, H, dH, D, dD = out[ 0 ]
+				lowest_point = out[ 1 ]
+				perturbations = out[ 2 ]
+				points = out[ 3 ]
+
+				plt.figure()
+				plt.gca().set_xlim( [ -3, 3 ] )
+				plt.gca().set_ylim( [ -3, 3 ] )
+				# plt.gca().invert_yaxis()
+
+				plt.scatter( *p1[ ::2 ], s = 50 )
+				plt.scatter( *p2[ ::2 ], s = 50 )
+				plt.scatter( *lowest_point[ ::2 ], s = 50 )
+
+				plt.quiver( *p1[ ::2 ], *perturbations[ 0 ][ ::2 ], angles = 'xy', scale = 50 )
+				plt.quiver( *p2[ ::2 ], *perturbations[ 1 ][ ::2 ], angles = 'xy', scale = 50 )
+
+				plt.plot( points[ :, 0 ], points[ :, 2 ] )
+
+				plt.title( f'{p2=}' )
+				print( perturbations )
+				plt.show()
+
+			except:
+				pass
+
+
 
 if __name__ == '__main__':
 	set_printoptions( precision = 5, linewidth = 10000, suppress = True )
@@ -565,6 +609,8 @@ if __name__ == '__main__':
 	# test_3()
 	# test_4()
 	# test_5()
+	test_6()
 	pass
 
-del test_1, test_2, test_3, test_4, test_5
+else:
+	del test_1, test_2, test_3, test_4, test_5, test_6
