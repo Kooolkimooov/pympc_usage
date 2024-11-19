@@ -87,7 +87,7 @@ class Bluerov:
 		cTheta, sTheta, tTheta = cos( theta ), sin( theta ), tan( theta )
 		cPsi, sPsi = cos( psi ), sin( psi )
 
-		matrix = zeros( (6, 6) )
+		matrix = eye( 6 )
 		matrix[ 0, 0 ] = cPsi * cTheta
 		matrix[ 0, 1 ] = -sPsi * cPhi + cPsi * sTheta * sPhi
 		matrix[ 0, 2 ] = sPsi * sPhi + cPsi * sTheta * cPhi
@@ -97,15 +97,14 @@ class Bluerov:
 		matrix[ 2, 0 ] = -sTheta
 		matrix[ 2, 1 ] = cTheta * sPhi
 		matrix[ 2, 2 ] = cTheta * cPhi
-		matrix[ 3, 0 ] = 1
-		matrix[ 3, 1 ] = sPhi * tTheta
-		matrix[ 3, 2 ] = cPhi * tTheta
-		matrix[ 4, 0 ] = 0
-		matrix[ 4, 1 ] = cPhi
-		matrix[ 4, 2 ] = -sPhi
-		matrix[ 5, 0 ] = 0
-		matrix[ 5, 1 ] = sPhi / cTheta
-		matrix[ 5, 2 ] = cPhi / cTheta
+		matrix[ 3, 4 ] = sPhi * tTheta
+		matrix[ 3, 5 ] = cPhi * tTheta
+		matrix[ 4, 3 ] = 0
+		matrix[ 4, 4 ] = cPhi
+		matrix[ 4, 5 ] = -sPhi
+		matrix[ 5, 3 ] = 0
+		matrix[ 5, 4 ] = sPhi / cTheta
+		matrix[ 5, 5 ] = cPhi / cTheta
 		return matrix
 
 	@staticmethod
@@ -168,6 +167,18 @@ class BluerovXYZPsi( Bluerov ):
 
 		return Bluerov.__call__( self, state, six_dof_actuation, perturbation )
 
+	@staticmethod
+	def build_transformation_matrix( phi: float, theta: float, psi: float ) -> ndarray:
+		cPsi, sPsi = cos( psi ), sin( psi )
+
+		matrix = eye( 6 )
+		matrix[ 0, 0 ] = cPsi
+		matrix[ 0, 1 ] = -sPsi
+		matrix[ 1, 0 ] = sPsi
+		matrix[ 1, 1 ] = cPsi
+
+		return matrix
+
 
 class USV( Bluerov ):
 
@@ -188,12 +199,10 @@ class USV( Bluerov ):
 
 
 if __name__ == '__main__':
-	rov = Bluerov()
+	rov = BluerovXYZPsi()
 	state = zeros( (rov.state_size,) )
 	actuation = zeros( (rov.actuation_size,) )
 	perturbation = zeros( (rov.actuation_size,) )
 	for _ in range( 1000 ):
 		state += rov( state, actuation, perturbation ) * 0.01
 		print( state[ :3 ] )
-
-
