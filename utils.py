@@ -204,7 +204,7 @@ def print_dict( d: dict, max_list_size: int = 10, prefix: str = '' ):
 		print( prefix + k, type( v ), ':', v, flush = True )
 
 
-def compare_dict( d0: dict, d1: dict, max_list_size: int = 10, prefix: str = '' ):
+def compare_dict( d0: dict, d1: dict, max_list_size: int = 10, prefix: str = '', only_diff = False ):
 	keys = set( list( d0.keys() ) + list( d1.keys() ) )
 
 	for k in keys:
@@ -217,6 +217,9 @@ def compare_dict( d0: dict, d1: dict, max_list_size: int = 10, prefix: str = '' 
 
 		equal = v0 == v1
 
+		if only_diff and equal:
+			continue
+
 		v = v0 if v0 is not None else v1
 
 		if v0 is None:
@@ -227,14 +230,14 @@ def compare_dict( d0: dict, d1: dict, max_list_size: int = 10, prefix: str = '' 
 		color_prefix = '\033[1;42m' if equal else '\033[1;41m'
 		color_suffix = '\033[0m'
 
-		if type(v0) != type(v1):
-			print( prefix + color_prefix + k, type( v0 ), '!=', type(v1), color_suffix, flush = True )
+		if type( v0 ) != type( v1 ):
+			print( prefix + color_prefix + k, type( v0 ), '!=', type( v1 ), color_suffix, flush = True )
 			continue
 
 		if isinstance( v, dict ):
 			print( prefix + color_prefix + k, type( v ), color_suffix + ':', flush = True )
 			compare_dict(
-					d0 = v0, d1 = v1, max_list_size = max_list_size, prefix = prefix + '\t'
+					d0 = v0, d1 = v1, max_list_size = max_list_size, prefix = prefix + '\t', only_diff = only_diff
 					)
 			continue
 
@@ -245,7 +248,8 @@ def compare_dict( d0: dict, d1: dict, max_list_size: int = 10, prefix: str = '' 
 						d0 = { str( i ): e for i, e in enumerate( v0 ) },
 						d1 = { str( i ): e for i, e in enumerate( v1 ) },
 						max_list_size = max_list_size,
-						prefix = prefix + '\t'
+						prefix = prefix + '\t',
+						only_diff = only_diff
 						)
 				continue
 
