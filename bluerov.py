@@ -33,7 +33,7 @@ class Bluerov:
 		if water_current.shape == (3,):
 			water_current = concatenate( (water_current, array( [ 0., 0., 0. ] )) )
 
-		assert water_current.shape == (6,)
+		assert water_current.shape == (6,), 'water current should be a (6,) ndarray at this point'
 
 		self.water_current = water_current
 

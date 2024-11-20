@@ -59,7 +59,8 @@ class MPC:
 		:param verbose: whether to print the optimization results
 		"""
 
-		assert time_step_prediction_factor >= 1
+		assert time_step_prediction_factor >= 1, 'time_step_prediction_factor must be greater or equal to 1'
+		assert (time_step_prediction_factor == 1) or (time_steps_per_actuation != horizon), 'time_step_prediction_factor may only be used in constant actuation problems, not piecewise constant actuation'
 
 		match model_type:
 			case 'linear':

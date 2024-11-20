@@ -38,7 +38,7 @@ if __name__ == "__main__":
 	horizon = 5
 	time_steps_per_actuation = 5
 	time_step_prediction_factor = 2
-	assert time_step_prediction_factor * horizon < n_frames
+	assert time_step_prediction_factor * horizon < n_frames / 2, 'scaled horizon is larger than the buffer at the end of the target trajectory'
 
 	final_cost_weight = 0.
 	objective_weight = .01
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 	constraint_ub_base = [ sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
 
 	assert (len( constraint_lb_base ) == len( constraints_values_labels )) and (
-			len( constraint_ub_base ) == len( constraints_reason_labels ))
+			len( constraint_ub_base ) == len( constraints_reason_labels )), 'bad definition of constraints'
 
 	lb = [ constraint_lb_base ] * horizon
 	ub = [ constraint_ub_base ] * horizon
