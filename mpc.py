@@ -3,7 +3,7 @@ from time import perf_counter
 
 from numpy import diff, eye, inf, ndarray, zeros
 from scipy.optimize import Bounds, LinearConstraint, minimize, NonlinearConstraint, OptimizeResult
-from optimparallel import minimize_parallel
+
 from model import Model
 
 
@@ -26,7 +26,7 @@ class MPC:
 			tolerance: float = 1e-6,
 			max_number_of_iteration: int = 1000,
 			bounds: tuple[ Bounds ] = None,
-			constraints: tuple[ NonlinearConstraint | LinearConstraint] = None,
+			constraints: tuple[ NonlinearConstraint | LinearConstraint ] = None,
 			pose_weight_matrix: ndarray = None,
 			actuation_derivative_weight_matrix: ndarray = None,
 			objective_weight: float = 0.,
@@ -121,7 +121,7 @@ class MPC:
 		self.final_weight = final_weight
 
 		self.best_cost = inf
-		self.best_candidate = zeros(self.result_shape)
+		self.best_candidate = zeros( self.result_shape )
 
 		self.record = record
 		if self.record:

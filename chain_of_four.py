@@ -1,4 +1,4 @@
-from numpy import dot, ndarray, zeros
+from numpy import dot, ndarray, r_, zeros
 from numpy.linalg import norm
 
 from bluerov import BluerovXYZPsi as Bluerov, USV

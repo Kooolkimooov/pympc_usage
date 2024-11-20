@@ -1,6 +1,6 @@
+from json import dump, load
 from pathlib import Path
 
-from json import dump, load
 from numpy import (
 	arccosh,
 	arcsinh,
@@ -30,7 +30,7 @@ class Catenary:
 	"""
 
 	GET_PARAMETER_METHOD = [ 'runtime', 'precompute' ]
-	REFERENCE_FRAME = ['NED', 'ENU']
+	REFERENCE_FRAME = [ 'NED', 'ENU' ]
 
 	def __init__(
 			self, length = 3., linear_mass = 1., get_parameter_method: str = 'runtime', reference_frame: str = 'NED'
@@ -411,12 +411,12 @@ def test_2():
 	from warnings import simplefilter
 
 	simplefilter( 'ignore', RuntimeWarning )
- 
-	print('testing derivation with NED')
+
+	print( 'testing derivation with NED' )
 
 	cat = Catenary( linear_mass = 1. )
-	X = linspace( 0, cat.length*.9, 4 )
-	Z = linspace( -cat.length*.9, cat.length*.9, 4 )
+	X = linspace( 0, cat.length * .9, 4 )
+	Z = linspace( -cat.length * .9, cat.length * .9, 4 )
 
 	for z in Z:
 		for x in X:
@@ -550,6 +550,7 @@ def test_5():
 		print( i == int( round( (n - 1) * abs( v ) / L, 0 ) ), end = '\t' )
 		print()
 
+
 def test_6():
 	"""
 	to test good derivation of the catenary with ENU
@@ -559,12 +560,12 @@ def test_6():
 	from warnings import simplefilter
 
 	simplefilter( 'ignore', RuntimeWarning )
- 
-	print('testing derivation with ENU')
 
-	cat = Catenary( linear_mass = 1., reference_frame='ENU' )
-	X = linspace( 0, cat.length*.9, 4 )
-	Z = linspace( -cat.length*.9, cat.length*.9, 4 )
+	print( 'testing derivation with ENU' )
+
+	cat = Catenary( linear_mass = 1., reference_frame = 'ENU' )
+	X = linspace( 0, cat.length * .9, 4 )
+	Z = linspace( -cat.length * .9, cat.length * .9, 4 )
 
 	for z in Z:
 		for x in X:
@@ -599,7 +600,6 @@ def test_6():
 
 			except:
 				pass
-
 
 
 if __name__ == '__main__':

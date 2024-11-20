@@ -1,7 +1,7 @@
 from copy import deepcopy
 from time import perf_counter
 
-from numpy import all, array, average, diff, exp, eye, inf, ndarray, ones, random, zeros
+from numpy import array, average, diff, exp, eye, inf, ndarray, ones, random, zeros
 from scipy.optimize import Bounds, LinearConstraint, NonlinearConstraint
 from scipy.optimize._differentialevolution import _ConstraintWrapper
 
@@ -90,7 +90,8 @@ class MPPI( MPC ):
 			self.constraints = constraints
 
 		add_one = (1 if self.horizon % self.time_steps_per_actuation != 0 else 0)
-		self.result_shape = (self.horizon // self.time_steps_per_actuation + add_one, 1, self.model.actuation.shape[ 0 ])
+		self.result_shape = (self.horizon // self.time_steps_per_actuation + add_one, 1, self.model.actuation.shape[
+		0 ])
 
 		self.raw_result = zeros( self.result_shape )
 		self.result = zeros( self.model.actuation.shape )
@@ -150,7 +151,7 @@ class MPPI( MPC ):
 
 		if len( costs ) == 0:
 			self.compute_times.append( perf_counter() - ti )
-			self.result = zeros(self.model.actuation.shape)
+			self.result = zeros( self.model.actuation.shape )
 			return self.result
 
 		min_cost = costs.min()
@@ -191,6 +192,7 @@ class MPPI( MPC ):
 		actuation, _ = self.get_actuation( self.raw_result )
 		prediction = self.predict( actuation )
 		return self.objective( prediction, actuation )
+
 
 if __name__ == '__main__':
 	from bluerov import Bluerov
