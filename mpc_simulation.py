@@ -9,7 +9,7 @@ from scipy.optimize import NonlinearConstraint
 from chain_of_four import *
 from model import Model
 from mpc import MPC
-from seafloor import SeafloorFromFunction
+from seafloor import seafloor_function_0, SeafloorFromFunction
 from utils import check, generate_trajectory, get_computer_info, Logger, print_dict, serialize_others
 
 simplefilter( 'ignore', RuntimeWarning )
@@ -19,116 +19,29 @@ if __name__ == "__main__":
 
 	ti = perf_counter()
 
-	n_frames = 200
+	n_frames = 500
 	tolerance = 1e-6
 	max_number_of_iteration = 100
 	time_step = 0.1
+	save_rate = int( .5 / time_step ) if time_step <= .1 else 1
+	count_before_save = 0
 
-
-	def seafloor_function( x, y ):
-		from numpy import sin, exp
-		z = 4.5
-		z += 1. * sin( y / 4 )
-		z += .5 * sin( x / 3 )
-		# peak at (-3, 0)
-		z -= 2.5 * exp( -8 * (pow( (x - (-3)), 2 ) + pow( (y - 0), 2 )) )
-		return z
-
-
-	seafloor = SeafloorFromFunction( seafloor_function )
-
-	dynamics = ChainOf4(
-			water_surface_depth = 0.,
-			water_current = array( [ .5, .5, 0. ] ),
-			seafloor = seafloor,
-			cables_length = 3.,
-			cables_linear_mass = 0.01,
-			get_cable_parameter_method = 'precompute'
-			)
-
-	initial_state = zeros( (dynamics.state_size,) )
-	initial_state[ dynamics.br_0_position ][ 0 ] = 2.
-	initial_state[ dynamics.br_0_position ][ 2 ] = 1.
-	initial_state[ dynamics.br_1_position ][ 0 ] = 2.5
-	initial_state[ dynamics.br_1_position ][ 2 ] = 1.
-	initial_state[ dynamics.br_2_position ][ 0 ] = 3.
-	initial_state[ dynamics.br_2_position ][ 2 ] = 1.
-	initial_state[ dynamics.br_3_position ][ 0 ] = 3.5
-	initial_state[ dynamics.br_3_orientation ][ 2 ] = pi / 2
-
-	initial_actuation = zeros( (dynamics.actuation_size,) )
+	#@formatter:off
+	key_frames = [
+			(0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
+			(.5, [ -5., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
+			(1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
+			(2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18)
+			]
+	# @formatter:on
 
 	horizon = 5
 	time_steps_per_actuation = 5
 	time_step_prediction_factor = 2
 	assert time_step_prediction_factor * horizon < n_frames
 
-	key_frames = [ (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (.5, [ -5., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
-								 (1., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18), (2., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18) ]
-
-	trajectory = generate_trajectory( key_frames, 2 * n_frames )
-	trajectory[ :, 0, dynamics.br_0_z ] = 1.5 * cos(
-			1.25 * (trajectory[ :, 0, dynamics.br_0_position ][ :, 0 ] - 2) + pi
-			) + 2.5
-
-	max_required_speed = (max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
-
-	pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
-	pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
-	pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
-	pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
-	pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
-	pose_weight_matrix[ dynamics.br_2_position, dynamics.br_2_position ] *= 0.
-	pose_weight_matrix[ dynamics.br_2_orientation, dynamics.br_2_orientation ] *= 1.
-	pose_weight_matrix[ dynamics.br_3_position, dynamics.br_3_position ] *= 0.
-	pose_weight_matrix[ dynamics.br_3_orientation, dynamics.br_3_orientation ] *= 0.
-
-	actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
-	actuation_weight_matrix[ dynamics.br_0_linear_actuation, dynamics.br_0_linear_actuation ] *= 0.
-	actuation_weight_matrix[ dynamics.br_0_angular_actuation, dynamics.br_0_angular_actuation ] *= 1.
-	actuation_weight_matrix[ dynamics.br_1_linear_actuation, dynamics.br_1_linear_actuation ] *= 0.
-	actuation_weight_matrix[ dynamics.br_1_angular_actuation, dynamics.br_1_angular_actuation ] *= 1.
-	actuation_weight_matrix[ dynamics.br_2_linear_actuation, dynamics.br_2_linear_actuation ] *= 0.
-	actuation_weight_matrix[ dynamics.br_2_angular_actuation, dynamics.br_2_angular_actuation ] *= 1.
-	actuation_weight_matrix[ dynamics.br_3_linear_actuation, dynamics.br_3_linear_actuation ] *= 0.
-	actuation_weight_matrix[ dynamics.br_3_angular_actuation, dynamics.br_3_angular_actuation ] *= 0.
-
 	final_cost_weight = 0.
 	objective_weight = .01
-
-	model = Model(
-			dynamics = dynamics,
-			time_step = time_step,
-			initial_state = initial_state,
-			initial_actuation = initial_actuation,
-			record = True
-			)
-
-	mpc = MPC(
-			model = model,
-			horizon = horizon,
-			target_trajectory = trajectory,
-			optimize_on = 'actuation',
-			objective_weight = objective_weight,
-			time_step_prediction_factor = time_step_prediction_factor,
-			tolerance = tolerance,
-			max_number_of_iteration = max_number_of_iteration,
-			time_steps_per_actuation = time_steps_per_actuation,
-			pose_weight_matrix = pose_weight_matrix,
-			actuation_derivative_weight_matrix = actuation_weight_matrix,
-			final_weight = final_cost_weight,
-			record = True,
-			# verbose = True
-			)
-
-	# inject constraints and objective as member functions so that they may access self
-	mpc.constraints_function = chain_of_4_constraints.__get__(
-			mpc, MPC
-			)
-
-	mpc.objective = chain_of_4_objective.__get__(
-			mpc, MPC
-			)
 
 	sf_lb = 0.2
 	sf_ub = inf
@@ -179,13 +92,91 @@ if __name__ == "__main__":
 	lb = [ constraint_lb_base ] * horizon
 	ub = [ constraint_ub_base ] * horizon
 
+	seafloor = SeafloorFromFunction( seafloor_function_0 )
+
+	dynamics = ChainOf4(
+			water_surface_depth = 0.,
+			water_current = array( [ .5, .5, 0. ] ),
+			seafloor = seafloor,
+			cables_length = 3.,
+			cables_linear_mass = 0.01,
+			get_cable_parameter_method = 'precompute'
+			)
+
+	trajectory = generate_trajectory( key_frames, 2 * n_frames )
+	trajectory[ :, 0, dynamics.br_0_z ] = 1.5 * cos(
+			1.25 * (trajectory[ :, 0, dynamics.br_0_position ][ :, 0 ] - 2) + pi
+			) + 2.5
+
+	max_required_speed = (max( norm( diff( trajectory[ :, 0, :3 ], axis = 0 ), axis = 1 ) ) / time_step)
+
+	if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
+		exit()
+
+	initial_state = zeros( (dynamics.state_size,) )
+	initial_actuation = zeros( (dynamics.actuation_size,) )
+	pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
+	actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
+
+	initial_state[ dynamics.br_0_position ][ 0 ] = 2.
+	initial_state[ dynamics.br_0_position ][ 2 ] = 1.
+	initial_state[ dynamics.br_1_position ][ 0 ] = 2.5
+	initial_state[ dynamics.br_1_position ][ 2 ] = 1.
+	initial_state[ dynamics.br_2_position ][ 0 ] = 3.
+	initial_state[ dynamics.br_2_position ][ 2 ] = 1.
+	initial_state[ dynamics.br_3_position ][ 0 ] = 3.5
+	initial_state[ dynamics.br_3_orientation ][ 2 ] = pi / 2
+	actuation_weight_matrix[ dynamics.br_0_linear_actuation, dynamics.br_0_linear_actuation ] *= 0.
+	actuation_weight_matrix[ dynamics.br_0_angular_actuation, dynamics.br_0_angular_actuation ] *= 1.
+	actuation_weight_matrix[ dynamics.br_1_linear_actuation, dynamics.br_1_linear_actuation ] *= 0.
+	actuation_weight_matrix[ dynamics.br_1_angular_actuation, dynamics.br_1_angular_actuation ] *= 1.
+	actuation_weight_matrix[ dynamics.br_2_linear_actuation, dynamics.br_2_linear_actuation ] *= 0.
+	actuation_weight_matrix[ dynamics.br_2_angular_actuation, dynamics.br_2_angular_actuation ] *= 1.
+	actuation_weight_matrix[ dynamics.br_3_linear_actuation, dynamics.br_3_linear_actuation ] *= 0.
+	actuation_weight_matrix[ dynamics.br_3_angular_actuation, dynamics.br_3_angular_actuation ] *= 0.
+	pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
+	pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
+	pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
+	pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
+	pose_weight_matrix[ dynamics.br_2_position, dynamics.br_2_position ] *= 0.
+	pose_weight_matrix[ dynamics.br_2_orientation, dynamics.br_2_orientation ] *= 1.
+	pose_weight_matrix[ dynamics.br_3_position, dynamics.br_3_position ] *= 0.
+	pose_weight_matrix[ dynamics.br_3_orientation, dynamics.br_3_orientation ] *= 0.
+
+	model = Model(
+			dynamics = dynamics,
+			time_step = time_step,
+			initial_state = initial_state,
+			initial_actuation = initial_actuation,
+			record = True
+			)
+
+	mpc = MPC(
+			model = model,
+			horizon = horizon,
+			target_trajectory = trajectory,
+			optimize_on = 'actuation',
+			objective_weight = objective_weight,
+			time_step_prediction_factor = time_step_prediction_factor,
+			tolerance = tolerance,
+			max_number_of_iteration = max_number_of_iteration,
+			time_steps_per_actuation = time_steps_per_actuation,
+			pose_weight_matrix = pose_weight_matrix,
+			actuation_derivative_weight_matrix = actuation_weight_matrix,
+			final_weight = final_cost_weight,
+			record = True,
+			# verbose = True
+			)
+
+	# inject constraints and objective as member functions so that they may access self
+	mpc.constraints_function = chain_of_4_constraints.__get__( mpc, MPC )
+	mpc.objective = chain_of_4_objective.__get__( mpc, MPC )
+
 	constraint = NonlinearConstraint(
 			mpc.constraints_function, array( lb ).flatten(), array( ub ).flatten()
 			)
-
 	constraint.value_labels = constraints_values_labels
 	constraint.labels = constraints_reason_labels
-
 	mpc.constraints = (constraint,)
 
 	previous_nfeval_record = [ 0 ]
@@ -203,13 +194,13 @@ if __name__ == "__main__":
 	logger = Logger()
 
 	with open( f'{folder}/config.json', 'w' ) as f:
-		dump( mpc.__dict__ | get_computer_info(), f, default = serialize_others )
+		dump( mpc.__dict__ | get_computer_info() | { 'save_rate': save_rate }, f, default = serialize_others )
 
 	with open( f'{folder}/config.json' ) as f:
 		config = load( f )
 		print_dict( config )
 
-	if 'y' != input( 'continue ? (y/n) ' ):
+	if 'y' != input( 'run this simulation ? (y/n) ' ):
 		exit()
 
 	for frame in range( n_frames ):
@@ -245,6 +236,9 @@ if __name__ == "__main__":
 		logger.lognl( '' )
 		logger.save_at( folder )
 
-		# save simulation state
-		with open( f'{folder}/data/{frame}.json', 'w' ) as f:
-			dump( mpc.__dict__, f, default = serialize_others )
+		count_before_save += 1
+		if count_before_save >= save_rate:
+			count_before_save = 0
+			print( 'saving state ...' )
+			with open( f'{folder}/data/{int( frame / save_rate )}.json', 'w' ) as f:
+				dump( mpc.__dict__, f, default = serialize_others )
