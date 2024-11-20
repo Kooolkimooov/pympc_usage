@@ -1,15 +1,10 @@
-from copy import deepcopy
-from time import perf_counter
 from warnings import simplefilter
 
-from matplotlib import pyplot as plt
-from numpy import any, array, dot, isnan, linspace, ndarray, r_, set_printoptions, zeros
+from numpy import dot, ndarray, r_, zeros
 from numpy.linalg import norm
-from tqdm import tqdm
 
 from bluerov import Bluerov
 from catenary import Catenary
-from model import Model
 
 simplefilter( 'ignore', RuntimeWarning )
 
@@ -153,79 +148,3 @@ class ChainOf2:
 
 		# in world frame
 		return perturbation, -perturbation
-
-
-if __name__ == "__main__":
-	set_printoptions( precision = 5, linewidth = 10000, suppress = True )
-
-	ti = perf_counter()
-
-	n_frames = 10000
-	time_step = 0.01
-
-	dynamics = ChainOf2( cables_linear_mass = .045, get_cable_parameter_method = 'precompute' )
-
-	initial_state = zeros( (dynamics.state_size,) )
-	initial_actuation = zeros( (dynamics.actuation_size,) )
-
-	model = Model( dynamics, time_step, initial_state, initial_actuation )
-
-	x0s = [ ]
-	x1s = [ ]
-
-	ds = [ ]
-	t0s = [ ]
-	t1s = [ ]
-	l = 2.5
-
-	model.actuation[ dynamics.br_0_actuation ][ 2 ] = 7.5
-
-	for frame in tqdm( range( n_frames ) ):
-		initial_state = deepcopy( model.state )
-		model.step()
-
-		if any( isnan( model.state ) ):
-			print( f'nan at {frame=}' )
-			break
-
-		t0, t1 = dynamics.c_01.get_perturbations(
-				model.state[ dynamics.br_0_position ], model.state[ dynamics.br_1_position ]
-				)
-		if t0 is None:
-			t0, t1 = dynamics.get_taunt_cable_perturbations( model.state, model.actuation, 0 )
-
-		ds += [ norm( model.state[ dynamics.br_1_position ] - model.state[ dynamics.br_0_position ] ) ]
-		t0s += [ norm( t0 ) ]
-		t1s += [ norm( t1 ) ]
-
-		x0s += [ model.state[ dynamics.br_0_position ] ]
-		x1s += [ model.state[ dynamics.br_1_position ] ]
-
-	x0s, x1s = array( x0s ), array( x1s )
-	T = [ i * time_step for i in range( len( x0s ) ) ]
-
-	fig, ((ax1, ax3), (ax2, ax4)) = plt.subplots( 2, 2, figsize = (16, 9) )
-	fig.suptitle( f'{model.actuation[ dynamics.br_0_linear_actuation ]=}' )
-	plt.subplots_adjust( hspace = 0 )
-
-	line = ax1.scatter( ds, t0s, c = linspace( 0., time_step * len( ds ), len( ds ) ), cmap = 'summer' )
-	plt.colorbar( line, location = 'top', label = 'time [s]' )
-	ax1.set_ylabel( 'force du câble sur br_0 [N]' )
-	ax1.axvline( 3. )
-
-	ax2.scatter( ds, t1s, c = linspace( 0., time_step * len( ds ), len( ds ) ), cmap = 'summer' )
-	ax2.set_xlabel( 'distances entre br_0 et br_1 [m]' )
-	ax2.set_ylabel( 'force du câble sur br_1 [N]' )
-	ax2.axvline( 3. )
-
-	ax3.plot( T, x0s[ :, 2 ], color = 'r' )
-	ax3.plot( T, x1s[ :, 2 ], color = 'b' )
-	ax3.set_ylabel( 'position sur $z_w$' )
-	ax3.legend( [ 'br_0', 'br_1' ] )
-
-	ax4.plot( T, [ norm( x1 - x0 ) for x0, x1 in zip( x0s, x1s ) ] )
-	ax4.axhline( 3. )
-	ax4.set_xlabel( 'time [s]' )
-	ax4.set_ylabel( 'distance entre br_0 et br_1' )
-
-	plt.show()
