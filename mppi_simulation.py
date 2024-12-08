@@ -6,7 +6,7 @@ from warnings import simplefilter
 from numpy import array, cos, diff, eye, inf, pi, set_printoptions
 from scipy.optimize import NonlinearConstraint
 
-from chain_of_four import *
+from chain_of_four_with_usv import *
 from model import Model
 from mppi import MPPI
 from seafloor import seafloor_function_0, SeafloorFromFunction
@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
 	seafloor = SeafloorFromFunction( seafloor_function_0 )
 
-	dynamics = ChainOf4(
+	dynamics = ChainOf4WithUSV(
 			water_surface_depth = 0.,
 			water_current = array( [ .5, .5, 0. ] ),
 			seafloor = seafloor,
