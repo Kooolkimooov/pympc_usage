@@ -10,7 +10,7 @@ from pympc.models.dynamics.chain_of_four_with_usv import *
 from pympc.models.model import Model
 from pympc.controllers.mppi import MPPI
 from pympc.models.dynamics.seafloor import seafloor_function_0, SeafloorFromFunction
-from utils import check, generate_trajectory, get_computer_info, Logger, print_dict, serialize_others
+from pympc.utils import check, generate_trajectory, get_computer_info, Logger, print_dict, serialize_others
 
 simplefilter( 'ignore', RuntimeWarning )
 
