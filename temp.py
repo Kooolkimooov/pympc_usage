@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 from matplotlib import pyplot as plt
 
-from catenary import Catenary
+from models.dynamics.catenary import Catenary
 
 np.set_printoptions( precision = 2, linewidth = 10000, suppress = True )
 
