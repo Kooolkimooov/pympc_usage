@@ -12,9 +12,9 @@ from mpc import MPC
 from seafloor import seafloor_function_0, SeafloorFromFunction
 from utils import check, generate_trajectory, get_computer_info, Logger, print_dict, serialize_others
 
-simplefilter( 'ignore', RuntimeWarning )
 
 if __name__ == "__main__":
+	simplefilter( 'ignore', RuntimeWarning )
 	set_printoptions( precision = 2, linewidth = 10000, suppress = True )
 
 	ti = perf_counter()
