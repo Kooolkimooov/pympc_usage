@@ -5,5 +5,5 @@
 __pycache__
 venv
 
-/export
-/cache
+export/
+cache/
