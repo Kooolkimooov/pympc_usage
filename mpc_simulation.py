@@ -3,14 +3,13 @@ from os.path import join, split
 from time import perf_counter, time
 from warnings import simplefilter
 
-from numpy import array, cos, diff, eye, inf, pi, set_printoptions
+from numpy import array, cos, diff, eye, inf, pi
 from scipy.optimize import NonlinearConstraint
 
 from pympc.models.dynamics.chain_of_four_with_usv import *
 from pympc.models.model import Model
-from pympc.controllers.mpc import MPC
-from pympc.models.seafloor import seafloor_function_0, SeafloorFromFunction
-from pympc.utils import check, generate_trajectory, get_computer_info, Logger, print_dict, serialize_others
+from pympc.models.seafloor import SeafloorFromFunction, seafloor_function_0
+from pympc.utils import Logger, check, generate_trajectory, get_computer_info, print_dict, serialize_others
 
 if __name__ == "__main__":
     simplefilter( 'ignore', RuntimeWarning )
@@ -98,8 +97,8 @@ if __name__ == "__main__":
     )
 
     trajectory = generate_trajectory( key_frames, 2 * n_frames )
-    trajectory[ :, 0, dynamics.br_0_position ][ :, 2 ] = 1.5 * cos(
-            1.25 * (trajectory[ :, 0, dynamics.br_0_position ][ :, 0 ] - 2) + pi
+    trajectory[ :, 0, dynamics.br_0_position[ 2 ] ] = 1.5 * cos(
+            1.25 * (trajectory[ :, 0, dynamics.br_0_position[ 0 ] ] - 2) + pi
     ) + 2.5
 
     max_required_speed = (max( norm( diff( trajectory[ :, 0, :3 ], axis=0 ), axis=1 ) ) / time_step)
@@ -112,15 +111,14 @@ if __name__ == "__main__":
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
     actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
 
-    # TODO: the double indexation makes the assignment not work
-    initial_state[ dynamics.br_0_position ][ 0 ] = 2.
-    initial_state[ dynamics.br_0_position ][ 2 ] = 1.
-    initial_state[ dynamics.br_1_position ][ 0 ] = 2.5
-    initial_state[ dynamics.br_1_position ][ 2 ] = 1.
-    initial_state[ dynamics.br_2_position ][ 0 ] = 3.
-    initial_state[ dynamics.br_2_position ][ 2 ] = 1.
-    initial_state[ dynamics.br_3_position ][ 0 ] = 3.5
-    initial_state[ dynamics.br_3_orientation ][ 2 ] = pi / 2
+    initial_state[ dynamics.br_0_position[ 0 ] ] = 2.
+    initial_state[ dynamics.br_0_position[ 2 ] ] = 1.
+    initial_state[ dynamics.br_1_position[ 0 ] ] = 2.5
+    initial_state[ dynamics.br_1_position[ 2 ] ] = 1.
+    initial_state[ dynamics.br_2_position[ 0 ] ] = 3.
+    initial_state[ dynamics.br_2_position[ 2 ] ] = 1.
+    initial_state[ dynamics.br_3_position[ 0 ] ] = 3.5
+    initial_state[ dynamics.br_3_orientation[ 2 ] ] = pi / 2
     actuation_weight_matrix[ dynamics.br_0_linear_actuation, dynamics.br_0_linear_actuation ] *= 0.
     actuation_weight_matrix[ dynamics.br_0_angular_actuation, dynamics.br_0_angular_actuation ] *= 1.
     actuation_weight_matrix[ dynamics.br_1_linear_actuation, dynamics.br_1_linear_actuation ] *= 0.
@@ -158,8 +156,7 @@ if __name__ == "__main__":
             pose_weight_matrix=pose_weight_matrix,
             actuation_weight_matrix=actuation_weight_matrix,
             final_weight=final_cost_weight,
-            record=True,
-            # verbose = True
+            record=True,  # verbose = True
     )
 
     # inject constraints and objective as member functions so that they may access self
