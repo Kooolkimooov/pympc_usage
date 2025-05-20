@@ -4,7 +4,7 @@ from time import perf_counter, time
 from warnings import simplefilter
 
 # noinspection PyUnresolvedReferences
-from numpy import array, concatenate, cos, diff, eye, inf, pi, set_printoptions
+from numpy import array, concatenate, cos, diff, eye, inf, pi, set_printoptions, sqrt
 from scipy.optimize import Bounds, NonlinearConstraint
 
 from pympc.models.dynamics.chain_of_four_with_usv import *
@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     dynamics = ChainOf4WithUSV(
             water_surface_depth=0.,
-            water_current=array( [ .5, .5, 0. ] ),
+            water_current=array( [ 0., 0., 0. ] ),
             seafloor=seafloor,
             cables_length=3.0,
             cables_linear_mass=0.01,
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         exit()
 
     tolerance = 1e-6
-    objective_weight = .005
+    objective_weight = 0.1
     max_number_of_iteration = 100
     time_steps_per_actuation = 5
     final_cost_weight = 0.
@@ -80,14 +80,7 @@ if __name__ == "__main__":
     actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
 
     actuation_weight_matrix[ dynamics.br_0_linear_actuation, dynamics.br_0_linear_actuation ] *= 0.
-    actuation_weight_matrix[ dynamics.br_0_angular_actuation, dynamics.br_0_angular_actuation ] *= 1.
-    actuation_weight_matrix[ dynamics.br_1_linear_actuation, dynamics.br_1_linear_actuation ] *= 0.
-    actuation_weight_matrix[ dynamics.br_1_angular_actuation, dynamics.br_1_angular_actuation ] *= 1.
-    actuation_weight_matrix[ dynamics.br_2_linear_actuation, dynamics.br_2_linear_actuation ] *= 0.
-    actuation_weight_matrix[ dynamics.br_2_angular_actuation, dynamics.br_2_angular_actuation ] *= 1.
-    actuation_weight_matrix[ dynamics.br_3_linear_actuation, dynamics.br_3_linear_actuation ] *= 0.
-    actuation_weight_matrix[ dynamics.br_3_angular_actuation, dynamics.br_3_angular_actuation ] *= 0.
-    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
+    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 50.
     pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
     pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
     pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
@@ -95,6 +88,14 @@ if __name__ == "__main__":
     pose_weight_matrix[ dynamics.br_2_orientation, dynamics.br_2_orientation ] *= 1.
     pose_weight_matrix[ dynamics.br_3_position, dynamics.br_3_position ] *= 0.
     pose_weight_matrix[ dynamics.br_3_orientation, dynamics.br_3_orientation ] *= 0.
+
+    actuation_weight_matrix[ dynamics.br_0_angular_actuation, dynamics.br_0_angular_actuation ] *= 1.
+    actuation_weight_matrix[ dynamics.br_1_linear_actuation, dynamics.br_1_linear_actuation ] *= 0.
+    actuation_weight_matrix[ dynamics.br_1_angular_actuation, dynamics.br_1_angular_actuation ] *= 1.
+    actuation_weight_matrix[ dynamics.br_2_linear_actuation, dynamics.br_2_linear_actuation ] *= 0.
+    actuation_weight_matrix[ dynamics.br_2_angular_actuation, dynamics.br_2_angular_actuation ] *= 1.
+    actuation_weight_matrix[ dynamics.br_3_linear_actuation, dynamics.br_3_linear_actuation ] *= 0.
+    actuation_weight_matrix[ dynamics.br_3_angular_actuation, dynamics.br_3_angular_actuation ] *= 0.
 
     bv_lb = 0
     bv_ub = 2 * 18.25
