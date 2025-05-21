@@ -53,7 +53,11 @@ if __name__ == "__main__":
     )
 
     horizon = 5
+    time_steps_per_actuation = 5
     n_frames = 500
+    tolerance = 1e-6
+    max_number_of_iteration = 100
+
     key_frames = [
             (0., [ 2., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
             (.5, [ -5., 0., 0., 0., 0., 0. ] + [ 0. ] * 18),
@@ -70,10 +74,7 @@ if __name__ == "__main__":
     if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
         exit()
 
-    tolerance = 1e-6
     objective_weight = 0.1
-    max_number_of_iteration = 100
-    time_steps_per_actuation = 5
     final_cost_weight = 0.
 
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
