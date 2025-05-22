@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     dynamics = ChainOf4WithUSV(
             water_surface_depth=0.,
-            water_current=array( [ 0., 0., 0. ] ),
+            water_current=array( [ sqrt( 2.0 ), 0., 0. ] ),
             seafloor=seafloor,
             cables_length=3.0,
             cables_linear_mass=0.01,
@@ -126,8 +126,8 @@ if __name__ == "__main__":
             ]
     )
 
-    assert bounds_lb.shape[0] == dynamics.actuation_size, f"{bounds_lb.shape=}!={dynamics.actuation_size=}"
-    assert bounds_ub.shape[0] == dynamics.actuation_size, f"{bounds_ub.shape=}!={dynamics.actuation_size=}"
+    assert bounds_lb.shape[ 0 ] == dynamics.actuation_size, f"{bounds_lb.shape=}!={dynamics.actuation_size=}"
+    assert bounds_ub.shape[ 0 ] == dynamics.actuation_size, f"{bounds_ub.shape=}!={dynamics.actuation_size=}"
 
     bounds = Bounds( lb=bounds_lb, ub=bounds_ub )
 
@@ -158,10 +158,6 @@ if __name__ == "__main__":
             'c_01_distance_to_seafloor',
             'c_12_distance_to_seafloor',
             'c_23_distance_to_seafloor',
-            'br_0_distance_to_seafloor',
-            'br_1_distance_to_seafloor',
-            'br_2_distance_to_seafloor',
-            'br_3_distance_to_seafloor',
             'br_0_br_1_horizontal_distance',
             'br_1_br_2_horizontal_distance',
             'br_2_br_3_horizontal_distance',
@@ -173,10 +169,6 @@ if __name__ == "__main__":
             'seafloor',
             'seafloor',
             'seafloor',
-            'seafloor',
-            'seafloor',
-            'seafloor',
-            'seafloor',
             'cable_length',
             'cable_length',
             'cable_length',
@@ -185,8 +177,8 @@ if __name__ == "__main__":
             'cable_length'
     ]
 
-    constraint_lb_base = [ sf_lb, sf_lb, sf_lb, sf_lb, sf_lb, sf_lb, sf_lb, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
-    constraint_ub_base = [ sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, sf_ub, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
+    constraint_lb_base = [ sf_lb, sf_lb, sf_lb, dp_lb, dp_lb, dp_lb, dr_lb, dr_lb, dr_lb ]
+    constraint_ub_base = [ sf_ub, sf_ub, sf_ub, dp_ub, dp_ub, dp_ub, dr_ub, dr_ub, dr_ub ]
 
     assert (len( constraint_lb_base ) == len( constraints_values_labels )) and (
             len( constraint_ub_base ) == len( constraints_reason_labels )), 'bad definition of constraints'
