@@ -18,6 +18,7 @@ if __name__ == "__main__":
 
     ti = perf_counter()
 
+    record = True
     seafloor = SeafloorFromFunction( seafloor_function_0 )
 
     dynamics = ChainOf4WithUSV(
@@ -49,7 +50,7 @@ if __name__ == "__main__":
             time_step=time_step,
             initial_state=initial_state,
             initial_actuation=initial_actuation,
-            record=True
+            record=record
     )
 
     horizon = 5
@@ -144,7 +145,7 @@ if __name__ == "__main__":
             objective_weight=objective_weight,
             final_weight=final_cost_weight,
             optimize_on='actuation',
-            record=True
+            record=record
     )
 
     sf_lb = 0.2
@@ -198,29 +199,30 @@ if __name__ == "__main__":
 
     mpc.objective = chain_of_4_objective.__get__( mpc, MPC )
 
-    previous_nfeval_record = [ 0 ]
-    previous_H01_record = [ 0. ]
-    previous_H12_record = [ 0. ]
-    previous_H23_record = [ 0. ]
-
-    save_rate = int( .5 / time_step ) if time_step <= .1 else 1
-    count_before_save = 0
-
-    folder = join(
-            split( __file__ )[ 0 ], 'export', split( __file__ )[ 1 ].split( '.' )[ 0 ] + '_' + str( int( time() ) )
-    )
-
-    if check( folder ) + check( f'{folder}/data' ):
-        exit()
-
     logger = Logger()
 
-    with open( f'{folder}/config.json', 'w' ) as f:
-        dump( mpc.__dict__ | get_computer_info() | { 'save_rate': save_rate }, f, default=serialize_others )
+    if record:
+        previous_nfeval_record = [ 0 ]
+        previous_H01_record = [ 0. ]
+        previous_H12_record = [ 0. ]
+        previous_H23_record = [ 0. ]
 
-    with open( f'{folder}/config.json' ) as f:
-        config = load( f )
-        print_dict( config )
+        save_rate = int( .5 / time_step ) if time_step <= .1 else 1
+        count_before_save = 0
+
+        folder = join(
+                split( __file__ )[ 0 ], 'export', split( __file__ )[ 1 ].split( '.' )[ 0 ] + '_' + str( int( time() ) )
+        )
+
+        if check( folder ) + check( f'{folder}/data' ):
+            exit()
+
+        with open( f'{folder}/config.json', 'w' ) as f:
+            dump( mpc.__dict__ | get_computer_info() | { 'save_rate': save_rate }, f, default=serialize_others )
+
+        with open( f'{folder}/config.json' ) as f:
+            config = load( f )
+            print_dict( config )
 
     if 'y' != input( 'run this simulation ? (y/n) ' ):
         exit()
@@ -255,11 +257,13 @@ if __name__ == "__main__":
         logger.log( f'constraints: {constraints_values[ :len( constraint_lb_base ) ]}' )
 
         logger.lognl( '' )
-        logger.save_at( folder )
 
-        count_before_save += 1
-        if count_before_save >= save_rate:
-            count_before_save = 0
-            print( 'saving state ...' )
-            with open( f'{folder}/data/{int( frame / save_rate )}.json', 'w' ) as f:
-                dump( mpc.__dict__, f, default=serialize_others )
+        if record:
+            logger.save_at( folder )
+
+            count_before_save += 1
+            if count_before_save >= save_rate:
+                count_before_save = 0
+                print( 'saving state ...' )
+                with open( f'{folder}/data/{int( frame / save_rate )}.json', 'w' ) as f:
+                    dump( mpc.__dict__, f, default=serialize_others )
