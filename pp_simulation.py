@@ -8,6 +8,7 @@ from numpy import array, concatenate, cos, diff, eye, inf, max, min, pi, set_pri
 from numpy.linalg import norm
 from scipy.optimize import Bounds, NonlinearConstraint
 
+from pympc.controllers.pid import PID
 from pympc.controllers.pp import PP
 from pympc.models.dynamics.chain_of_four_with_usv import (
     ChainOf4WithUSV,
@@ -82,7 +83,7 @@ if __name__ == "__main__":
     if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
         exit()
 
-    objective_weight = 0.01
+    objective_weight = 0.1
     final_cost_weight = 0.
 
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
@@ -117,10 +118,38 @@ if __name__ == "__main__":
             ]
     )
 
-    assert bounds_lb.shape[ 0 ] == horizon * dynamics.state_size // 2, f"{bounds_lb.shape=}!={horizon * dynamics.state_size // 2=}"
-    assert bounds_ub.shape[ 0 ] == horizon * dynamics.state_size // 2, f"{bounds_ub.shape=}!={horizon * dynamics.state_size // 2=}"
+    assert bounds_lb.shape[
+               0 ] == horizon * dynamics.state_size // 2, f"{bounds_lb.shape=}!={horizon * dynamics.state_size // 2=}"
+    assert bounds_ub.shape[
+               0 ] == horizon * dynamics.state_size // 2, f"{bounds_ub.shape=}!={horizon * dynamics.state_size // 2=}"
 
     bounds = Bounds( lb=bounds_lb, ub=bounds_ub )
+
+    proportional = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
+    integral = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ] * 0.0
+    derivative = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
+    offset = zeros( (dynamics.actuation_size,) )
+
+    proportional[ dynamics.br_0_linear_actuation][:2] *= 0.65
+    proportional[ dynamics.br_0_angular_actuation] *= 0.075
+    proportional[ dynamics.br_1_linear_actuation][:2] *= 0.65
+    proportional[ dynamics.br_1_angular_actuation] *= 0.075
+    proportional[ dynamics.br_2_linear_actuation][:2] *= 0.65
+    proportional[ dynamics.br_2_angular_actuation] *= 0.075
+    proportional[ dynamics.br_3_angular_actuation] *= 0.075
+
+    derivative[ dynamics.br_0_linear_actuation] *= 100.0
+    derivative[ dynamics.br_0_angular_actuation] *= 0.0
+    derivative[ dynamics.br_1_linear_actuation] *= 100.0
+    derivative[ dynamics.br_1_angular_actuation] *= 0.0
+    derivative[ dynamics.br_2_linear_actuation] *= 100.0
+    derivative[ dynamics.br_2_angular_actuation] *= 0.0
+    derivative[ dynamics.br_3_linear_actuation] *= 100.0
+    derivative[ dynamics.br_3_angular_actuation] *= 0.0
+
+    offset[ dynamics.br_0_linear_actuation][2] = -0.2
+    offset[ dynamics.br_1_linear_actuation][2] = -0.2
+    offset[ dynamics.br_2_linear_actuation][2] = -0.2
 
     pp = PP(
             model=model,
@@ -132,6 +161,15 @@ if __name__ == "__main__":
             pose_weight_matrix=pose_weight_matrix,
             objective_weight=objective_weight,
             final_weight=final_cost_weight,
+            record=record
+    )
+
+    pid = PID(
+            model=model,
+            target=trajectory[ 0 ],
+            proportional=proportional,
+            integral=integral,
+            derivative=derivative,
             record=record
     )
 
@@ -219,7 +257,8 @@ if __name__ == "__main__":
 
         logger.log( f'frame {frame + 1}/{n_frames} starts at t={perf_counter() - ti:.2f}' )
 
-        model.actuation = pp.step()
+        pid.target = pp.step()
+        model.actuation = pid.step()
         model.step()
 
         logger.log( f'ends at t={perf_counter() - ti:.2f}' )
