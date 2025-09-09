@@ -16,6 +16,6 @@ print(f'{desired_feature=}')
 
 vs = VS(leader, follower, desired_feature, cable_length=1.0, verbose=True)
 
-actuation = vs.compute_actuation()
+actuation = vs.step()
 
 print(f'{actuation=}')

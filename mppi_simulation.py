@@ -119,11 +119,11 @@ if __name__ == "__main__":
     )
 
     # inject constraints and objective as member functions so that they may access self
-    mppi.constraints_function = chain_of_4_constraints.__get__(
+    mppi.constraints_function = chain_of_4_constraints_mpc.__get__(
             mppi, MPPI
     )
 
-    mppi.objective = chain_of_4_objective.__get__(
+    mppi.objective = chain_of_4_objective_mpc.__get__(
             mppi, MPPI
     )
 
@@ -214,7 +214,7 @@ for frame in range( n_frames ):
 
     logger.log( f'frame {frame + 1}/{n_frames} starts at t={perf_counter() - ti:.2f}' )
 
-    model.actuation = mppi.compute_actuation()
+    model.actuation = mppi.step()
     model.step()
 
     logger.log( f'ends at t={perf_counter() - ti:.2f}' )
