@@ -4,10 +4,12 @@ from time import perf_counter, time
 from warnings import simplefilter
 
 # noinspection PyUnresolvedReferences
-from numpy import array, concatenate, cos, diff, eye, inf, pi, set_printoptions, sqrt
+from numpy import array, concatenate, cos, diff, eye, inf, pi, set_printoptions, sqrt, zeros
+from numpy.linalg import norm
 from scipy.optimize import Bounds, NonlinearConstraint
 
-from pympc.models.dynamics.chain_of_four_with_usv import *
+from pympc.controllers.mpc import MPC
+from pympc.models.dynamics.chain_of_four_with_usv import ChainOf4WithUSV, chain_of_4_objective_mpc, chain_of_4_constraints_mpc
 from pympc.models.model import Model
 from pympc.models.seafloor import SeafloorFromFunction, seafloor_function_0
 from pympc.utils import Logger, check, generate_trajectory, get_computer_info, print_dict, serialize_others
@@ -53,8 +55,8 @@ if __name__ == "__main__":
             record=record
     )
 
-    horizon = 5
-    time_steps_per_actuation = 5
+    horizon = 10
+    time_steps_per_actuation = 10
     n_frames = 500
     tolerance = 1e-6
     max_number_of_iteration = 100
@@ -70,19 +72,19 @@ if __name__ == "__main__":
             1.25 * (trajectory[ :, 0, dynamics.br_0_position[ 0 ] ] - 2) + pi
     ) + 2.5
 
-    max_required_speed = (max( norm( diff( trajectory[ :, 0, :3 ], axis=0 ), axis=1 ) ) / time_step)
+    max_required_speed = max( norm( diff( trajectory[ :, 0, :3 ], axis=0 ), axis=1 ) ) / time_step
 
     if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
         exit()
 
-    objective_weight = 0.1
+    objective_weight = 0.01
     final_cost_weight = 0.
 
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
     actuation_weight_matrix = eye( initial_actuation.shape[ 0 ] )
 
     actuation_weight_matrix[ dynamics.br_0_linear_actuation, dynamics.br_0_linear_actuation ] *= 0.
-    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 50.
+    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
     pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
     pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
     pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
@@ -100,7 +102,7 @@ if __name__ == "__main__":
     actuation_weight_matrix[ dynamics.br_3_angular_actuation, dynamics.br_3_angular_actuation ] *= 0.
 
     bv_lb = 0
-    bv_ub = 2 * 18.25
+    bv_ub = 3 * 18.25
     bh_lb = -2 * 18.25
     bh_ub = 2 * 18.25
     bo_lb = -1.0
@@ -151,7 +153,7 @@ if __name__ == "__main__":
     sf_lb = 0.2
     sf_ub = inf
     dp_lb = 0.2
-    dp_ub = 2.8
+    dp_ub = inf
     dr_lb = -inf
     dr_ub = 2.8
 
@@ -188,7 +190,7 @@ if __name__ == "__main__":
     constraint_ub = [ constraint_ub_base ] * horizon
 
     # inject constraints and objective as member functions so that they may access self
-    mpc.constraints_function = chain_of_4_constraints.__get__( mpc, MPC )
+    mpc.constraints_function = chain_of_4_constraints_mpc.__get__( mpc, MPC )
 
     constraint = NonlinearConstraint(
             mpc.constraints_function, array( constraint_lb ).flatten(), array( constraint_ub ).flatten()
@@ -197,7 +199,7 @@ if __name__ == "__main__":
     constraint.labels = constraints_reason_labels
     mpc.constraints = (constraint,)
 
-    mpc.objective = chain_of_4_objective.__get__( mpc, MPC )
+    mpc.objective = chain_of_4_objective_mpc.__get__( mpc, MPC )
 
     logger = Logger()
 
@@ -232,7 +234,7 @@ if __name__ == "__main__":
 
         logger.log( f'frame {frame + 1}/{n_frames} starts at t={perf_counter() - ti:.2f}' )
 
-        model.actuation = mpc.compute_actuation()
+        model.actuation = mpc.step()
         model.step()
 
         logger.log( f'ends at t={perf_counter() - ti:.2f}' )
