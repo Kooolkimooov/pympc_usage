@@ -82,7 +82,7 @@ if __name__ == "__main__":
     if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
         exit()
 
-    objective_weight = 0.1
+    objective_weight = 0.01
     final_cost_weight = 0.
 
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
@@ -129,26 +129,27 @@ if __name__ == "__main__":
     derivative = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
     offset = zeros( (dynamics.actuation_size,) )
 
-    proportional[ dynamics.br_0_linear_actuation][:2] *= 0.35
-    proportional[ dynamics.br_0_angular_actuation] *= 0.075
-    proportional[ dynamics.br_1_linear_actuation][:2] *= 0.35
-    proportional[ dynamics.br_1_angular_actuation] *= 0.075
-    proportional[ dynamics.br_2_linear_actuation][:2] *= 0.35
-    proportional[ dynamics.br_2_angular_actuation] *= 0.075
-    proportional[ dynamics.br_3_angular_actuation] *= 0.075
+    proportional[ dynamics.br_0_linear_actuation[ :2 ] ] *= 10.0
+    proportional[ dynamics.br_0_angular_actuation ] *= 0.1
+    proportional[ dynamics.br_1_linear_actuation[ :2 ] ] *= 10.0
+    proportional[ dynamics.br_1_angular_actuation ] *= 0.1
+    proportional[ dynamics.br_2_linear_actuation[ :2 ] ] *= 10.0
+    proportional[ dynamics.br_2_angular_actuation ] *= 0.1
+    proportional[ dynamics.br_3_linear_actuation[ :2 ] ] *= 10.0
+    proportional[ dynamics.br_3_angular_actuation ] *= 0.1
 
-    derivative[ dynamics.br_0_linear_actuation] *= 100.0
-    derivative[ dynamics.br_0_angular_actuation] *= 0.0
-    derivative[ dynamics.br_1_linear_actuation] *= 100.0
-    derivative[ dynamics.br_1_angular_actuation] *= 0.0
-    derivative[ dynamics.br_2_linear_actuation] *= 100.0
-    derivative[ dynamics.br_2_angular_actuation] *= 0.0
-    derivative[ dynamics.br_3_linear_actuation] *= 100.0
-    derivative[ dynamics.br_3_angular_actuation] *= 0.0
+    derivative[ dynamics.br_0_linear_actuation ] *= 10.0
+    derivative[ dynamics.br_0_angular_actuation ] *= 0.0
+    derivative[ dynamics.br_1_linear_actuation ] *= 10.0
+    derivative[ dynamics.br_1_angular_actuation ] *= 0.0
+    derivative[ dynamics.br_2_linear_actuation ] *= 10.0
+    derivative[ dynamics.br_2_angular_actuation ] *= 0.0
+    derivative[ dynamics.br_3_linear_actuation ] *= 10.0
+    derivative[ dynamics.br_3_angular_actuation ] *= 0.0
 
-    offset[ dynamics.br_0_linear_actuation][2] = 0.2
-    offset[ dynamics.br_1_linear_actuation][2] = 0.2
-    offset[ dynamics.br_2_linear_actuation][2] = 0.2
+    offset[ dynamics.br_0_linear_actuation[ 2 ] ] = 18.25
+    offset[ dynamics.br_1_linear_actuation[ 2 ] ] = 18.25
+    offset[ dynamics.br_2_linear_actuation[ 2 ] ] = 18.25
 
     pp = PP(
             model=model,
@@ -170,6 +171,7 @@ if __name__ == "__main__":
             proportional=proportional,
             integral=integral,
             derivative=derivative,
+            offset=offset,
             record=record
     )
 
@@ -264,10 +266,11 @@ if __name__ == "__main__":
         logger.log( f'ends at t={perf_counter() - ti:.2f}' )
         logger.log( f'{pp.raw_result.message}' )
         logger.log( f'{pp.raw_result.nit} iterations' )
-        logger.log( f'{model.state[model.dynamics.position]}')
-        logger.log( f'{pid.target[model.dynamics.position]}')
-        logger.log( f'{pid.last_error[0, 0, model.dynamics.position]}')
-        logger.log( f'{model.actuation[model.dynamics.linear_actuation]}')
+
+        logger.log( f'{model.state[ dynamics.position ]}' )
+        logger.log( f'{pid.target[ dynamics.position ]}' )
+        logger.log( f'{pid.error[ dynamics.br_0_position ]}' )
+        logger.log( f'{model.actuation[ dynamics.br_0_linear_actuation ]}' )
 
         # try to recover if the optimization failed
         if not pp.raw_result.success and pp.tolerance < 1:
