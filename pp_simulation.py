@@ -82,12 +82,12 @@ if __name__ == "__main__":
     if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
         exit()
 
-    objective_weight = 0.01
+    objective_weight = 0.0
     final_cost_weight = 0.
 
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
 
-    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
+    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 500.
     pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
     pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
     pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
@@ -96,16 +96,18 @@ if __name__ == "__main__":
     pose_weight_matrix[ dynamics.br_3_position, dynamics.br_3_position ] *= 0.
     pose_weight_matrix[ dynamics.br_3_orientation, dynamics.br_3_orientation ] *= 0.
 
-    # base bounds for a bluerov
     bounds_lb_base = array( [ -1.0, -1.0, -1.0, -0.1, -0.1, -0.1 ] )
     bounds_ub_base = array( [ 1.0, 1.0, 1.0, 0.1, 0.1, 0.1 ] )
+
+    bounds_lb_usv = array( [ -1.0, 0.0, 0.0, 0.0, 0.0, -0.1 ] )
+    bounds_ub_usv = array( [ 1.0, 0.0, 0.0, 0.0, 0.0, 0.1 ] )
 
     bounds_lb = concatenate(
             horizon * [
                     bounds_lb_base,
                     bounds_lb_base,
                     bounds_lb_base,
-                    bounds_lb_base
+                    bounds_lb_usv
             ]
     )
     bounds_ub = concatenate(
@@ -113,7 +115,7 @@ if __name__ == "__main__":
                     bounds_ub_base,
                     bounds_ub_base,
                     bounds_ub_base,
-                    bounds_ub_base
+                    bounds_ub_usv
             ]
     )
 
@@ -125,31 +127,59 @@ if __name__ == "__main__":
     bounds = Bounds( lb=bounds_lb, ub=bounds_ub )
 
     proportional = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
-    integral = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ] * 0.0
+    integral = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
     derivative = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
     offset = zeros( (dynamics.actuation_size,) )
+    acceleration_compensation = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
 
-    proportional[ dynamics.br_0_linear_actuation[ :2 ] ] *= 10.0
+    proportional[ dynamics.br_0_linear_actuation[ :2 ] ] *= 80.0
+    proportional[ dynamics.br_0_linear_actuation[ 2 ] ] *= 30.0
     proportional[ dynamics.br_0_angular_actuation ] *= 0.1
-    proportional[ dynamics.br_1_linear_actuation[ :2 ] ] *= 10.0
+    proportional[ dynamics.br_1_linear_actuation[ :2 ] ] *= 80.0
+    proportional[ dynamics.br_1_linear_actuation[ 2 ] ] *= 30.0
     proportional[ dynamics.br_1_angular_actuation ] *= 0.1
-    proportional[ dynamics.br_2_linear_actuation[ :2 ] ] *= 10.0
+    proportional[ dynamics.br_2_linear_actuation[ :2 ] ] *= 80.0
+    proportional[ dynamics.br_2_linear_actuation[ 2 ] ] *= 30.0
     proportional[ dynamics.br_2_angular_actuation ] *= 0.1
-    proportional[ dynamics.br_3_linear_actuation[ :2 ] ] *= 10.0
-    proportional[ dynamics.br_3_angular_actuation ] *= 0.1
+    proportional[ dynamics.br_3_linear_actuation ] *= 50.0
+    proportional[ dynamics.br_3_angular_actuation ] *= 1.1
 
-    derivative[ dynamics.br_0_linear_actuation ] *= 10.0
-    derivative[ dynamics.br_0_angular_actuation ] *= 0.0
-    derivative[ dynamics.br_1_linear_actuation ] *= 10.0
-    derivative[ dynamics.br_1_angular_actuation ] *= 0.0
-    derivative[ dynamics.br_2_linear_actuation ] *= 10.0
-    derivative[ dynamics.br_2_angular_actuation ] *= 0.0
-    derivative[ dynamics.br_3_linear_actuation ] *= 10.0
-    derivative[ dynamics.br_3_angular_actuation ] *= 0.0
+    integral[ dynamics.br_0_linear_actuation[ :2 ] ] *= 40.0
+    integral[ dynamics.br_0_linear_actuation[ 2 ] ] *= 0.0
+    integral[ dynamics.br_0_angular_actuation ] *= 0.0
+    integral[ dynamics.br_1_linear_actuation[ :2 ] ] *= 30.0
+    integral[ dynamics.br_1_linear_actuation[ 2 ] ] *= 0.0
+    integral[ dynamics.br_1_angular_actuation ] *= 0.0
+    integral[ dynamics.br_2_linear_actuation[ :2 ] ] *= 30.0
+    integral[ dynamics.br_2_linear_actuation[ 2 ] ] *= 0.0
+    integral[ dynamics.br_2_angular_actuation ] *= 0.0
+    integral[ dynamics.br_3_linear_actuation ] *= 0.0
+    integral[ dynamics.br_3_angular_actuation ] *= 0.0
+
+    derivative[ dynamics.br_0_linear_actuation[ :2 ] ] *= 5500.0
+    derivative[ dynamics.br_0_linear_actuation[ 2 ] ] *= 1000.0
+    derivative[ dynamics.br_0_angular_actuation ] *= 1.0
+    derivative[ dynamics.br_1_linear_actuation[ :2 ] ] *= 5500.0
+    derivative[ dynamics.br_1_linear_actuation[ 2 ] ] *= 1000.0
+    derivative[ dynamics.br_1_angular_actuation ] *= 1.0
+    derivative[ dynamics.br_2_linear_actuation[ :2 ] ] *= 5500.0
+    derivative[ dynamics.br_2_linear_actuation[ 2 ] ] *= 1000.0
+    derivative[ dynamics.br_2_angular_actuation ] *= 1.0
+    derivative[ dynamics.br_3_linear_actuation ] *= 5500.0
+    derivative[ dynamics.br_3_angular_actuation ] *= 1.0
 
     offset[ dynamics.br_0_linear_actuation[ 2 ] ] = 18.25
     offset[ dynamics.br_1_linear_actuation[ 2 ] ] = 18.25
     offset[ dynamics.br_2_linear_actuation[ 2 ] ] = 18.25
+
+    acceleration_compensation[ dynamics.br_0_linear_actuation ] *= 10.0
+    acceleration_compensation[ dynamics.br_0_angular_actuation ] *= 0.9
+    acceleration_compensation[ dynamics.br_1_linear_actuation ] *= 10.0
+    acceleration_compensation[ dynamics.br_1_angular_actuation ] *= 0.9
+    acceleration_compensation[ dynamics.br_2_linear_actuation ] *= 10.0
+    acceleration_compensation[ dynamics.br_2_angular_actuation ] *= 0.9
+    acceleration_compensation[ dynamics.br_3_linear_actuation ] *= 0.0
+    acceleration_compensation[ dynamics.br_3_angular_actuation ] *= 0.0
 
     pp = PP(
             model=model,
@@ -172,7 +202,10 @@ if __name__ == "__main__":
             integral=integral,
             derivative=derivative,
             offset=offset,
-            record=record
+            # acceleration_compensation=acceleration_compensation,
+            anti_windup_limit=1e3,
+            record=record,
+            verbose=False
     )
 
     sf_lb = 0.2
@@ -257,20 +290,21 @@ if __name__ == "__main__":
     for frame in range( n_frames ):
         pp.target_trajectory = trajectory[ frame + 1: ]
 
-        logger.log( f'frame {frame + 1}/{n_frames} starts at t={perf_counter() - ti:.2f}' )
+        logger.log( f'frame {frame + 1}/{n_frames}' )
+        # logger.log( f'starts at t={perf_counter() - ti:.2f}' )
 
         pid.target = pp.step()
         model.actuation = pid.step()
         model.step()
 
-        logger.log( f'ends at t={perf_counter() - ti:.2f}' )
-        logger.log( f'{pp.raw_result.message}' )
-        logger.log( f'{pp.raw_result.nit} iterations' )
+        # logger.log( f'ends at t={perf_counter() - ti:.2f}' )
+        logger.log( f'{pp.raw_result.message == "Optimization terminated successfully"}' )
+        # logger.log( f'{pp.raw_result.nit} iterations' )
 
-        logger.log( f'{model.state[ dynamics.position ]}' )
+        logger.log( f'{pp.target_trajectory[ 0, 0, dynamics.br_0_position ]}' )
         logger.log( f'{pid.target[ dynamics.position ]}' )
-        logger.log( f'{pid.error[ dynamics.br_0_position ]}' )
-        logger.log( f'{model.actuation[ dynamics.br_0_linear_actuation ]}' )
+        logger.log( f'{model.state[ dynamics.position ]}' )
+        logger.log( f'{model.actuation}' )
 
         # try to recover if the optimization failed
         if not pp.raw_result.success and pp.tolerance < 1:
@@ -284,10 +318,10 @@ if __name__ == "__main__":
             logger.log( f'keeping tolerance: {pp.tolerance:.0e}' )
 
         objective_value = pp.get_objective()
-        logger.log( f'objective: {objective_value:.2f}' )
+        # logger.log( f'objective: {objective_value:.2f}' )
 
         constraints_values = pp.constraints_function( pp.raw_result.x )
-        logger.log( f'constraints: {constraints_values[ :len( constraint_lb_base ) ]}' )
+        # logger.log( f'constraints: {constraints_values[ :len( constraint_lb_base ) ]}' )
 
         logger.lognl( '' )
 
