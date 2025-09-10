@@ -78,7 +78,6 @@ if __name__ == "__main__":
     ) + 2.5
 
     max_required_speed = max( norm( diff( trajectory[ :, 0, :3 ], axis=0 ), axis=1 ) ) / time_step
-    print( min( trajectory, axis=0 ), max( trajectory, axis=0 ) )
 
     if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
         exit()
@@ -98,8 +97,8 @@ if __name__ == "__main__":
     pose_weight_matrix[ dynamics.br_3_orientation, dynamics.br_3_orientation ] *= 0.
 
     # base bounds for a bluerov
-    bounds_lb_base = array( [ -6.0, -6.0, 0.0, -pi, -pi, -pi ] )
-    bounds_ub_base = array( [ 6.0, 6.0, 6.0, pi, pi, pi ] )
+    bounds_lb_base = array( [ -1.0, -1.0, -1.0, -0.1, -0.1, -0.1 ] )
+    bounds_ub_base = array( [ 1.0, 1.0, 1.0, 0.1, 0.1, 0.1 ] )
 
     bounds_lb = concatenate(
             horizon * [
@@ -130,11 +129,11 @@ if __name__ == "__main__":
     derivative = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
     offset = zeros( (dynamics.actuation_size,) )
 
-    proportional[ dynamics.br_0_linear_actuation][:2] *= 0.65
+    proportional[ dynamics.br_0_linear_actuation][:2] *= 0.35
     proportional[ dynamics.br_0_angular_actuation] *= 0.075
-    proportional[ dynamics.br_1_linear_actuation][:2] *= 0.65
+    proportional[ dynamics.br_1_linear_actuation][:2] *= 0.35
     proportional[ dynamics.br_1_angular_actuation] *= 0.075
-    proportional[ dynamics.br_2_linear_actuation][:2] *= 0.65
+    proportional[ dynamics.br_2_linear_actuation][:2] *= 0.35
     proportional[ dynamics.br_2_angular_actuation] *= 0.075
     proportional[ dynamics.br_3_angular_actuation] *= 0.075
 
@@ -147,13 +146,14 @@ if __name__ == "__main__":
     derivative[ dynamics.br_3_linear_actuation] *= 100.0
     derivative[ dynamics.br_3_angular_actuation] *= 0.0
 
-    offset[ dynamics.br_0_linear_actuation][2] = -0.2
-    offset[ dynamics.br_1_linear_actuation][2] = -0.2
-    offset[ dynamics.br_2_linear_actuation][2] = -0.2
+    offset[ dynamics.br_0_linear_actuation][2] = 0.2
+    offset[ dynamics.br_1_linear_actuation][2] = 0.2
+    offset[ dynamics.br_2_linear_actuation][2] = 0.2
 
     pp = PP(
             model=model,
             horizon=horizon,
+            optimize_on='trajectory_derivative',
             target_trajectory=trajectory,
             tolerance=tolerance,
             bounds=bounds,
@@ -264,6 +264,10 @@ if __name__ == "__main__":
         logger.log( f'ends at t={perf_counter() - ti:.2f}' )
         logger.log( f'{pp.raw_result.message}' )
         logger.log( f'{pp.raw_result.nit} iterations' )
+        logger.log( f'{model.state[model.dynamics.position]}')
+        logger.log( f'{pid.target[model.dynamics.position]}')
+        logger.log( f'{pid.last_error[0, 0, model.dynamics.position]}')
+        logger.log( f'{model.actuation[model.dynamics.linear_actuation]}')
 
         # try to recover if the optimization failed
         if not pp.raw_result.success and pp.tolerance < 1:
