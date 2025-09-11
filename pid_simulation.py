@@ -21,7 +21,7 @@ initial_actuation = zeros( (dynamics.actuation_size,) )
 
 initial_state = zeros( (dynamics.state_size,) )
 initial_state[ dynamics.position[ 0 ] ] = 2.
-# initial_state[ dynamics.position[ 2 ] ] = 1.
+initial_state[ dynamics.position[ 2 ] ] = 1.
 
 model = Model(
         dynamics=dynamics,
@@ -52,7 +52,7 @@ offset[ dynamics.linear_actuation[ 2 ] ] = 18.25
 
 pid = PID(
         model=model,
-        target=array( [ 2.0, 0.0, 0.0, 0.0, 0.0, pi ] ),
+        target=array( [ 2.0, 0.0, 4.0, 0.0, 0.0, 0.0 ] ),
         proportional=proportional,
         integral=integral,
         derivative=derivative,
@@ -65,7 +65,7 @@ logger = Logger()
 
 logger.lognl( 'target\tposition\terror\tactuation' )
 
-for i in range( 500 ):
+for i in range( 100 ):
     model.actuation = pid.step()
     model.step()
 
