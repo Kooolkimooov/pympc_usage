@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     ti = perf_counter()
 
-    record = False
+    record = True
     seafloor = SeafloorFromFunction( seafloor_function_0 )
 
     dynamics = ChainOf4WithUSV(
@@ -87,7 +87,7 @@ if __name__ == "__main__":
 
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
 
-    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
+    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 50.
     pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
     pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
     pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
