@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
     dynamics = ChainOf4WithUSV(
             water_surface_depth=0.,
-            water_current=array( [ sqrt( 2.0 ), 0., 0. ] ),
+            water_current=None, #array( [ sqrt( 2.0 ), 0., 0. ] ),
             seafloor=seafloor,
             cables_length=3.0,
             cables_linear_mass=0.01,
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     horizon = 10
     time_steps_per_actuation = 10
     n_frames = 500
-    tolerance = 1e-6
+    tolerance = 1e-3
     max_number_of_iteration = 100
 
     key_frames = [
@@ -82,12 +82,12 @@ if __name__ == "__main__":
     if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
         exit()
 
-    objective_weight = 0.0
+    objective_weight = 0.01
     final_cost_weight = 0.
 
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
 
-    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 500.
+    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
     pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
     pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
     pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
@@ -99,8 +99,8 @@ if __name__ == "__main__":
     bounds_lb_base = array( [ -1.0, -1.0, -1.0, -0.1, -0.1, -0.1 ] )
     bounds_ub_base = array( [ 1.0, 1.0, 1.0, 0.1, 0.1, 0.1 ] )
 
-    bounds_lb_usv = array( [ -1.0, 0.0, 0.0, 0.0, 0.0, -0.1 ] )
-    bounds_ub_usv = array( [ 1.0, 0.0, 0.0, 0.0, 0.0, 0.1 ] )
+    bounds_lb_usv = array( [ -1.0, 0.0, 0.0, 0.0, 0.0, -1.0 ] )
+    bounds_ub_usv = array( [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] )
 
     bounds_lb = concatenate(
             horizon * [
@@ -132,41 +132,41 @@ if __name__ == "__main__":
     offset = zeros( (dynamics.actuation_size,) )
     acceleration_compensation = eye( dynamics.state_size // 2 )[ dynamics.six_dof_actuation_mask, : ]
 
-    proportional[ dynamics.br_0_linear_actuation[ :2 ] ] *= 80.0
-    proportional[ dynamics.br_0_linear_actuation[ 2 ] ] *= 30.0
+    proportional[ dynamics.br_0_linear_actuation[ :2 ] ] *= 100.0
+    proportional[ dynamics.br_0_linear_actuation[ 2 ] ] *= 100.0
     proportional[ dynamics.br_0_angular_actuation ] *= 0.1
-    proportional[ dynamics.br_1_linear_actuation[ :2 ] ] *= 80.0
-    proportional[ dynamics.br_1_linear_actuation[ 2 ] ] *= 30.0
+    proportional[ dynamics.br_1_linear_actuation[ :2 ] ] *= 100.0
+    proportional[ dynamics.br_1_linear_actuation[ 2 ] ] *= 100.0
     proportional[ dynamics.br_1_angular_actuation ] *= 0.1
-    proportional[ dynamics.br_2_linear_actuation[ :2 ] ] *= 80.0
-    proportional[ dynamics.br_2_linear_actuation[ 2 ] ] *= 30.0
+    proportional[ dynamics.br_2_linear_actuation[ :2 ] ] *= 100.0
+    proportional[ dynamics.br_2_linear_actuation[ 2 ] ] *= 100.0
     proportional[ dynamics.br_2_angular_actuation ] *= 0.1
-    proportional[ dynamics.br_3_linear_actuation ] *= 50.0
-    proportional[ dynamics.br_3_angular_actuation ] *= 1.1
+    proportional[ dynamics.br_3_linear_actuation ] *= 100.0
+    proportional[ dynamics.br_3_angular_actuation ] *= 0.3
 
-    integral[ dynamics.br_0_linear_actuation[ :2 ] ] *= 40.0
-    integral[ dynamics.br_0_linear_actuation[ 2 ] ] *= 0.0
+    integral[ dynamics.br_0_linear_actuation[ :2 ] ] *= 10.0
+    integral[ dynamics.br_0_linear_actuation[ 2 ] ] *= 10.0
     integral[ dynamics.br_0_angular_actuation ] *= 0.0
-    integral[ dynamics.br_1_linear_actuation[ :2 ] ] *= 30.0
-    integral[ dynamics.br_1_linear_actuation[ 2 ] ] *= 0.0
+    integral[ dynamics.br_1_linear_actuation[ :2 ] ] *= 10.0
+    integral[ dynamics.br_1_linear_actuation[ 2 ] ] *= 10.0
     integral[ dynamics.br_1_angular_actuation ] *= 0.0
-    integral[ dynamics.br_2_linear_actuation[ :2 ] ] *= 30.0
-    integral[ dynamics.br_2_linear_actuation[ 2 ] ] *= 0.0
+    integral[ dynamics.br_2_linear_actuation[ :2 ] ] *= 10.0
+    integral[ dynamics.br_2_linear_actuation[ 2 ] ] *= 10.0
     integral[ dynamics.br_2_angular_actuation ] *= 0.0
-    integral[ dynamics.br_3_linear_actuation ] *= 0.0
+    integral[ dynamics.br_3_linear_actuation ] *= 10.0
     integral[ dynamics.br_3_angular_actuation ] *= 0.0
 
-    derivative[ dynamics.br_0_linear_actuation[ :2 ] ] *= 5500.0
-    derivative[ dynamics.br_0_linear_actuation[ 2 ] ] *= 1000.0
-    derivative[ dynamics.br_0_angular_actuation ] *= 1.0
-    derivative[ dynamics.br_1_linear_actuation[ :2 ] ] *= 5500.0
-    derivative[ dynamics.br_1_linear_actuation[ 2 ] ] *= 1000.0
-    derivative[ dynamics.br_1_angular_actuation ] *= 1.0
-    derivative[ dynamics.br_2_linear_actuation[ :2 ] ] *= 5500.0
-    derivative[ dynamics.br_2_linear_actuation[ 2 ] ] *= 1000.0
-    derivative[ dynamics.br_2_angular_actuation ] *= 1.0
-    derivative[ dynamics.br_3_linear_actuation ] *= 5500.0
-    derivative[ dynamics.br_3_angular_actuation ] *= 1.0
+    derivative[ dynamics.br_0_linear_actuation[ :2 ] ] *= 6500.0
+    derivative[ dynamics.br_0_linear_actuation[ 2 ] ] *= 5000.0
+    derivative[ dynamics.br_0_angular_actuation ] *= .0
+    derivative[ dynamics.br_1_linear_actuation[ :2 ] ] *= 6500.0
+    derivative[ dynamics.br_1_linear_actuation[ 2 ] ] *= 5000.0
+    derivative[ dynamics.br_1_angular_actuation ] *= .0
+    derivative[ dynamics.br_2_linear_actuation[ :2 ] ] *= 6500.0
+    derivative[ dynamics.br_2_linear_actuation[ 2 ] ] *= 5000.0
+    derivative[ dynamics.br_2_angular_actuation ] *= .0
+    derivative[ dynamics.br_3_linear_actuation ] *= 6500.0
+    derivative[ dynamics.br_3_angular_actuation ] *= .0
 
     offset[ dynamics.br_0_linear_actuation[ 2 ] ] = 18.25
     offset[ dynamics.br_1_linear_actuation[ 2 ] ] = 18.25
@@ -294,6 +294,7 @@ if __name__ == "__main__":
         # logger.log( f'starts at t={perf_counter() - ti:.2f}' )
 
         pid.target = pp.step()
+        # pid.target[ dynamics.br_0_pose ] = pp.target_trajectory[ 0, 0, dynamics.br_0_pose ]
         model.actuation = pid.step()
         model.step()
 
@@ -303,7 +304,9 @@ if __name__ == "__main__":
 
         logger.log( f'{pp.target_trajectory[ 0, 0, dynamics.br_0_position ]}' )
         logger.log( f'{pid.target[ dynamics.position ]}' )
+        logger.log( f'{pid.target[ dynamics.br_3_orientation ]}' )
         logger.log( f'{model.state[ dynamics.position ]}' )
+        logger.log( f'{model.state[ dynamics.br_3_orientation ]}' )
         logger.log( f'{model.actuation}' )
 
         # try to recover if the optimization failed
@@ -321,7 +324,7 @@ if __name__ == "__main__":
         # logger.log( f'objective: {objective_value:.2f}' )
 
         constraints_values = pp.constraints_function( pp.raw_result.x )
-        # logger.log( f'constraints: {constraints_values[ :len( constraint_lb_base ) ]}' )
+        logger.log( f'constraints: {constraints_values[ :len( constraint_lb_base ) ]}' )
 
         logger.lognl( '' )
 
