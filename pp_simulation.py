@@ -96,25 +96,25 @@ if __name__ == "__main__":
     pose_weight_matrix[ dynamics.br_3_position, dynamics.br_3_position ] *= 0.
     pose_weight_matrix[ dynamics.br_3_orientation, dynamics.br_3_orientation ] *= 0.
 
-    bounds_lb_base = array( [ -1.0, -1.0, -1.0, -0.1, -0.1, -0.1 ] )
-    bounds_ub_base = array( [ 1.0, 1.0, 1.0, 0.1, 0.1, 0.1 ] )
+    bounds_lb_rov = array( [ -1.0, -1.0, -1.0, -0.1, -0.1, -0.1 ] )
+    bounds_ub_rov = array( [ 1.0, 1.0, 1.0, 0.1, 0.1, 0.1 ] )
 
     bounds_lb_usv = array( [ -1.0, 0.0, 0.0, 0.0, 0.0, -1.0 ] )
     bounds_ub_usv = array( [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] )
 
     bounds_lb = concatenate(
             horizon * [
-                    bounds_lb_base,
-                    bounds_lb_base,
-                    bounds_lb_base,
+                    bounds_lb_rov,
+                    bounds_lb_rov,
+                    bounds_lb_rov,
                     bounds_lb_usv
             ]
     )
     bounds_ub = concatenate(
             horizon * [
-                    bounds_ub_base,
-                    bounds_ub_base,
-                    bounds_ub_base,
+                    bounds_ub_rov,
+                    bounds_ub_rov,
+                    bounds_ub_rov,
                     bounds_ub_usv
             ]
     )
@@ -294,7 +294,6 @@ if __name__ == "__main__":
         # logger.log( f'starts at t={perf_counter() - ti:.2f}' )
 
         pid.target = pp.step()
-        # pid.target[ dynamics.br_0_pose ] = pp.target_trajectory[ 0, 0, dynamics.br_0_pose ]
         model.actuation = pid.step()
         model.step()
 
