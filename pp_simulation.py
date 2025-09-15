@@ -60,8 +60,7 @@ if __name__ == "__main__":
             record=record
     )
 
-    horizon = 10
-    time_steps_per_actuation = 10
+    horizon = 500
     n_frames = 500
     tolerance = 1e-3
     max_number_of_iteration = 100
@@ -184,7 +183,7 @@ if __name__ == "__main__":
     pp = PP(
             model=model,
             horizon=horizon,
-            optimize_on='trajectory_derivative',
+            replan_method='never',
             target_trajectory=trajectory,
             tolerance=tolerance,
             bounds=bounds,
