@@ -60,9 +60,9 @@ if __name__ == "__main__":
             record=record
     )
 
-    horizon = 500
+    horizon = 20
     n_frames = 500
-    tolerance = 1e-3
+    tolerance = 1e-5
     max_number_of_iteration = 100
 
     key_frames = [
@@ -81,12 +81,12 @@ if __name__ == "__main__":
     if 'y' != input( f'{max_required_speed=}, continue ? (y/n) ' ):
         exit()
 
-    objective_weight = 0.01
+    objective_weight = 20.
     final_cost_weight = 0.
 
     pose_weight_matrix = eye( initial_state.shape[ 0 ] // 2 )
 
-    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 50.
+    pose_weight_matrix[ dynamics.br_0_position, dynamics.br_0_position ] *= 10.
     pose_weight_matrix[ dynamics.br_0_orientation, dynamics.br_0_orientation ] *= 1.
     pose_weight_matrix[ dynamics.br_1_position, dynamics.br_1_position ] *= 0.
     pose_weight_matrix[ dynamics.br_1_orientation, dynamics.br_1_orientation ] *= 1.
@@ -183,7 +183,7 @@ if __name__ == "__main__":
     pp = PP(
             model=model,
             horizon=horizon,
-            replan_method='never',
+            replan_method='on_error_and_steps',
             target_trajectory=trajectory,
             tolerance=tolerance,
             bounds=bounds,
@@ -191,6 +191,7 @@ if __name__ == "__main__":
             pose_weight_matrix=pose_weight_matrix,
             objective_weight=objective_weight,
             final_weight=final_cost_weight,
+            steps_before_replan=horizon // 2,
             record=record
     )
 
@@ -290,25 +291,26 @@ if __name__ == "__main__":
         pp.target_trajectory = trajectory[ frame + 1: ]
 
         logger.log( f'frame {frame + 1}/{n_frames}' )
-        # logger.log( f'starts at t={perf_counter() - ti:.2f}' )
+        logger.log( f'starts at t={perf_counter() - ti:.2f}' )
 
         pid.target = pp.step()
         model.actuation = pid.step()
         model.step()
 
-        # logger.log( f'ends at t={perf_counter() - ti:.2f}' )
-        logger.log( f'{pp.raw_result.message == "Optimization terminated successfully"}' )
+        logger.log( f'ends at t={perf_counter() - ti:.2f}' )
+        logger.log( f'{pp.raw_result.message}' )
+        logger.log( f'{pp.steps_since_replan}' )
         # logger.log( f'{pp.raw_result.nit} iterations' )
 
         logger.log( f'{pp.target_trajectory[ 0, 0, dynamics.br_0_position ]}' )
         logger.log( f'{pid.target[ dynamics.position ]}' )
         logger.log( f'{pid.target[ dynamics.br_3_orientation ]}' )
-        logger.log( f'{model.state[ dynamics.position ]}' )
-        logger.log( f'{model.state[ dynamics.br_3_orientation ]}' )
+        # logger.log( f'{model.state[ dynamics.position ]}' )
+        # logger.log( f'{model.state[ dynamics.br_3_orientation ]}' )
         logger.log( f'{model.actuation}' )
 
         # try to recover if the optimization failed
-        if not pp.raw_result.success and pp.tolerance < 1:
+        if pp.steps_since_replan == 0 and not pp.raw_result.success and pp.tolerance < 1:
             pp.tolerance *= 10
             logger.log( f'increasing tolerance: {pp.tolerance:.0e}' )
         elif pp.raw_result.success and pp.tolerance > 2 * tolerance:
